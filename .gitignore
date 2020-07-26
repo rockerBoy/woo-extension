@@ -1,0 +1,7 @@
+assets/node_modules
+vendor/*
+.idea
+lsp
+tests
+phpcs.xml
+phpunit.xml
