@@ -21,8 +21,9 @@ final class Kernel implements ExtendedWooInterface
      */
     public function init(): ExtendedWooInterface
     {
-        add_action('admin_init', array($this, 'install'));
         $pages = new Pages();
+        add_action('admin_init', array($this, 'install'));
+        add_action('admin_menu', [$pages, 'menu'], 1);
 
         return $this;
     }

@@ -17,17 +17,9 @@ final class Pages implements PageInterface
      *
      * @var string|null $current_page
      */
-    private $current_page = null;
+    private ?string $current_page = null;
 
-    /**
-     * @param array $options
-     */
-    public function __construct(array $pageList = [])
-    {
-        add_action('admin_menu', [$this, 'menu'], 1);
-    }
-
-    public function menu()
+    public function menu(): void
     {
         $pages =  [
             [
@@ -38,7 +30,7 @@ final class Pages implements PageInterface
                 'path'     => 'product_excel_exporter',
             ],
             [
-                'id'        => 'woocommerce-import-products',
+                'id'        => 'product_excel_importer',
                 'parent'    => self::PAGE_ROOT,
                 'screen_id' => 'product_page_product_importer',
                 'title'     => __('Import Products', 'woocommerce'),
@@ -50,6 +42,7 @@ final class Pages implements PageInterface
             $this->registerPage($page);
         }
     }
+
     public function connectPage($options): void
     {
         if (! is_array($options['title'])) {
@@ -129,7 +122,7 @@ final class Pages implements PageInterface
                 $options['title'],
                 $options['capability'],
                 $options['path'],
-                array( __CLASS__, 'viewPage' )
+                [$this, 'viewPage']
             );
         }
 
@@ -165,17 +158,43 @@ final class Pages implements PageInterface
         return $id;
     }
 
-    public function productExporter()
+    public function viewPage(): void
     {
+        $prefix = 'product_page_';
+        $current = get_current_screen();
+        $settings = [];
+
+        foreach ($this->pages as $page) {
+            if ($prefix.$page['id'] === $current->base) {
+                $settings = $page;
+            }
+        }
+
+        $viewStr = explode('_', $settings['path']);
+        array_walk($viewStr, function (&$val) {
+            $val = ucfirst($val);
+        });
+        $viewStr = lcfirst(implode('', $viewStr));
+
+        echo $this->$viewStr();
+    }
+    private function productExcelExporter(): string
+    {
+        ob_start();
+        require __DIR__.'/../views/admin-page-product-export.php';
+        $view = ob_get_contents();
+        ob_end_clean();
+
+        return $view;
     }
 
-    public function viewPage()
+    private function productExcelImporter(): string
     {
-        echo '<pre>';
-        var_dump(get_current_screen());
-        echo '</pre>';
+        ob_start();
+        require __DIR__.'/../views/admin-page-product-import.php';
+        $view = ob_get_contents();
+        ob_end_clean();
+
+        return $view;
     }
 }
-
-//TODO Import page
-//TODO Export page
