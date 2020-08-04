@@ -12,4 +12,13 @@
             <directory name="vendor" />
         </ignoreFiles>
     </projectFiles>
+    <issueHandlers>
+        <UndefinedFunction>
+            <errorLevel type="suppress">
+                <referencedFunction name="apply_filters" />
+                <referencedFunction name="wc_clean" />
+                <referencedFunction name="__" />
+            </errorLevel>
+        </UndefinedFunction>
+    </issueHandlers>
 </psalm>

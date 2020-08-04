@@ -12,4 +12,8 @@ License: A "Slug" license name e.g. GPL-3.0
 
 declare(strict_types=1);
 
+if (! defined('EWOO_PLUGIN_FILE')) {
+    define('EWOO_PLUGIN_FILE', __FILE__);
+}
+
 require __DIR__.'/src/Bootstrap.php';

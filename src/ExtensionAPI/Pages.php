@@ -3,11 +3,20 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
+use ExtendedWoo\Entities\Product;
+use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
+use Symfony\Component\HttpFoundation\Request;
+use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
 
 final class Pages implements PageInterface
 {
     public const PAGE_ROOT = 'edit.php?post_type=product';
+
+    /**
+     * @var Request $request
+     */
+    private Request $request;
     /**
      * @var array $pages
      */
@@ -18,6 +27,11 @@ final class Pages implements PageInterface
      * @var string|null $current_page
      */
     private ?string $current_page = null;
+
+    public function __construct()
+    {
+        $this->request = Request::createFromGlobals();
+    }
 
     public function menu(): void
     {
@@ -178,6 +192,7 @@ final class Pages implements PageInterface
 
         echo $this->$viewStr();
     }
+
     private function productExcelExporter(): string
     {
         ob_start();
@@ -197,4 +212,80 @@ final class Pages implements PageInterface
 
         return $view;
     }
+
+    public function doAjaxProductExport(): void
+    {
+        $request = $this->request;
+        check_ajax_referer('ewoo-product-export', 'security');
+
+        $columnsToExport = ($request->get('selected_columns'))?:[];
+        $categoriesToExport = ($request->get('export_category'))?:[];
+        $useMeta = $request->get('export_meta');
+        $step = ($request->get('step'))?:1;
+        $excelGenerator = new ExcelExport('Test_Export.xlsx');
+        $products = new Product();
+        $exporter = new Exporter($excelGenerator, $products);
+        $exporter
+            ->setColumnsToExport(wp_unslash($columnsToExport))
+            ->setCategoriesToExport(wp_unslash($categoriesToExport))
+            ->enableMetaExport($useMeta)
+            ->setPage($step)
+            ->generate();
+
+        $query_args = apply_filters(
+            'ewoo_export_get_ajax_query_args',
+            array(
+                'nonce'    => wp_create_nonce('product-xls'),
+                'action'   => 'download_product_xls',
+                'filename' => $excelGenerator->getFileName(),
+            )
+        );
+
+
+        if ( 100 === $exporter->get_percent_complete() ) {
+            wp_send_json_success(
+                array(
+                    'step'       => 'done',
+                    'percentage' => 100,
+                    'url'        => add_query_arg( $query_args, admin_url( 'edit.php?post_type=product&page=product_exporter' ) ),
+                )
+            );
+        } else {
+            wp_send_json_success(
+                array(
+                    'step'       => ++$step,
+                    'percentage' => $exporter->get_percent_complete(),
+                    'columns'    => $exporter->get_column_names(),
+                )
+            );
+        }
+        wp_send_json_success(
+            array(
+                'step'       => 'done',
+                'percentage' => 100,
+                'url'        => add_query_arg($query_args, admin_url(Pages::PAGE_ROOT.'&page=product_excel_exporter')),
+            )
+        );
+
+        wp_die();
+    }
+
+    public function downloadExportFile(): void
+    {
+        $request = $this->request;
+        if ((
+                ! empty($request->get('action')) && ! empty($request->get('nonce'))
+        )) {
+            $excelGenerator = new ExcelExport('Test_Export.xlsx');
+            $excelGenerator->sendFileToUser();
+            wp_die();
+//            header("Content-Disposition: attachment; filename=".$excelGenerator->getFileName());
+//            $content = file_get_contents($excelGenerator->get());
+//            unlink($excelGenerator->getFileName());
+//            exit($content);
+        }
+    }
+
+    //TODO Need to create a download export method
+    //TODO Need to add it to admin_init hook
 }

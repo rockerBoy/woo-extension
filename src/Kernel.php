@@ -15,7 +15,7 @@ use Exteption;
  */
 final class Kernel implements ExtendedWooInterface
 {
-
+    public const PLUGIN_URL = '';
     /**
      * @return $this|ExtendedWooInterface
      */
@@ -24,6 +24,8 @@ final class Kernel implements ExtendedWooInterface
         $pages = new Pages();
         add_action('admin_init', array($this, 'install'));
         add_action('admin_menu', [$pages, 'menu'], 1);
+        add_action('admin_init', array($pages, 'downloadExportFile'));
+        add_action('wp_ajax_ext_do_ajax_product_export', array( $pages, 'doAjaxProductExport' ));
 
         return $this;
     }
@@ -44,5 +46,11 @@ final class Kernel implements ExtendedWooInterface
     public function uninstall(): ExtendedWooInterface
     {
         ExtensionInstall::uninstallTables();
+        return $this;
+    }
+
+    final public static function pluginUrl(): string
+    {
+        return untrailingslashit(plugins_url('/', EWOO_PLUGIN_FILE));
     }
 }

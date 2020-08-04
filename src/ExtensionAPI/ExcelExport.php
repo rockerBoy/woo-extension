@@ -3,22 +3,39 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
-use ExtendedWoo\ExtensionAPI\interfaces\ExcelExporterInterface;
+use ExtendedWoo\Entities\Product;
+use ExtendedWoo\ExtensionAPI\interfaces\ExportInterface;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
-class ExcelExport implements ExcelExporterInterface
+class ExcelExport implements ExportInterface
 {
-
-    public function setFilters(array $filters = []): ExcelExporterInterface
+    public function prepareDataToExport(): void
     {
-        return $this;
+        // TODO: Implement prepareDataToExport() method.
     }
 
-    public function getProducts(): array
+    public function getColumnNames(): array
     {
-        return [];
+        // TODO: Implement getColumnNames() method.
     }
 
-    private function generateExport()
+    public function getDefaultColumnNames(): array
     {
+        // TODO: Implement getDefaultColumnNames() method.
+    }
+
+    public function setColumnNames(array $column_names): ExportInterface
+    {
+        // TODO: Implement setColumnNames() method.
+    }
+
+    public function setColumnsToExport(array $columns): ExportInterface
+    {
+        // TODO: Implement setColumnsToExport() method.
+    }
+
+    public function export(): void
+    {
+        // TODO: Implement export() method.
     }
 }
