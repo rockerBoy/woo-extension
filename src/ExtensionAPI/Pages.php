@@ -242,23 +242,23 @@ final class Pages implements PageInterface
         );
 
 
-        if ( 100 === $exporter->get_percent_complete() ) {
-            wp_send_json_success(
-                array(
-                    'step'       => 'done',
-                    'percentage' => 100,
-                    'url'        => add_query_arg( $query_args, admin_url( 'edit.php?post_type=product&page=product_exporter' ) ),
-                )
-            );
-        } else {
-            wp_send_json_success(
-                array(
-                    'step'       => ++$step,
-                    'percentage' => $exporter->get_percent_complete(),
-                    'columns'    => $exporter->get_column_names(),
-                )
-            );
-        }
+//        if ( 100 === $exporter->get_percent_complete() ) {
+//            wp_send_json_success(
+//                array(
+//                    'step'       => 'done',
+//                    'percentage' => 100,
+//                    'url'        => add_query_arg( $query_args, admin_url( 'edit.php?post_type=product&page=product_exporter' ) ),
+//                )
+//            );
+//        } else {
+//            wp_send_json_success(
+//                array(
+//                    'step'       => ++$step,
+//                    'percentage' => $exporter->get_percent_complete(),
+//                    'columns'    => $exporter->get_column_names(),
+//                )
+//            );
+//        }
         wp_send_json_success(
             array(
                 'step'       => 'done',

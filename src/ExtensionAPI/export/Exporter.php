@@ -210,7 +210,7 @@ final class Exporter implements ExporterInterface
 
             $row[$column_id] = $value;
         }
-
+        
         return apply_filters('woocommerce_product_export_row_data', $row, $product);
     }
 }

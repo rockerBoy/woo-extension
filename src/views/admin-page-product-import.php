@@ -1,93 +1,129 @@
 <?php
+/**
+ * Admin View: Product import form
+ *
+ * @package WooCommerce/Admin
+ */
 
-if (! defined('ABSPATH')) {
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
-
-wp_enqueue_script('wc-product-export');
-
-//$exporter = new WC_Product_CSV_Exporter();
+wp_localize_script(
+    'wc-product-import',
+    'wc_product_import_params',
+    array(
+        'import_nonce'    => wp_create_nonce( 'wc-product-import' ),
+        'mapping'         => array(
+            'from' => '',
+            'to'   => '',
+        ),
+        'file'            => 'file.csv',
+        'update_existing' => '$this->update_existing',
+        'delimiter'       => '',
+    )
+);
+//wp_enqueue_script('woocommerce_admin');
+//wp_enqueue_script('wc-admin-meta-boxes');
+//wp_enqueue_script('wc-enhanced-select');
+//wp_enqueue_script('select2');
+wp_enqueue_script( 'wc-product-import' );
 ?>
 <div class="wrap woocommerce">
-    <h1><?php esc_html_e('Import Products', 'woocommerce'); ?></h1>
+<div class="woocommerce-progress-form-wrapper">
 
-    <!--    <div class="woocommerce-exporter-wrapper">-->
-    <!--        <form class="woocommerce-exporter">-->
-    <!--            <header>-->
-    <!--                <span class="spinner is-active"></span>-->
-    <!--                <h2>--><?php //esc_html_e('Export products to a CSV file', 'woocommerce'); ?><!--</h2>-->
-    <!--                <p>--><?php //esc_html_e('This tool allows you to generate and download a CSV file containing a list of all products.', 'woocommerce'); ?><!--</p>-->
-    <!--            </header>-->
-    <!--            <section>-->
-    <!--                <table class="form-table woocommerce-exporter-options">-->
-    <!--                    <tbody>-->
-    <!--                    <tr>-->
-    <!--                        <th scope="row">-->
-    <!--                            <label for="woocommerce-exporter-columns">--><?php //esc_html_e('Which columns should be exported?', 'woocommerce'); ?><!--</label>-->
-    <!--                        </th>-->
-    <!--                        <td>-->
-    <!--                            <select id="woocommerce-exporter-columns" class="woocommerce-exporter-columns wc-enhanced-select" style="width:100%;" multiple data-placeholder="--><?php //esc_attr_e('Export all columns', 'woocommerce'); ?><!--">-->
-    <!--                                --><?php
-    //                                foreach ($exporter->get_default_column_names() as $column_id => $column_name) {
-    //                                    echo '<option value="' . esc_attr($column_id) . '">' . esc_html($column_name) . '</option>';
-    //                                }
-    //                                ?>
-    <!--                                <option value="downloads">--><?php //esc_html_e('Downloads', 'woocommerce'); ?><!--</option>-->
-    <!--                                <option value="attributes">--><?php //esc_html_e('Attributes', 'woocommerce'); ?><!--</option>-->
-    <!--                            </select>-->
-    <!--                        </td>-->
-    <!--                    </tr>-->
-    <!--                    <tr>-->
-    <!--                        <th scope="row">-->
-    <!--                            <label for="woocommerce-exporter-types">--><?php //esc_html_e('Which product types should be exported?', 'woocommerce'); ?><!--</label>-->
-    <!--                        </th>-->
-    <!--                        <td>-->
-    <!--                            <select id="woocommerce-exporter-types" class="woocommerce-exporter-types wc-enhanced-select" style="width:100%;" multiple data-placeholder="--><?php //esc_attr_e('Export all products', 'woocommerce'); ?><!--">-->
-    <!--                                --><?php
-    //                                foreach (wc_get_product_types() as $value => $label) {
-    //                                    echo '<option value="' . esc_attr($value) . '">' . esc_html($label) . '</option>';
-    //                                }
-    //                                ?>
-    <!--                                <option value="variation">--><?php //esc_html_e('Product variations', 'woocommerce'); ?><!--</option>-->
-    <!--                            </select>-->
-    <!--                        </td>-->
-    <!--                    </tr>-->
-    <!--                    <tr>-->
-    <!--                        <th scope="row">-->
-    <!--                            <label for="woocommerce-exporter-category">--><?php //esc_html_e('Which product category should be exported?', 'woocommerce'); ?><!--</label>-->
-    <!--                        </th>-->
-    <!--                        <td>-->
-    <!--                            <select id="woocommerce-exporter-category" class="woocommerce-exporter-category wc-enhanced-select" style="width:100%;" multiple data-placeholder="--><?php //esc_attr_e('Export all categories', 'woocommerce'); ?><!--">-->
-    <!--                                --><?php
-    //                                $categories = get_categories(
-    //                                    array(
-    //                                        'taxonomy'   => 'product_cat',
-    //                                        'hide_empty' => false,
-    //                                    )
-    //                                );
-    //                                foreach ($categories as $category) {
-    //                                    echo '<option value="' . esc_attr($category->slug) . '">' . esc_html($category->name) . '</option>';
-    //                                }
-    //                                ?>
-    <!--                        </td>-->
-    <!--                    </tr>-->
-    <!--                    <tr>-->
-    <!--                        <th scope="row">-->
-    <!--                            <label for="woocommerce-exporter-meta">--><?php //esc_html_e('Export custom meta?', 'woocommerce'); ?><!--</label>-->
-    <!--                        </th>-->
-    <!--                        <td>-->
-    <!--                            <input type="checkbox" id="woocommerce-exporter-meta" value="1" />-->
-    <!--                            <label for="woocommerce-exporter-meta">--><?php //esc_html_e('Yes, export all custom meta', 'woocommerce'); ?><!--</label>-->
-    <!--                        </td>-->
-    <!--                    </tr>-->
-    <!--                    --><?php //do_action('woocommerce_product_export_row'); ?>
-    <!--                    </tbody>-->
-    <!--                </table>-->
-    <!--                <progress class="woocommerce-exporter-progress" max="100" value="0"></progress>-->
-    <!--            </section>-->
-    <!--            <div class="wc-actions">-->
-    <!--                <button type="submit" class="woocommerce-exporter-button button button-primary" value="--><?php //esc_attr_e('Generate CSV', 'woocommerce'); ?><!--">--><?php //esc_html_e('Generate CSV', 'woocommerce'); ?><!--</button>-->
-    <!--            </div>-->
-    <!--        </form>-->
-    <!--    </div>-->
+    <form class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data" method="post">
+        <header>
+            <h2><?php esc_html_e( 'Импорт товаров из Excel файла', 'extended-woo' ); ?></h2>
+            <p><?php esc_html_e( 'Этот инструмент позволяет импортировать (или дописывать) данные товаров из Excel файла к вашему магазину.', 'woocommerce' ); ?></p>
+        </header>
+        <section>
+            <table class="form-table woocommerce-importer-options">
+                <tbody>
+                <tr>
+                    <th scope="row">
+                        <label for="upload">
+                            <?php esc_html_e( 'Выберите Excel файл с вашего компьютера:', 'extended-woo' ); ?>
+                        </label>
+                    </th>
+                    <td>
+                        <?php
+                        if ( ! empty( $upload_dir['error'] ) ) {
+                            ?>
+                            <div class="inline error">
+                                <p><?php esc_html_e( 'Before you can upload your import file, you will need to fix the following error:', 'woocommerce' ); ?></p>
+                                <p><strong><?php echo esc_html( $upload_dir['error'] ); ?></strong></p>
+                            </div>
+                            <?php
+                        } else {
+                            ?>
+                            <input type="file" id="upload" name="import" size="25" />
+                            <input type="hidden" name="action" value="save" />
+                            <input type="hidden" name="max_file_size" value="<?php echo esc_attr( $bytes ); ?>" />
+                            <br>
+                            <small>
+                                <?php
+                                printf(
+                                /* translators: %s: maximum upload size */
+                                    esc_html__( 'Maximum size: %s', 'woocommerce' ),
+                                    esc_html( $size )
+                                );
+                                ?>
+                            </small>
+                            <?php
+                        }
+                        ?>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Update existing products', 'woocommerce' ); ?></label><br/></th>
+                    <td>
+                        <input type="hidden" name="update_existing" value="0" />
+                        <input type="checkbox" id="woocommerce-importer-update-existing" name="update_existing" value="1" />
+                        <label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Existing products that match by ID or SKU will be updated. Products that do not exist will be skipped.', 'woocommerce' ); ?></label>
+                    </td>
+                </tr>
+                <tr class="woocommerce-importer-advanced hidden">
+                    <th>
+                        <label for="woocommerce-importer-file-url"><?php esc_html_e( 'Alternatively, enter the path to a CSV file on your server:', 'woocommerce' ); ?></label>
+                    </th>
+                    <td>
+                        <label for="woocommerce-importer-file-url" class="woocommerce-importer-file-url-field-wrapper">
+                            <code><?php echo esc_html( ABSPATH ) . ' '; ?></code><input type="text" id="woocommerce-importer-file-url" name="file_url" />
+                        </label>
+                    </td>
+                </tr>
+                <tr class="woocommerce-importer-advanced hidden">
+                    <th><label><?php esc_html_e( 'CSV Delimiter', 'woocommerce' ); ?></label><br/></th>
+                    <td><input type="text" name="delimiter" placeholder="," size="2" /></td>
+                </tr>
+                <tr class="woocommerce-importer-advanced hidden">
+                    <th><label><?php esc_html_e( 'Use previous column mapping preferences?', 'woocommerce' ); ?></label><br/></th>
+                    <td><input type="checkbox" id="woocommerce-importer-map-preferences" name="map_preferences" value="1" /></td>
+                </tr>
+                </tbody>
+            </table>
+        </section>
+        <script type="text/javascript">
+            jQuery(function() {
+                jQuery( '.woocommerce-importer-toggle-advanced-options' ).on( 'click', function() {
+                    var elements = jQuery( '.woocommerce-importer-advanced' );
+                    if ( elements.is( '.hidden' ) ) {
+                        elements.removeClass( 'hidden' );
+                        jQuery( this ).text( jQuery( this ).data( 'hidetext' ) );
+                    } else {
+                        elements.addClass( 'hidden' );
+                        jQuery( this ).text( jQuery( this ).data( 'showtext' ) );
+                    }
+                    return false;
+                } );
+            });
+        </script>
+        <div class="wc-actions">
+            <a href="#" class="woocommerce-importer-toggle-advanced-options" data-hidetext="<?php esc_attr_e( 'Hide advanced options', 'woocommerce' ); ?>" data-showtext="<?php esc_attr_e( 'Show advanced options', 'woocommerce' ); ?>"><?php esc_html_e( 'Show advanced options', 'woocommerce' ); ?></a>
+            <button type="submit" class="button button-primary button-next" value="<?php esc_attr_e( 'Continue', 'woocommerce' ); ?>" name="save_step"><?php esc_html_e( 'Continue', 'woocommerce' ); ?></button>
+            <?php wp_nonce_field( 'woocommerce-csv-importer' ); ?>
+        </div>
+    </form>
+
+</div>
 </div>
