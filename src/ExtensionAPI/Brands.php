@@ -8,11 +8,13 @@ final class Brands
     /**
      * @var array $options
      */
-    private $options = [
+    private array $options = [
+        'label'                      => '',
         'labels'                     => [],
         'hierarchical'               => true,
         'public'                     => true,
         'show_ui'                    => true,
+        'query_var'                  => true,
         'show_admin_column'          => true,
         'show_in_nav_menus'          => true,
         'show_tagcloud'              => true,
@@ -20,7 +22,23 @@ final class Brands
 
     public function init(): void
     {
-        $labels = [
+        $this->setLabels();
+        register_taxonomy(
+            'brands',
+            apply_filters('woocommerce_taxonomy_objects_product_tag', array( 'product' )),
+            $this->options
+        );
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    private function setLabels(array $labels = []): self
+    {
+        $this->options['label'] = __('Бренды', 'woocommerce');
+        $this->options['labels'] = [
             'name'                       => __('Бренды', 'extendedwoo'),
             'singular_name'              => __('Бренд', 'extendedwoo'),
             'menu_name'                  => __('Бренды', 'extendedwoo'),
@@ -34,10 +52,9 @@ final class Brands
             'separate_items_with_commas' => __("Разделить бренды запятыми", "extendedwoo"),
             'search_items'               => __("Поиск бренда", 'extendedwoo'),
             'add_or_remove_items'        => __("Добавить или удалить бренды", "extendedwoo"),
-            'choose_from_most_used'      => __("Выберите наиболее исспользуемые бренды", "extendedwoo"),
+            'choose_from_most_used'      => __("Выберите наиболее используемые бренды", "extendedwoo"),
         ];
 
-        $this->options['labels'] = $labels;
-        register_taxonomy('brands', 'product', $this->options);
+        return $this;
     }
 }
