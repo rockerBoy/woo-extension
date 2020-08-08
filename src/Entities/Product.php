@@ -22,40 +22,7 @@ namespace ExtendedWoo\Entities;
 
 class Product
 {
-    /**
-     * @var int $limit
-     */
-    private $limit = 50;
-    /**
-     * @var int $page
-     */
-    private $page = 1;
-    /**
-     * @var int $total_products
-     */
-    private $total_products = 0;
-    /**
-     * @var bool $enable_attributes_export
-     */
-    private $enable_attributes_export = false;
-    /**
-     * @var array $product_categories_to_export
-     */
-    private $product_categories_to_export = [];
-    /**
-     * @var array $product_types_to_export
-     */
-    private $product_types_to_export = [];
-
-    /**
-     * @var array $column_names
-     */
-    private $column_names = [];
-    private $export_type = 'product';
-    /**
-     * @var array $columns_to_export
-     */
-    private $columns_to_export = [];
+    private string $export_type = 'product';
 
     private array $product_args = [];
     /**
@@ -65,7 +32,6 @@ class Product
     public function getDefaultColumnNames(): array
     {
         $columns = [
-
             'id'                 => __('ID', 'woocommerce'),
             'type'               => __('Type', 'woocommerce'),
             'sku'                => __('SKU', 'woocommerce'),
@@ -122,6 +88,7 @@ class Product
 
         return $this;
     }
+
     public function getProducts()
     {
         return wc_get_products(
@@ -130,5 +97,55 @@ class Product
                 $this->product_args
             )
         );
+    }
+
+    public function getCategory($product):string
+    {
+        $term_ids = $product->get_category_ids('edit');
+
+        return $this->formatTermIDs($term_ids, 'product_cat');
+    }
+
+    private function formatTermIDs(array $term_ids, string $taxonomy): string
+    {
+        $term_ids = wp_parse_id_list($term_ids);
+
+        if (! count($term_ids)) {
+            return '';
+        }
+
+        $formatted_terms = array();
+
+        if (is_taxonomy_hierarchical($taxonomy)) {
+            foreach ($term_ids as $term_id) {
+                $formatted_term = array();
+                $ancestor_ids   = array_reverse(get_ancestors($term_id, $taxonomy));
+
+                foreach ($ancestor_ids as $ancestor_id) {
+                    $term = get_term($ancestor_id, $taxonomy);
+                    if ($term && ! is_wp_error($term)) {
+                        $formatted_term[] = $term->name;
+                    }
+                }
+
+                $term = get_term($term_id, $taxonomy);
+
+                if ($term && ! is_wp_error($term)) {
+                    $formatted_term[] = $term->name;
+                }
+
+                $formatted_terms[] = implode(' > ', $formatted_term);
+            }
+        } else {
+            foreach ($term_ids as $term_id) {
+                $term = get_term($term_id, $taxonomy);
+
+                if ($term && ! is_wp_error($term)) {
+                    $formatted_terms[] = $term->name;
+                }
+            }
+        }
+
+        return implode(' , ', $formatted_terms);
     }
 }

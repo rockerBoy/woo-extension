@@ -64,6 +64,8 @@
             success: function ( response ) {
                 if ( response.success ) {
                     if ( 'done' === response.data.step ) {
+                        // console.dir(response.data);
+                        // return false;
                         $this.$form.find('.woocommerce-exporter-progress').val(response.data.percentage);
                         window.location.href = response.data.url;
                         setTimeout(function () {

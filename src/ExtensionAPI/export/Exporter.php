@@ -20,13 +20,13 @@ final class Exporter implements ExporterInterface
     private int $exportedRowCount = 0;
     private array $rowData = [];
     private ?Product $productModel = null;
+
     public function __construct($file_export, $product)
     {
         try {
             $this->file_export = $file_export;
             $this->productModel = $product;
             $this->columnNames = $this->productModel->getDefaultColumnNames();
-//            $this->file_export->set
             $this->setProductTypesToExport(
                 array_merge(
                     array_keys(
@@ -184,7 +184,7 @@ final class Exporter implements ExporterInterface
     {
         $columns = $this->getColumnNames();
         $row     = [];
-
+        $categories = $this->productModel->getCategory($product);
         foreach ($columns as $column_id => $column_name) {
             $column_id = strstr($column_id, ':') ? current(explode(':', $column_id)) : $column_id;
 
@@ -192,7 +192,6 @@ final class Exporter implements ExporterInterface
                 continue;
             }
             $value = '';
-
             if (has_filter("woocommerce_product_export_{$this->export_type}_column_{$column_id}")) {
                 // Filter for 3rd parties.
                 $value = apply_filters("woocommerce_product_export_{$this->export_type}_column_{$column_id}", '', $product, $column_id);
@@ -204,13 +203,16 @@ final class Exporter implements ExporterInterface
                 $value = $product->{"get_{$column_id}"}('edit');
             }
 
+            if ($column_id === 'category_ids') {
+                $value = $categories;
+            }
             if ('description' === $column_id || 'short_description' === $column_id) {
                 $value = $this->filterDescriptionField($value);
             }
 
             $row[$column_id] = $value;
         }
-        
+
         return apply_filters('woocommerce_product_export_row_data', $row, $product);
     }
 }

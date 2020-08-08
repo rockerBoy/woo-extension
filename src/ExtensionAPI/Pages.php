@@ -241,24 +241,6 @@ final class Pages implements PageInterface
             )
         );
 
-
-//        if ( 100 === $exporter->get_percent_complete() ) {
-//            wp_send_json_success(
-//                array(
-//                    'step'       => 'done',
-//                    'percentage' => 100,
-//                    'url'        => add_query_arg( $query_args, admin_url( 'edit.php?post_type=product&page=product_exporter' ) ),
-//                )
-//            );
-//        } else {
-//            wp_send_json_success(
-//                array(
-//                    'step'       => ++$step,
-//                    'percentage' => $exporter->get_percent_complete(),
-//                    'columns'    => $exporter->get_column_names(),
-//                )
-//            );
-//        }
         wp_send_json_success(
             array(
                 'step'       => 'done',
@@ -266,7 +248,6 @@ final class Pages implements PageInterface
                 'url'        => add_query_arg($query_args, admin_url(Pages::PAGE_ROOT.'&page=product_excel_exporter')),
             )
         );
-
         wp_die();
     }
 
@@ -279,13 +260,6 @@ final class Pages implements PageInterface
             $excelGenerator = new ExcelExport('Test_Export.xlsx');
             $excelGenerator->sendFileToUser();
             wp_die();
-//            header("Content-Disposition: attachment; filename=".$excelGenerator->getFileName());
-//            $content = file_get_contents($excelGenerator->get());
-//            unlink($excelGenerator->getFileName());
-//            exit($content);
         }
     }
-
-    //TODO Need to create a download export method
-    //TODO Need to add it to admin_init hook
 }
