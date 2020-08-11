@@ -3,10 +3,8 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
-use ExtendedWoo\ExtensionAPI\Brands;
 use ExtendedWoo\Entities\CategoryFiltersTable;
 use ExtendedWoo\Entities\PreImportTable;
-use \wpdb;
 
 /**
  * Class ExtensionInstall
@@ -24,10 +22,7 @@ final class ExtensionInstall
      * @var array $tables
      */
     private static $tables = [];
-    /**
-     * @var array $pages
-     */
-    private static $pages = [];
+
     public static function init(): void
     {
         global $wpdb;
@@ -39,8 +34,6 @@ final class ExtensionInstall
         ];
         self::registerAssets();
         self::installTables();
-        $brands = new Brands();
-        $brands->init();
     }
 
     public static function registerAssets(): void

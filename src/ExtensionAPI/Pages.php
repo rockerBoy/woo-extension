@@ -3,11 +3,20 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
+use ExtendedWoo\Entities\Products;
+use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
+use Symfony\Component\HttpFoundation\Request;
+use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
 
 final class Pages implements PageInterface
 {
     public const PAGE_ROOT = 'edit.php?post_type=product';
+
+    /**
+     * @var Request $request
+     */
+    private Request $request;
     /**
      * @var array $pages
      */
@@ -17,17 +26,14 @@ final class Pages implements PageInterface
      *
      * @var string|null $current_page
      */
-    private $current_page = null;
+    private ?string $current_page = null;
 
-    /**
-     * @param array $options
-     */
-    public function __construct(array $pageList = [])
+    public function __construct()
     {
-        add_action('admin_menu', [$this, 'menu'], 1);
+        $this->request = Request::createFromGlobals();
     }
 
-    public function menu()
+    public function menu(): void
     {
         $pages =  [
             [
@@ -38,7 +44,7 @@ final class Pages implements PageInterface
                 'path'     => 'product_excel_exporter',
             ],
             [
-                'id'        => 'woocommerce-import-products',
+                'id'        => 'product_excel_importer',
                 'parent'    => self::PAGE_ROOT,
                 'screen_id' => 'product_page_product_importer',
                 'title'     => __('Import Products', 'woocommerce'),
@@ -50,6 +56,7 @@ final class Pages implements PageInterface
             $this->registerPage($page);
         }
     }
+
     public function connectPage($options): void
     {
         if (! is_array($options['title'])) {
@@ -129,7 +136,7 @@ final class Pages implements PageInterface
                 $options['title'],
                 $options['capability'],
                 $options['path'],
-                array( __CLASS__, 'viewPage' )
+                [$this, 'viewPage']
             );
         }
 
@@ -165,17 +172,94 @@ final class Pages implements PageInterface
         return $id;
     }
 
-    public function productExporter()
+    public function viewPage(): void
     {
+        $prefix = 'product_page_';
+        $current = get_current_screen();
+        $settings = [];
+
+        foreach ($this->pages as $page) {
+            if ($prefix.$page['id'] === $current->base) {
+                $settings = $page;
+            }
+        }
+
+        $viewStr = explode('_', $settings['path']);
+        array_walk($viewStr, function (&$val) {
+            $val = ucfirst($val);
+        });
+        $viewStr = lcfirst(implode('', $viewStr));
+
+        echo $this->$viewStr();
     }
 
-    public function viewPage()
+    private function productExcelExporter(): string
     {
-        echo '<pre>';
-        var_dump(get_current_screen());
-        echo '</pre>';
+        ob_start();
+        require __DIR__.'/../views/admin-page-product-export.php';
+        $view = ob_get_contents();
+        ob_end_clean();
+
+        return $view;
+    }
+
+    private function productExcelImporter(): string
+    {
+        ob_start();
+        require __DIR__.'/../views/admin-page-product-import.php';
+        $view = ob_get_contents();
+        ob_end_clean();
+
+        return $view;
+    }
+
+    public function doAjaxProductExport(): void
+    {
+        $request = $this->request;
+        check_ajax_referer('ewoo-product-export', 'security');
+
+        $columnsToExport = ($request->get('selected_columns'))?:[];
+        $categoriesToExport = ($request->get('export_category'))?:[];
+        $useMeta = $request->get('export_meta');
+        $step = ($request->get('step'))?:1;
+        $excelGenerator = new ExcelExport('Test_Export.xlsx');
+        $products = new Products();
+        $exporter = new Exporter($excelGenerator, $products);
+        $exporter
+            ->setColumnsToExport(wp_unslash($columnsToExport))
+            ->setCategoriesToExport(wp_unslash($categoriesToExport))
+            ->enableMetaExport($useMeta)
+            ->setPage($step)
+            ->generate();
+
+        $query_args = apply_filters(
+            'ewoo_export_get_ajax_query_args',
+            array(
+                'nonce'    => wp_create_nonce('product-xls'),
+                'action'   => 'download_product_xls',
+                'filename' => $excelGenerator->getFileName(),
+            )
+        );
+
+        wp_send_json_success(
+            array(
+                'step'       => 'done',
+                'percentage' => 100,
+                'url'        => add_query_arg($query_args, admin_url(Pages::PAGE_ROOT.'&page=product_excel_exporter')),
+            )
+        );
+        wp_die();
+    }
+
+    public function downloadExportFile(): void
+    {
+        $request = $this->request;
+        $action = $request->get('action');
+        $nonce = $request->get('nonce');
+        if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') && wp_unslash($action) === 'download_product_xls') {
+            $excelGenerator = new ExcelExport('Test_Export.xlsx');
+            $excelGenerator->sendFileToUser();
+            wp_die();
+        }
     }
 }
-
-//TODO Import page
-//TODO Export page
