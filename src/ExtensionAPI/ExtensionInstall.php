@@ -28,6 +28,7 @@ final class ExtensionInstall
      * @var array $pages
      */
     private static $pages = [];
+
     public static function init(): void
     {
         global $wpdb;

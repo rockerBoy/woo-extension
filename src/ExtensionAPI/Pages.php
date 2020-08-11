@@ -3,7 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
-use ExtendedWoo\Entities\Product;
+use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -223,7 +223,7 @@ final class Pages implements PageInterface
         $useMeta = $request->get('export_meta');
         $step = ($request->get('step'))?:1;
         $excelGenerator = new ExcelExport('Test_Export.xlsx');
-        $products = new Product();
+        $products = new Products();
         $exporter = new Exporter($excelGenerator, $products);
         $exporter
             ->setColumnsToExport(wp_unslash($columnsToExport))
@@ -254,9 +254,9 @@ final class Pages implements PageInterface
     public function downloadExportFile(): void
     {
         $request = $this->request;
-        if ((
-                ! empty($request->get('action')) && ! empty($request->get('nonce'))
-        )) {
+        $action = $request->get('action');
+        $nonce = $request->get('nonce');
+        if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') && wp_unslash($action) === 'download_product_xls') {
             $excelGenerator = new ExcelExport('Test_Export.xlsx');
             $excelGenerator->sendFileToUser();
             wp_die();

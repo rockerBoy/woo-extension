@@ -1,6 +1,6 @@
 <?php
 
-use ExtendedWoo\Entities\Product;
+use ExtendedWoo\Entities\Products;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -16,7 +16,7 @@ wp_localize_script(
     )
 );
 
-$products = new Product();
+$products = new Products();
 ?>
 <div class="wrap woocommerce">
     <h1><?php esc_html_e('Export Products', 'woocommerce'); ?></h1>

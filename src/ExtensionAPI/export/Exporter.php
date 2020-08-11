@@ -3,7 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI\export;
 
-use ExtendedWoo\Entities\Product;
+use ExtendedWoo\Entities\Products;
 
 final class Exporter implements ExporterInterface
 {
@@ -19,7 +19,7 @@ final class Exporter implements ExporterInterface
     private int $totalRows = 0;
     private int $exportedRowCount = 0;
     private array $rowData = [];
-    private ?Product $productModel = null;
+    private ?Products $productModel = null;
 
     public function __construct($file_export, $product)
     {
