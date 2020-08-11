@@ -20,8 +20,11 @@
 
 namespace ExtendedWoo\Entities;
 
-class Product
+use ExtendedWoo\ExtensionAPI\interfaces\import\ProductInterface;
+
+class Products implements ProductInterface
 {
+    public const POST_TYPE = 'product';
     private string $export_type = 'product';
 
     private array $product_args = [];
@@ -147,5 +150,15 @@ class Product
         }
 
         return implode(' , ', $formatted_terms);
+    }
+
+    public function checkIfExists(string $product_name): bool
+    {
+        // TODO: Implement checkIfExists() method.
+    }
+
+    public function getProductTerms(): array
+    {
+        // TODO: Implement getProductTerms() method.
     }
 }

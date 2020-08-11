@@ -8,7 +8,7 @@ final class Brands
     /**
      * @var array $options
      */
-    private $options = [
+    private array $options = [
         'labels'                     => [],
         'hierarchical'               => true,
         'public'                     => true,
@@ -34,10 +34,12 @@ final class Brands
             'separate_items_with_commas' => __("Разделить бренды запятыми", "extendedwoo"),
             'search_items'               => __("Поиск бренда", 'extendedwoo'),
             'add_or_remove_items'        => __("Добавить или удалить бренды", "extendedwoo"),
-            'choose_from_most_used'      => __("Выберите наиболее исспользуемые бренды", "extendedwoo"),
+            'choose_from_most_used'      => __("Выберите наиболее используемые бренды", "extendedwoo"),
         ];
 
-        $this->options['labels'] = $labels;
+        if (empty($this->options['labels'])) {
+            $this->options['labels'] = $labels;
+        }
         register_taxonomy('brands', 'product', $this->options);
     }
 }

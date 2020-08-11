@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo;
 
+use ExtendedWoo\Entities\Filters;
 use ExtendedWoo\ExtensionAPI\ExtensionInstall;
 use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
 use ExtendedWoo\ExtensionAPI\Pages;
@@ -22,6 +23,8 @@ final class Kernel implements ExtendedWooInterface
     public function init(): ExtendedWooInterface
     {
         $pages = new Pages();
+        $filters = new Filters();
+        add_action('init', array($filters, 'initTaxonomies'));
         add_action('admin_init', array($this, 'install'));
         add_action('admin_menu', [$pages, 'menu'], 1);
         add_action('admin_init', array($pages, 'downloadExportFile'));
