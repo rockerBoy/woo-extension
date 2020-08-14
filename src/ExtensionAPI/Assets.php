@@ -16,8 +16,10 @@ class Assets
     /**
      * Enqueue styles.
      */
-    public function adminStyles()
+    public function adminStyles(): void
     {
+        wp_register_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
+        wp_enqueue_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
     }
 
     /**

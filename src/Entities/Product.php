@@ -6,7 +6,7 @@ namespace ExtendedWoo\Entities;
 
 use ExtendedWoo\ExtensionAPI\interfaces\ProductInterface;
 
-class Product implements \ExtendedWoo\ExtensionAPI\interfaces\ProductInterface
+class Product implements ProductInterface
 {
 
     public function setBrand(string $brand): ProductInterface

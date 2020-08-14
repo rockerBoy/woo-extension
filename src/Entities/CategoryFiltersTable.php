@@ -17,34 +17,6 @@ class CategoryFiltersTable implements TableInterface
      * @var string $table_name
      */
     private $table_name = 'woo_category_attributes';
-    /**
-     * @var int $attribute_id
-     */
-    private $attribute_id = 0;
-    /**
-     * @var string $attribute_name
-     */
-    private $attribute_name = '';
-    /**
-     * @var string $attribute_label
-     */
-    private $attribute_label = '';
-    /**
-     * @var string $attribute_type
-     */
-    private $attribute_type = '';
-    /**
-     * @var string $attribute_orderby
-     */
-    private $attribute_orderby = '';
-    /**
-     * @var int $attribute_category_id
-     */
-    private $attribute_category_id = 0;
-    /**
-     * @var bool $attribute_public
-     */
-    private $attribute_public = false;
 
     public function __construct(wpdb $wpdb)
     {
@@ -86,5 +58,17 @@ class CategoryFiltersTable implements TableInterface
     {
         $query = "SHOW TABLES LIKE '{$this->db->prefix}$this->table_name';";
         return (bool) ($this->db->get_var($query));
+    }
+
+    public function getFilters(int $category_id): array
+    {
+        $db = $this->db;
+        $fields_query = $this->db->prepare("SELECT
+                                                ca.attribute_label, 
+                                                ca.attribute_name, 
+                                                ca.attribute_type 
+                                                FROM {$db->prefix}{$this->table_name} `ca`
+                                                WHERE ca.attribute_category_id = %d", $category_id);
+        return $db->get_results($fields_query);
     }
 }

@@ -4,7 +4,9 @@
 namespace ExtendedWoo\ExtensionAPI;
 
 use ExtendedWoo\Entities\CategoryFiltersTable;
+use ExtendedWoo\Entities\Filters;
 use ExtendedWoo\Entities\PreImportTable;
+use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 
 /**
  * Class ExtensionInstall
@@ -32,14 +34,16 @@ final class ExtensionInstall
             new PreImportTable(self::$db),
             new CategoryFiltersTable(self::$db)
         ];
-        self::registerAssets();
+        new Assets();
         self::installTables();
+        $filters = (new Filters())->setCatTable(next(self::$tables));
+        $product_cat = new ProductCatTaxonomy($wpdb, $filters);
+
+        add_action('product_cat_add_form_fields', array( $product_cat, 'addTaxonomyFields' ));
+        add_action('product_cat_edit_form_fields', array( $product_cat, 'editTaxonomyFields' ), 10);
+        add_action('created_term', array( $product_cat, 'saveTaxonomyFields' ), 10, 3);
     }
 
-    public static function registerAssets(): void
-    {
-        $assets = new Assets();
-    }
     /**
      * Creation of the additional database tables
      * such as:
@@ -62,12 +66,5 @@ final class ExtensionInstall
         foreach (self::$tables as $table) {
             $table->dropTable();
         }
-    }
-
-    private static function registerStyles()
-    {
-    }
-    private static function registerScripts(): void
-    {
     }
 }
