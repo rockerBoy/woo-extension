@@ -1,4 +1,4 @@
-<form action="" class="wc-progress-form-content woocommerce-importer"
+<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer"
       method="post">
     <header>
         <h2><?= __('Назначить XLS поля товарам', 'extendedwoo'); ?></h2>
@@ -20,9 +20,13 @@
                     <td>
                         <?php foreach ( $headers as $index => $name ) :
                             $mapped_value = $mapped_items[$index];
+                            if ( ! empty($sample[$index])) :
                         ?>
                         <tr>
-                            <td class="wc-importer-mapping-table-name"><?= esc_html($name) ?></td>
+                            <td class="wc-importer-mapping-table-name">
+                                <?= esc_html($name) ?>
+                                    <span class="description"><?php esc_html_e( 'Sample:', 'woocommerce' ); ?> <code><?= esc_html( $sample[ $index ] ) ?></code></span>
+                            </td>
                             <td class="wc-importer-mapping-table-field">
                                 <input type="hidden" name="map_from[<?= esc_html($index) ?>]" value="<?= esc_html($name) ?>" />
                                 <select name="map_to[<?= esc_html($index) ?>]">
@@ -42,7 +46,10 @@
                                 </select>
                             </td>
                         </tr>
-                        <?php endforeach; ?>
+                        <?php
+                            endif;
+                        endforeach;
+                        ?>
                     </td>
                 </tr>
             </tbody>
@@ -54,6 +61,6 @@
                 name="save_step"><?php esc_html_e('Run the importer', 'woocommerce'); ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
         <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing; ?>" />
-        <?= wp_nonce_field('extended-xls-importer') ?>
+        <?php wp_nonce_field( 'etx-xls-importer' ); ?>
     </div>
 </form>

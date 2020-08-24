@@ -34,7 +34,7 @@ class ProductImporterController
             ],
             'import'  => [
                 'name'    => __("Import", 'woocommerce'),
-                'view'    => [$this, 'import'],
+                'view'    => [$this, 'showImport'],
                 'handler' => '',
             ],
             'result'  => [
@@ -82,7 +82,6 @@ class ProductImporterController
             'update_existing' => $this->update_existing,
             '_wpnonce'        => wp_create_nonce('etx-xls-importer'),
         ];
-
         return add_query_arg($params);
     }
 
@@ -90,8 +89,10 @@ class ProductImporterController
     {
         check_admin_referer(self::IMPORT_NONCE);
         $file = $this->handleUpload();
+
         if (is_wp_error($file)) {
             $this->addErrors($file->get_error_message());
+            return;
         } else {
             $this->file = $file;
         }
@@ -253,10 +254,49 @@ class ProductImporterController
         $importer = (new ProductExcelImporter($this->file));
         $headers  = $importer->getHeader();
         $mapped_items = $this->autoMapColumns($headers);
+        $sample = $importer->getSample();
+        if (empty($sample)) {
+            $this->addErrors(
+                __('The file is empty or using a different encoding than UTF-8, please try again with a new file.', 'woocommerce'),
+                array(
+                    array(
+                        'url'   => admin_url('edit.php?post_type=product&page=product_importer'),
+                        'label' => __('Upload a new file', 'woocommerce'),
+                    ),
+                )
+            );
+            $this->showErrors();
+        }
 
         include_once $this->import_views_path . '/import-column-mapping.php';
     }
 
+    private function showImport(): void
+    {
+        check_admin_referer(self::IMPORT_NONCE);
+
+        if (! is_file($this->file)) {
+            $this->addErrors(__('The file does not exist, please try again.', 'woocommerce'));
+            $this->showErrors();
+        }
+
+        $req = $this->request;
+
+        if (!empty($req->get('map_from')) && ! empty($req->get('map_to'))) {
+            $mapping_from = $req->get('map_from');
+            $mapping_to = $req->get('map_to');
+
+            // Save mapping preferences for future imports.
+            update_user_option( get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to );
+//            dump($mapping_from);
+//            dump($mapping_to);
+        } else {
+            wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
+            exit;
+        }
+
+        include_once $this->import_views_path . '/import-progress.php';
+    }
     private function showFooter(): self
     {
         include $this->import_views_path . 'import-footer.php';
@@ -354,10 +394,8 @@ class ProductImporterController
         foreach ($headers as $index => $header) {
             $normalized_field  = strtolower($header);
             $key = $num_indexes ? $index : $header;
-            $parsed_headers[$key] = $normalized_field;
-            if (isset($default_columns[ $normalized_field ])) {
-                $parsed_headers[ $key ] = $default_columns[ $normalized_field ];
-            }
+            $parsed_headers[$key] = $default_columns[$normalized_field] ??
+                                    $normalized_field;
         }
 
         return $parsed_headers;

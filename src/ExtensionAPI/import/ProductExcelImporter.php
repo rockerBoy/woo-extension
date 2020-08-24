@@ -30,5 +30,10 @@ class ProductExcelImporter
         return array_values(current($this->columns));
     }
 
+    public function getSample(): array
+    {
+        return array_values(next($this->columns));
+    }
+
     //TODO: Set start position (it will be an array of headers)
 }

@@ -5,7 +5,6 @@ namespace ExtendedWoo;
 
 use ExtendedWoo\Entities\Filters;
 use ExtendedWoo\ExtensionAPI\ExtensionInstall;
-use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
 use ExtendedWoo\ExtensionAPI\Pages;
 use Symfony\Component\HttpFoundation\Request;
