@@ -5,6 +5,7 @@ namespace ExtendedWoo\ExtensionAPI;
 
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
+use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
@@ -30,6 +31,9 @@ final class Pages implements PageInterface
 
     public function __construct()
     {
+        if (! defined('ABSPATH')) {
+            exit;
+        }
         $this->request = Request::createFromGlobals();
     }
 
@@ -164,7 +168,7 @@ final class Pages implements PageInterface
         $current_screen_id = get_current_screen();
     }
 
-    public function getPathFromId($id)
+    private function getPathFromId($id)
     {
         if (isset($this->pages[ $id ]) && isset($this->pages[ $id ]['path'])) {
             return $this->pages[ $id ]['path'];
@@ -172,46 +176,6 @@ final class Pages implements PageInterface
         return $id;
     }
 
-    public function viewPage(): void
-    {
-        $prefix = 'product_page_';
-        $current = get_current_screen();
-        $settings = [];
-
-        foreach ($this->pages as $page) {
-            if ($prefix.$page['id'] === $current->base) {
-                $settings = $page;
-            }
-        }
-
-        $viewStr = explode('_', $settings['path']);
-        array_walk($viewStr, function (&$val) {
-            $val = ucfirst($val);
-        });
-        $viewStr = lcfirst(implode('', $viewStr));
-
-        echo $this->$viewStr();
-    }
-
-    private function productExcelExporter(): string
-    {
-        ob_start();
-        require __DIR__.'/../views/admin-page-product-export.php';
-        $view = ob_get_contents();
-        ob_end_clean();
-
-        return $view;
-    }
-
-    private function productExcelImporter(): string
-    {
-        ob_start();
-        require __DIR__.'/../views/admin-page-product-import.php';
-        $view = ob_get_contents();
-        ob_end_clean();
-
-        return $view;
-    }
 
     public function doAjaxProductExport(): void
     {
@@ -261,5 +225,64 @@ final class Pages implements PageInterface
             $excelGenerator->sendFileToUser();
             wp_die();
         }
+    }
+    
+    public function viewPage(): void
+    {
+        $prefix = 'product_page_';
+        $current = get_current_screen();
+        $settings = [];
+
+        foreach ($this->pages as $page) {
+            if ($prefix.$page['id'] === $current->base) {
+                $settings = $page;
+            }
+        }
+
+        $viewStr = explode('_', $settings['path']);
+        array_walk($viewStr, function (&$val) {
+            $val = ucfirst($val);
+        });
+        $viewStr = lcfirst(implode('', $viewStr));
+        echo $this->$viewStr();
+    }
+
+    private function productExcelExporter(): string
+    {
+        wp_enqueue_script('wc-enhanced-select');
+        wp_enqueue_script('ewoo-product-export');
+        wp_localize_script(
+            'ewoo-product-export',
+            'ewoo_product_export_params',
+            array(
+                'export_nonce' => wp_create_nonce( 'ewoo-product-export' ),
+            )
+        );
+
+        ob_start();
+        require __DIR__.'/../views/admin-page-product-export.php';
+
+        return ob_get_clean();
+    }
+
+    private function productExcelImporter(): string
+    {
+        wp_localize_script(
+            'wc-product-import',
+            'wc_product_import_params',
+            array(
+                'import_nonce'    => wp_create_nonce('wc-product-import'),
+                'mapping'         => array(
+                    'from' => '',
+                    'to'   => '',
+                ),
+            )
+        );
+        wp_enqueue_script('wc-product-import');
+
+        $importer = new ProductImporterController($this->request);
+        $importer->dispatch();
+
+        return ob_get_clean();
     }
 }

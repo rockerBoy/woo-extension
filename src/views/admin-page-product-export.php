@@ -2,20 +2,6 @@
 
 use ExtendedWoo\Entities\Products;
 
-if (! defined('ABSPATH')) {
-    exit;
-}
-
-wp_enqueue_script('wc-enhanced-select');
-wp_enqueue_script('ewoo-product-export');
-wp_localize_script(
-    'ewoo-product-export',
-    'ewoo_product_export_params',
-    array(
-        'export_nonce' => wp_create_nonce( 'ewoo-product-export' ),
-    )
-);
-
 $products = new Products();
 ?>
 <div class="wrap woocommerce">
