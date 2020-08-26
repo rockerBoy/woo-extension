@@ -5,6 +5,7 @@ namespace ExtendedWoo\ExtensionAPI;
 
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
+use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
 use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -104,7 +105,7 @@ final class Pages implements PageInterface
      *   @type int         position     Menu item position.
      * }
      */
-    public function registerPage($options): void
+    public function registerPage(array $options): void
     {
         $defaults = array(
             'id'         => null,
@@ -116,35 +117,35 @@ final class Pages implements PageInterface
             'position'   => null,
             'js_page'    => true,
         );
-        $options = wp_parse_args($options, $defaults);
+        $parsed_options = wp_parse_args($options, $defaults);
 
-        if (0 !== strpos($options['path'], self::PAGE_ROOT)) {
+//        if (0 !== strpos($parsed_options['path'], self::PAGE_ROOT)) {
 //            $options['path'] = self::PAGE_ROOT . '=' . $options['path'];
-        }
-        if (is_null($options['parent'])) {
+//        }
+        if (is_null($parsed_options['parent'])) {
             add_menu_page(
-                $options['title'],
-                $options['title'],
-                $options['capability'],
-                $options['path'],
+                $parsed_options['title'],
+                $parsed_options['title'],
+                $parsed_options['capability'],
+                $parsed_options['path'],
                 array( __CLASS__, 'page_wrapper' ),
-                $options['icon'],
-                $options['position']
+                $parsed_options['icon'],
+                $parsed_options['position']
             );
         } else {
             $parent_path = $this->getPathFromId($options['parent']);
             // @todo check for null path.
             add_submenu_page(
                 $parent_path,
-                $options['title'],
-                $options['title'],
-                $options['capability'],
-                $options['path'],
+                $parsed_options['title'],
+                $parsed_options['title'],
+                $parsed_options['capability'],
+                $parsed_options['path'],
                 [$this, 'viewPage']
             );
         }
 
-        $this->connectPage($options);
+        $this->connectPage($parsed_options);
     }
 
     public function getCurrentPage(): string
@@ -164,13 +165,12 @@ final class Pages implements PageInterface
 
     public function determineCurrentPage(): void
     {
-        $current_url = '';
-        $current_screen_id = get_current_screen();
+        //$current_screen_id = get_current_screen();
     }
 
     private function getPathFromId($id)
     {
-        if (isset($this->pages[ $id ]) && isset($this->pages[ $id ]['path'])) {
+        if (isset($this->pages[$id], $this->pages[$id]['path'])) {
             return $this->pages[ $id ]['path'];
         }
         return $id;
@@ -181,12 +181,12 @@ final class Pages implements PageInterface
     {
         $request = $this->request;
         check_ajax_referer('ewoo-product-export', 'security');
-
+        $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
         $columnsToExport = ($request->get('selected_columns'))?:[];
         $categoriesToExport = ($request->get('export_category'))?:[];
         $useMeta = $request->get('export_meta');
         $step = ($request->get('step'))?:1;
-        $excelGenerator = new ExcelExport('Test_Export.xlsx');
+        $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xlsx');
         $products = new Products();
         $exporter = new Exporter($excelGenerator, $products);
         $exporter
@@ -215,13 +215,30 @@ final class Pages implements PageInterface
         wp_die();
     }
 
+    public function doAjaxProductImport(): void
+    {
+        $request = $this->request;
+        check_ajax_referer('ewoo-product-import', 'security');
+
+        if (!empty($request->get('file'))) {
+            $params = array(
+                'mapping'         => isset($_POST['mapping']) ? (array) wc_clean(wp_unslash($_POST['mapping'])) : array(), // PHPCS: input var ok.
+                'update_existing' => isset($_POST['update_existing']) ? (bool) $_POST['update_existing'] : false, // PHPCS: input var ok.
+            );
+            $importer = new ProductExcelImporter($request->get('file'), $params);
+            $results = $importer->import();
+            dd($results);
+        }
+    }
+
     public function downloadExportFile(): void
     {
         $request = $this->request;
         $action = $request->get('action');
         $nonce = $request->get('nonce');
+        $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
         if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') && wp_unslash($action) === 'download_product_xls') {
-            $excelGenerator = new ExcelExport('Test_Export.xlsx');
+            $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xlsx');
             $excelGenerator->sendFileToUser();
             wp_die();
         }
@@ -240,7 +257,7 @@ final class Pages implements PageInterface
         }
 
         $viewStr = explode('_', $settings['path']);
-        array_walk($viewStr, function (&$val) {
+        array_walk($viewStr, static function (&$val) {
             $val = ucfirst($val);
         });
         $viewStr = lcfirst(implode('', $viewStr));
@@ -255,7 +272,7 @@ final class Pages implements PageInterface
             'ewoo-product-export',
             'ewoo_product_export_params',
             array(
-                'export_nonce' => wp_create_nonce( 'ewoo-product-export' ),
+                'export_nonce' => wp_create_nonce('ewoo-product-export'),
             )
         );
 

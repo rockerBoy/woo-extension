@@ -11,7 +11,6 @@ class ExcelExport implements FileExportInterface
 {
     private string $file_name = 'woocommerce_product_export.xlsx';
     private array $row_data = [];
-    private int $exportedRowCount = 0;
     private array $columnNames = [];
 
     public function __construct(string $file_name = '')

@@ -32,6 +32,7 @@ final class Kernel implements ExtendedWooInterface
         add_action('admin_menu', [$pages, 'menu'], 1);
         add_action('admin_init', array($pages, 'downloadExportFile'));
         add_action('wp_ajax_ext_do_ajax_product_export', array( $pages, 'doAjaxProductExport' ));
+        add_action('wp_ajax_ext_do_ajax_product_import', array( $pages, 'doAjaxProductImport' ));
         return $this;
     }
 

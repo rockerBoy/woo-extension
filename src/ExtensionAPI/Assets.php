@@ -27,8 +27,8 @@ class Assets
         );
         wp_register_script(
             'ewoo-product-import',
-            Kernel::pluginUrl() . '/assets/js/admin/product-import.js',
-            array( 'jquery' )
+            Kernel::pluginUrl() . '/assets/js/admin/product-import.js?ver=100.1',
+            array( 'jquery' ),'15'
         );
     }
 }

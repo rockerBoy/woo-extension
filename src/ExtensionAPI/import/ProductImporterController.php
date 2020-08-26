@@ -163,6 +163,14 @@ class ProductImporterController
                 'importer_scheduled_cleanup',
                 array($id)
             );
+            $f_size = (new ProductExcelImporter($upload['file']))
+            ->getImportSize();
+            if ($f_size <= 1) {
+                return new WP_Error(
+                    'extendedwoo_product_xls_importer_upload_invalid_file',
+                    __('The file is empty or using a different encoding than UTF-8, please try again with a new file.', 'woocommerce')
+                );
+            }
 
             return $upload['file'];
         } elseif (file_exists(ABSPATH . $file_url)) {
@@ -242,7 +250,6 @@ class ProductImporterController
         );
         $size       = size_format($bytes);
         $upload_dir = wp_upload_dir();
-
         include $this->import_views_path . 'import-form.php';
 
         return $this;
@@ -260,7 +267,7 @@ class ProductImporterController
                 __('The file is empty or using a different encoding than UTF-8, please try again with a new file.', 'woocommerce'),
                 array(
                     array(
-                        'url'   => admin_url('edit.php?post_type=product&page=product_importer'),
+                        'url'   => admin_url('edit.php?post_type=product&page=product_excel_importer'),
                         'label' => __('Upload a new file', 'woocommerce'),
                     ),
                 )
@@ -285,16 +292,29 @@ class ProductImporterController
         if (!empty($req->get('map_from')) && ! empty($req->get('map_to'))) {
             $mapping_from = $req->get('map_from');
             $mapping_to = $req->get('map_to');
-
             // Save mapping preferences for future imports.
-            update_user_option( get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to );
-//            dump($mapping_from);
-//            dump($mapping_to);
+            update_user_option(get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to);
         } else {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
             exit;
         }
 
+        wp_localize_script(
+            'ewoo-product-import',
+            'ewoo_product_import_params',
+            [
+                'import_nonce' => wp_create_nonce( 'ewoo-product-import' ),
+                'mapping' => [
+                    'from' => $mapping_from,
+                    'to' => $mapping_to,
+                ],
+                'file' => $this->file,
+                'update_existing' => $this->update_existing
+            ]
+        );
+
+        wp_deregister_script('wc-product-import');
+        wp_enqueue_script('ewoo-product-import');
         include_once $this->import_views_path . '/import-progress.php';
     }
     private function showFooter(): self

@@ -25,8 +25,8 @@ class ProductImporter
     {
         $db = $this->db;
         $request = $this->request;
-
         check_ajax_referer('extended-product-import', 'security');
+
         if (! $this->checkUserAccess() || empty($request->get('file'))) {
             wp_send_json_error(array( 'message' => __('Insufficient privileges to import products.', 'woocommerce') ));
         }

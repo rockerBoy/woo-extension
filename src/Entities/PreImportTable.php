@@ -3,46 +3,19 @@
 namespace ExtendedWoo\Entities;
 
 use ExtendedWoo\ExtensionAPI\interfaces\TableInterface;
-use \wpdb;
+use wpdb;
 
 class PreImportTable implements TableInterface
 {
     /**
      * @obj \wpdb $db;
      */
-    private $db;
+    private wpdb $db;
     /**
      * @var string $table_name
      */
-    private $table_name = "woo_pre_import";
-    /**
-     * @var int $product_id
-     */
-    private $product_id = 0;
-    /**
-     * @var string $product_name
-     */
-    private $product_name = '';
-    /**
-     * @var string $product_article
-     */
-    private $product_article = '';
-    /**
-     * @var float $product_price
-     */
-    private $product_price = 0.00;
-    /**
-     * @var int $product_category
-     */
-    private $product_category = 0;
-    /**
-     * @var int $product_parent_category
-     */
-    private $product_parent_category= 0;
+    private string $table_name = "woo_pre_import";
 
-    /**
-     * @return bool
-     */
     public function __construct(wpdb $db)
     {
         $this->db = $db;
@@ -51,7 +24,9 @@ class PreImportTable implements TableInterface
     public function checkIfTableExists(): bool
     {
         $db = $this->db;
-        return (boolean) ($db->get_var("SHOW TABLES LIKE '{$db->prefix}woocommerce_downloadable_product_permissions';")) ?? false;
+        return false
+               ??
+               (boolean) ($db->get_var("SHOW TABLES LIKE '{$db->prefix}woocommerce_downloadable_product_permissions';"));
     }
 
     public function createTable(): void
