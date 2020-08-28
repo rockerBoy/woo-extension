@@ -24,9 +24,7 @@ class PreImportTable implements TableInterface
     public function checkIfTableExists(): bool
     {
         $db = $this->db;
-        return false
-               ??
-               (boolean) ($db->get_var("SHOW TABLES LIKE '{$db->prefix}woocommerce_downloadable_product_permissions';"));
+        return ($db->get_var("SHOW TABLES LIKE '{$db->prefix}{$this->table_name}';")) ?? false;
     }
 
     public function createTable(): void
@@ -47,6 +45,8 @@ class PreImportTable implements TableInterface
                 `onsale` tinyint(1) NULL default 0,
                 `stock_status` varchar(100) NULL default 'instock',
                 `tax_class` varchar(100) NULL default '',
+                `is_valid` tinyint(1) NULL default 0,
+                `is_imported` tinyint(1) NULL default 0,
                 `product_uploaded` datetime NOT NULL default '0000-00-00 00:00:00',
                 `product_uploaded_gmt` datetime NOT NULL default '0000-00-00 00:00:00',
               PRIMARY KEY  (`id`),
