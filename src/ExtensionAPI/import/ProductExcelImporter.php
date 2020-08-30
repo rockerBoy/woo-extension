@@ -57,7 +57,9 @@ class ProductExcelImporter
 
     public function getSample(): array
     {
-        $next = $this->columns[++$this->params['start_from']];
+        $start = (isset($this->params['start_from']))? $this->params['start_from'] : 1;
+        $next = $this->columns[++$start];
+
         return array_values($next);
     }
 
@@ -85,8 +87,9 @@ class ProductExcelImporter
 
         foreach ($this->getColumns() as $index => $column) {
             $column = array_values($column);
+            $start = (isset($this->params['start_from']))? $this->params['start_from'] : 1;
 
-            if ($column === $this->getHeader($this->params['start_from'])) {
+            if ($column === $this->getHeader($start)) {
                 continue;
             }
 
@@ -117,8 +120,10 @@ class ProductExcelImporter
         $row = [];
         $mapping = $this->params['mapping']['to'];
         foreach ($raw_data as $index => $cell) {
-            $key = $mapping[$index];
-            $row[$key] = $cell;
+            if (isset($mapping[$index])) {
+                $key = $mapping[$index];
+                $row[$key] = $cell;
+            }
         }
 
         return $row;
@@ -162,7 +167,7 @@ class ProductExcelImporter
 //            }
         }
 
-        $this->product->set_catalog_visibility('0');
+        $this->product->set_catalog_visibility('hidden');
         $this->saveProduct($this->product);
 
 //        else {
