@@ -227,8 +227,12 @@ final class Pages implements PageInterface
             );
             $importer = new ProductExcelImporter($request->get('file'), $params);
             $results = $importer->import();
-            dd($results);
         }
+    }
+
+    public function doAjaxProductImportResolve(): void
+    {
+        dump('resolver');
     }
 
     public function downloadExportFile(): void

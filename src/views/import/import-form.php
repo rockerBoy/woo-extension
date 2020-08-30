@@ -35,8 +35,12 @@
                     </td>
                 </tr>
                 <tr>
-                    <th></th>
-                    <td></td>
+                    <th scope="row">
+                        <label for="starting_row"><?= __('Экспортировать со строки:', 'extendedwoo')?></label>
+                    </th>
+                    <td>
+                        <input type="number" id="starting_row" name="starting_row" min="1" placeholder="1"/>
+                    </td>
                 </tr>
                 </tbody>
             </table>

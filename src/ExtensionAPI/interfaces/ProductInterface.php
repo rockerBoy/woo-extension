@@ -2,6 +2,15 @@
 
 namespace ExtendedWoo\ExtensionAPI\interfaces;
 
+/**
+ * Interface ProductInterface
+ * Minimal data structure to Importing
+ * - SKU
+ * - Title (if product is not exists)
+ * - Price
+ *
+ * @package ExtendedWoo\ExtensionAPI\interfaces
+ */
 interface ProductInterface
 {
     public function setBrand(string $brand): ProductInterface;

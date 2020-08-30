@@ -16,6 +16,7 @@ class ProductImporterController
     private bool $update_existing = true;
     private string $import_views_path;
     private string $file;
+    private int $startRow = 1;
 
     public function __construct(Request $request)
     {
@@ -79,6 +80,7 @@ class ProductImporterController
                 '/',
                 $this->file
             ),
+            'start_row' => $this->startRow,
             'update_existing' => $this->update_existing,
             '_wpnonce'        => wp_create_nonce('etx-xls-importer'),
         ];
@@ -119,6 +121,9 @@ class ProductImporterController
         $request  = $this->request;
         $file_url = ( ! empty($request->get('file_url')))
             ? wc_clean(wp_unslash($request->get('file_url'))) : '';
+        $this->startRow = (! empty($request->get('starting_row')))
+            ? wc_clean(wp_unslash($request->get('starting_row'))) : 1;
+
         if (empty($file_url) && ! isset($_FILES['import'])) {
             return new WP_Error(
                 'extendedwoo_product_xls_importer_upload_file_empty',
@@ -258,8 +263,9 @@ class ProductImporterController
     private function showMappingForm(): void
     {
         check_admin_referer(self::IMPORT_NONCE);
-        $importer = (new ProductExcelImporter($this->file));
-        $headers  = $importer->getHeader();
+        $this->startRow = $_GET['start_row'];
+        $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
+        $headers  = $importer->getHeader($this->startRow);
         $mapped_items = $this->autoMapColumns($headers);
         $sample = $importer->getSample();
         if (empty($sample)) {
