@@ -223,13 +223,15 @@ class ProductExcelImporter
         $id = isset($data['id']) ? absint($data['id']) : 0;
         $sku = $data['sku'];
 
-        if ($id) {
+        if ($id && wc_get_product($id)) {
             return wc_get_product($id);
         }
 
         if ($sku) {
             $id = wc_get_product_id_by_sku($sku);
-            return wc_get_product($id);
+            if (wc_get_product($id)) {
+                return wc_get_product($id);
+            }
         }
 
         // Type is the most important part here because we need to be using the correct class and methods.
