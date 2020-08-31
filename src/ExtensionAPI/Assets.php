@@ -13,6 +13,7 @@ class Assets
     {
         wp_register_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
         wp_enqueue_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
+        wp_enqueue_style( 'woocommerce_admin_styles' );
     }
 
     /**

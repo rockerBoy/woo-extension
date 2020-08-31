@@ -139,11 +139,14 @@ class ProductExcelImporter
     private function process(array $data): bool
     {
         $sku = $data['sku'] ?? '';
+        $id = $data['id'] ? absint($data['id']): 0;
         $categories = $data['category_ids'] ?? '';
-        $this->preImportColumns = [
+
+        $columns = [
             'product_title' => $data['name'] ?? '',
             'product_excerpt' => $data['short_description'] ?? '',
             'product_content' => $data['description'] ?? '',
+            'id' => $id,
             'sku' => $sku,
             'min_price' => $data['sale_price'] ?? 0,
             'max_price' => $data['regular_price'] ?? 0,
@@ -151,8 +154,7 @@ class ProductExcelImporter
             'product_uploaded' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             'product_uploaded_gmt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
-
-        $product = $this->makeProduct($this->preImportColumns);
+        $product = $this->makeProduct($columns);
         /**
          * @param  string $visibility Options: 'hidden', 'visible', 'search' and 'catalog'.
          */
@@ -176,20 +178,21 @@ class ProductExcelImporter
 
     private function makeProduct(array $productData): WC_Product
     {
-        $settings = $this->preImportColumns;
+        $settings = $productData;
         $settings['type'] = 'simple';
-
         $new_product = $this->getProductObject($settings);
-
         $new_product->set_name($productData['product_title']);
-        $new_product->set_sku($productData['sku']);
+        if (!empty($productData['sku']) && $productData['sku'] !== $new_product->get_sku()) {
+            $new_product->set_sku($productData['sku']);
+        }
         $new_product->set_short_description($productData['product_excerpt']);
         $new_product->set_description($productData['product_content']);
 
-        if ($this->preImportColumns['max_price'] > 0) {
+        if ($productData['max_price'] > 0) {
             $new_product->set_regular_price($productData['max_price']);
         }
-        if ($this->preImportColumns['min_price'] > 0) {
+        if ($productData['min_price'] > 0) {
+            $new_product->set_price($productData['min_price']);
             $new_product->set_sale_price($productData['min_price']);
         }
 
@@ -217,11 +220,18 @@ class ProductExcelImporter
      */
     private function getProductObject(array $data)
     {
-        if ($this->product) {
-            return $this->product;
+        $id = isset($data['id']) ? absint($data['id']) : 0;
+        $sku = $data['sku'];
+
+        if ($id) {
+            return wc_get_product($id);
         }
 
-        $id = isset($data['id']) ? absint($data['id']) : 0;
+        if ($sku) {
+            $id = wc_get_product_id_by_sku($sku);
+            return wc_get_product($id);
+        }
+
         // Type is the most important part here because we need to be using the correct class and methods.
         if (isset($data['type'])) {
             $types   = array_keys(wc_get_product_types());
