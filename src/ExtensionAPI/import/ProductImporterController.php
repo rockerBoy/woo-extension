@@ -40,7 +40,7 @@ class ProductImporterController
             ],
             'result'  => [
                 'name'    => __('Done!', 'woocommerce'),
-                'view'    => [$this, 'done'],
+                'view'    => [$this, 'showDone'],
                 'handler' => '',
             ],
         ];
@@ -200,7 +200,6 @@ class ProductImporterController
         ) {
             call_user_func($this->steps[$this->step]['handler'], $this);
         }
-
         $this
             ->showHeader()
             ->showSteps()
@@ -309,7 +308,7 @@ class ProductImporterController
             'ewoo-product-import',
             'ewoo_product_import_params',
             [
-                'import_nonce' => wp_create_nonce( 'ewoo-product-import' ),
+                'import_nonce' => wp_create_nonce('ewoo-product-import'),
                 'mapping' => [
                     'from' => $mapping_from,
                     'to' => $mapping_to,
@@ -326,6 +325,21 @@ class ProductImporterController
     private function showFooter(): self
     {
         include $this->import_views_path . 'import-footer.php';
+
+        return $this;
+    }
+
+    private function showDone(): self
+    {
+        check_admin_referer(self::IMPORT_NONCE);
+        $imported  = isset( $_GET['products-imported'] ) ? absint( $_GET['products-imported'] ) : 0;
+        $updated   = isset( $_GET['products-updated'] ) ? absint( $_GET['products-updated'] ) : 0;
+        $failed    = isset( $_GET['products-failed'] ) ? absint( $_GET['products-failed'] ) : 0;
+        $skipped   = isset( $_GET['products-skipped'] ) ? absint( $_GET['products-skipped'] ) : 0;
+        $file_name = isset( $_GET['file-name'] ) ? sanitize_text_field( wp_unslash( $_GET['file-name'] ) ) : '';
+        $errors    = array_filter( (array) get_user_option( 'product_import_error_log' ) );
+
+        include $this->import_views_path . 'import-done.php';
 
         return $this;
     }

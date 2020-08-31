@@ -58,13 +58,14 @@ class PreImportTable implements TableInterface
         $db->query($table);
         $db->query("
         CREATE TABLE IF NOT EXISTS {$db->prefix}{$this->table_name}_relationships (
+                `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
                 `import_id` bigint(20) unsigned NOT NULL default '0',
                 `product_id` bigint(20) unsigned NOT NULL,
                 `product_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_parent_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_author_id`  bigint(20) unsigned NOT NULL default '0',
                 `order` int(11) unsigned NULL default 0,
-                PRIMARY KEY (product_id, product_category_id),
+                PRIMARY KEY (id),
                 UNIQUE KEY product_id_category (product_id, product_category_id),
                  
                 KEY import_id (import_id),

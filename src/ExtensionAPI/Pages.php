@@ -217,6 +217,8 @@ final class Pages implements PageInterface
 
     public function doAjaxProductImport(): void
     {
+        global $wpdb;
+
         $request = $this->request;
         check_ajax_referer('ewoo-product-import', 'security');
 
@@ -227,6 +229,53 @@ final class Pages implements PageInterface
             );
             $importer = new ProductExcelImporter($request->get('file'), $params);
             $results = $importer->import();
+
+            if (! empty($results)) {
+                $wpdb->delete($wpdb->postmeta, array( 'meta_key' => '_original_id' ));
+                $wpdb->delete($wpdb->posts, array(
+                    'post_type'   => 'product',
+                    'post_status' => 'importing',
+                ));
+                $wpdb->delete($wpdb->posts, array(
+                    'post_type'   => 'product_variation',
+                    'post_status' => 'importing',
+                ));
+                $wpdb->query(
+                    "
+                    DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
+                    WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
+			    ");
+                $wpdb->query(
+                        "
+                    DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
+                    WHERE wp.ID IS NULL
+                ");
+                // @codingStandardsIgnoreStart.
+                $wpdb->query( "
+                    DELETE tr.* FROM {$wpdb->term_relationships} tr
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
+                    LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                    WHERE wp.ID IS NULL
+                    AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
+                " );
+                // @codingStandardsIgnoreEnd.
+
+                // Send success.
+                wp_send_json_success(
+                    array(
+                        'position'   => 'done',
+                        'percentage' => 100,
+                        'url'        => add_query_arg(array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
+                            admin_url('edit.php?post_type=product&page=product_excel_importer&step=result')),
+                        'imported'   => count($results['imported']),
+                        'failed'     => count($results['failed']),
+                        'updated'    => count($results['updated']),
+                        'skipped'    => count($results['skipped']),
+                    )
+                );
+            }
         }
     }
 

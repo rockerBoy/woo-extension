@@ -18,6 +18,7 @@ class ProductExcelImporter
     private array $preImportColumns;
     private array $relationsColumns;
     private $product = null;
+    private array $valid_products = [];
 
     public function __construct(string $fileName, array $args = [])
     {
@@ -95,11 +96,11 @@ class ProductExcelImporter
 
             $parsed_data = $this->parseRawColumn($column);
 
-            if (! empty($parsed_data['sku']) && $this->validateRawProduct($parsed_data)) {
-                $this->process($parsed_data);
-            } else {
+            if (empty($parsed_data['name']) && empty($parsed_data['sku'])) {
+               continue;
             }
 
+            $this->process($parsed_data);
             $data['imported'][$index] = $parsed_data;
         }
 
@@ -139,7 +140,6 @@ class ProductExcelImporter
     {
         $sku = $data['sku'] ?? '';
         $categories = $data['category_ids'] ?? '';
-
         $this->preImportColumns = [
             'product_title' => $data['name'] ?? '',
             'product_excerpt' => $data['short_description'] ?? '',
@@ -152,61 +152,45 @@ class ProductExcelImporter
             'product_uploaded_gmt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
 
-        $this->product = $this->makeProduct($this->preImportColumns);
+        $product = $this->makeProduct($this->preImportColumns);
+        /**
+         * @param  string $visibility Options: 'hidden', 'visible', 'search' and 'catalog'.
+         */
 
+        $product->set_catalog_visibility('hidden');
         if ($categories) {
             $categories_ids = $this->parseCategoriesField($categories);
-
+            $data['category_ids'] = $categories_ids;
             if (!empty($categories_ids)) {
-                $this->product->set_category_ids($categories_ids);
+                $product->set_category_ids($categories_ids);
             }
-
-//            if (empty($categories_ids)) {
-//                $data['failed'][$index] = $parsed_data;
-//                continue;
-//            }
         }
 
-        $this->product->set_catalog_visibility('hidden');
-        $this->saveProduct($this->product);
-
-//        else {
-//            $this->product = $this->productUpdate($this->preImportColumns);
-//        }
-
-
-
-//        if ($product) {
-//            $this->relationsColumns['product_id'] = $product->get_id();
-//            $this->relationsColumns['product_category_id'] = current($product->get_category_ids());
-////            $this->productUpdate($product);
-//        } else {
-////            $this->productInsert($this->preImportColumns);
-//        }
+        $this->preImportColumns['is_valid'] = $this->validateRawProduct($data);
+        $id = $product->save();
+        $this->saveProduct($product);
 
         return false;
     }
 
 
-    private function makeProduct(array $productData): ?WC_Product
+    private function makeProduct(array $productData): WC_Product
     {
         $settings = $this->preImportColumns;
         $settings['type'] = 'simple';
 
         $new_product = $this->getProductObject($settings);
 
-        if ($new_product !== null) {
-            $new_product->set_name($productData['product_title']);
-            $new_product->set_sku($productData['sku']);
-            $new_product->set_short_description($productData['product_excerpt']);
-            $new_product->set_description($productData['product_content']);
+        $new_product->set_name($productData['product_title']);
+        $new_product->set_sku($productData['sku']);
+        $new_product->set_short_description($productData['product_excerpt']);
+        $new_product->set_description($productData['product_content']);
 
-            if ($this->preImportColumns['max_price'] > 0) {
-                $new_product->set_regular_price($productData['max_price']);
-            }
-            if ($this->preImportColumns['min_price'] > 0) {
-                $new_product->set_sale_price($productData['min_price']);
-            }
+        if ($this->preImportColumns['max_price'] > 0) {
+            $new_product->set_regular_price($productData['max_price']);
+        }
+        if ($this->preImportColumns['min_price'] > 0) {
+            $new_product->set_sale_price($productData['min_price']);
         }
 
         return $new_product;
@@ -216,19 +200,15 @@ class ProductExcelImporter
     private function saveProduct(WC_Product $product): void
     {
         $db = $this->db;
-
         $db->insert($db->prefix.'woo_pre_import', $this->preImportColumns);
-        $this->relationsColumns['import_id'] = $db->insert_id;
-        $db->insert($db->prefix.'woo_pre_import_relationships', $this->relationsColumns);
-
-        $product->save();
+        if ($product->get_id()) {
+            $this->relationsColumns['import_id'] = $db->insert_id;
+            $this->relationsColumns['product_id'] = ($product->get_id() !== 0) ?$product->get_id(): $db->insert_id;
+            $this->relationsColumns['product_category_id'] = current($product->get_category_ids());
+            $db->insert($db->prefix.'woo_pre_import_relationships', $this->relationsColumns);
+        }
     }
 
-//    private function productUpdate($productData): void
-//    {
-//        $wpdb->insert($wpdb->prefix.'woo_pre_import_relationships', $this->relationsColumns);
-//        $new_product = $this->product;
-//    }
 
     /**
      * @param array $data
@@ -311,11 +291,19 @@ class ProductExcelImporter
                 }
             }
         }
+        
+        if (empty($product_data['category_ids'])) {
+            return false;
+        }
 
         if ($sku) {
             $id_from_sku = wc_get_product_id_by_sku($sku);
             $product     = $id_from_sku ? wc_get_product($id_from_sku) : false;
-            $this->product = $product;
+
+            if (false !== $product) {
+                $this->product = $product;
+            }
+
             $sku_exists  = $product && 'importing' !== $product->get_status();
             $is_valid = true;
 

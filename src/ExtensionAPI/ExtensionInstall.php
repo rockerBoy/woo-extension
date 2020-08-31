@@ -36,7 +36,6 @@ final class ExtensionInstall
             new CategoryFiltersTable(self::$db)
         ];
         self::installTables();
-
         $filters = (new Filters())->setCatTable(next(self::$tables));
         $product_cat = new ProductCatTaxonomy($wpdb, $filters);
         $assets = new Assets();
