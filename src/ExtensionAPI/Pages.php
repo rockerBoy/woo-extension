@@ -231,36 +231,7 @@ final class Pages implements PageInterface
             $results = $importer->import();
 
             if (! empty($results)) {
-                $wpdb->delete($wpdb->postmeta, array( 'meta_key' => '_original_id' ));
-                $wpdb->delete($wpdb->posts, array(
-                    'post_type'   => 'product',
-                    'post_status' => 'importing',
-                ));
-                $wpdb->delete($wpdb->posts, array(
-                    'post_type'   => 'product_variation',
-                    'post_status' => 'importing',
-                ));
-                $wpdb->query(
-                    "
-                    DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
-                    WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
-			    ");
-                $wpdb->query(
-                        "
-                    DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
-                    WHERE wp.ID IS NULL
-                ");
-                // @codingStandardsIgnoreStart.
-                $wpdb->query( "
-                    DELETE tr.* FROM {$wpdb->term_relationships} tr
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
-                    LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                    WHERE wp.ID IS NULL
-                    AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
-                " );
-                // @codingStandardsIgnoreEnd.
+                $importer->clearDatabase();
 
                 // Send success.
                 wp_send_json_success(

@@ -20,12 +20,13 @@
                     <td>
                         <?php foreach ( $headers as $index => $name ) :
                             $mapped_value = $mapped_items[$index];
-                            if ( ! empty($sample[$index])) :
                         ?>
                         <tr>
                             <td class="wc-importer-mapping-table-name">
                                 <?= esc_html($name) ?>
+                                <?php if ( ! empty($sample[$index])) : ?>
                                     <span class="description"><?php esc_html_e( 'Sample:', 'woocommerce' ); ?> <code><?= esc_html( $sample[ $index ] ) ?></code></span>
+                                <?php endif; ?>
                             </td>
                             <td class="wc-importer-mapping-table-field">
                                 <input type="hidden" name="map_from[<?= esc_html($index) ?>]" value="<?= esc_html($name) ?>" />
@@ -46,10 +47,7 @@
                                 </select>
                             </td>
                         </tr>
-                        <?php
-                            endif;
-                        endforeach;
-                        ?>
+                        <?php endforeach; ?>
                     </td>
                 </tr>
             </tbody>
@@ -58,7 +56,7 @@
     <div class="wc-actions">
         <button type="submit" class="button button-primary button-next"
                 value="<?= __('Run the importer', 'woocommerce'); ?>"
-                name="save_step"><?php esc_html_e('Run the importer', 'woocommerce'); ?></button>
+                name="save_step"><?php esc_html_e('Начать проверку', 'woocommerce'); ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
         <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing; ?>" />
         <?php wp_nonce_field( 'etx-xls-importer' ); ?>

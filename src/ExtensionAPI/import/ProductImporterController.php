@@ -33,6 +33,11 @@ class ProductImporterController
                 'view'    => [$this, 'showMappingForm'],
                 'handler' => '',
             ],
+            'validation' => [
+                'name'    => __("Обработка товаров", 'extendedwoo'),
+                'view'    => [$this, 'showResolverForm'],
+                'handler' => '',
+            ],
             'import'  => [
                 'name'    => __("Import", 'woocommerce'),
                 'view'    => [$this, 'showImport'],
@@ -283,6 +288,42 @@ class ProductImporterController
         include_once $this->import_views_path . '/import-column-mapping.php';
     }
 
+    private function showResolverForm(): void
+    {
+        check_admin_referer(self::IMPORT_NONCE);
+        if (! is_file($this->file)) {
+            $this->addErrors(__('The file does not exist, please try again.', 'woocommerce'));
+            $this->showErrors();
+        }
+        $req = $this->request;
+
+        $labels = $req->get('map_from');
+        $mapping_to = $req->get('map_to');
+
+        if (empty($mapping_to)) {
+            wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
+        }
+        update_user_option(get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to);
+        $importer = new ProductExcelImporter($req->get('file'), []);
+        wp_localize_script(
+            'ewoo-product-import',
+            'ewoo_product_import_params',
+            [
+                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'mapping' => [
+                    'from' => $labels,
+                    'to' => $mapping_to,
+                ],
+                'file' => $this->file,
+                'update_existing' => $this->update_existing
+            ]
+        );
+        wp_deregister_script('wc-product-import');
+//        wp_enqueue_script('ewoo-product-import');
+        include_once $this->import_views_path . '/import-problem-resolver.php';
+    }
+
+
     private function showImport(): void
     {
         check_admin_referer(self::IMPORT_NONCE);
@@ -401,29 +442,29 @@ class ProductImporterController
                     __('Description', 'woocommerce')    => 'description',
                     __('Date sale price starts', 'woocommerce') => 'date_on_sale_from',
                     __('Date sale price ends', 'woocommerce') => 'date_on_sale_to',
-                    __('Tax status', 'woocommerce')     => 'tax_status',
-                    __('Tax class', 'woocommerce')      => 'tax_class',
+//                    __('Tax status', 'woocommerce')     => 'tax_status',
+//                    __('Tax class', 'woocommerce')      => 'tax_class',
                     __('In stock?', 'woocommerce')      => 'stock_status',
                     __('Stock', 'woocommerce')          => 'stock_quantity',
                     __('Backorders allowed?', 'woocommerce') => 'backorders',
                     __('Low stock amount', 'woocommerce') => 'low_stock_amount',
-                    __('Sold individually?', 'woocommerce') => 'sold_individually',
-                    __('Allow customer reviews?', 'woocommerce') => 'reviews_allowed',
+//                    __('Sold individually?', 'woocommerce') => 'sold_individually',
+//                    __('Allow customer reviews?', 'woocommerce') => 'reviews_allowed',
                     __('Purchase note', 'woocommerce')  => 'purchase_note',
                     __('Sale price', 'woocommerce')     => 'sale_price',
                     __('Regular price', 'woocommerce')  => 'regular_price',
                     __('Categories', 'woocommerce')     => 'category_ids',
                     __('Tags', 'woocommerce')           => 'tag_ids',
-                    __('Shipping class', 'woocommerce') => 'shipping_class_id',
-                    __('Images', 'woocommerce')         => 'images',
-                    __('Download limit', 'woocommerce') => 'download_limit',
-                    __('Download expiry days', 'woocommerce') => 'download_expiry',
+//                    __('Shipping class', 'woocommerce') => 'shipping_class_id',
+//                    __('Images', 'woocommerce')         => 'images',
+//                    __('Download limit', 'woocommerce') => 'download_limit',
+//                    __('Download expiry days', 'woocommerce') => 'download_expiry',
                     __('Parent', 'woocommerce')         => 'parent_id',
-                    __('Upsells', 'woocommerce')        => 'upsell_ids',
-                    __('Cross-sells', 'woocommerce')    => 'cross_sell_ids',
-                    __('Grouped products', 'woocommerce') => 'grouped_products',
-                    __('External URL', 'woocommerce')   => 'product_url',
-                    __('Button text', 'woocommerce')    => 'button_text',
+//                    __('Upsells', 'woocommerce')        => 'upsell_ids',
+//                    __('Cross-sells', 'woocommerce')    => 'cross_sell_ids',
+//                    __('Grouped products', 'woocommerce') => 'grouped_products',
+//                    __('External URL', 'woocommerce')   => 'product_url',
+//                    __('Button text', 'woocommerce')    => 'button_text',
                     __('Position', 'woocommerce')       => 'menu_order',
                 ),
                 $headers

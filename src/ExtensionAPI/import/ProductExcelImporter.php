@@ -116,7 +116,7 @@ class ProductExcelImporter
             ->toArray(null, false, true, true);
     }
 
-    private function parseRawColumn(array $raw_data): array
+    public function parseRawColumn(array $raw_data): array
     {
         $row = [];
         $mapping = $this->params['mapping']['to'];
@@ -328,5 +328,54 @@ class ProductExcelImporter
         }
 
         return $is_valid;
+    }
+
+    public function clearDatabase(): void
+    {
+        $wpdb = $this->db;
+
+        $wpdb->delete($wpdb->postmeta, array( 'meta_key' => '_original_id' ));
+        $wpdb->delete($wpdb->posts, array(
+            'post_type'   => 'product',
+            'post_status' => 'importing',
+        ));
+        $wpdb->delete($wpdb->posts, array(
+            'post_type'   => 'product_variation',
+            'post_status' => 'importing',
+        ));
+        $wpdb->query(
+            "
+                    DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
+                    WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
+			    ");
+        $wpdb->query(
+            "
+                    DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
+                    WHERE wp.ID IS NULL
+                ");
+        // @codingStandardsIgnoreStart.
+        $wpdb->query( "
+                    DELETE tr.* FROM {$wpdb->term_relationships} tr
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
+                    LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                    WHERE wp.ID IS NULL
+                    AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
+                " );
+    }
+
+    public function makeExcerpt(string $str, int $startPos = 0, int $maxLength = 100): string
+    {
+        if(strlen($str) > $maxLength) {
+            $excerpt   = substr($str, $startPos, $maxLength-3);
+            $lastSpace = strrpos($excerpt, ' ');
+            $excerpt   = substr($excerpt, 0, $lastSpace);
+            $excerpt  .= '...';
+        } else {
+            $excerpt = $str;
+        }
+
+        return $excerpt;
     }
 }
