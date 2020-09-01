@@ -186,7 +186,7 @@ final class Pages implements PageInterface
         $categoriesToExport = ($request->get('export_category'))?:[];
         $useMeta = $request->get('export_meta');
         $step = ($request->get('step'))?:1;
-        $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xlsx');
+        $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xls');
         $products = new Products();
         $exporter = new Exporter($excelGenerator, $products);
         $exporter
@@ -262,7 +262,7 @@ final class Pages implements PageInterface
         $nonce = $request->get('nonce');
         $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
         if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') && wp_unslash($action) === 'download_product_xls') {
-            $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xlsx');
+            $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xls');
             $excelGenerator->sendFileToUser();
             wp_die();
         }
