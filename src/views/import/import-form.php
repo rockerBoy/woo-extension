@@ -42,6 +42,14 @@
                         <input type="number" id="starting_row" name="starting_row" min="1" placeholder="1"/>
                     </td>
                 </tr>
+                <tr>
+                    <th><label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Update existing products', 'woocommerce' ); ?></label><br/></th>
+                    <td>
+                        <input type="hidden" name="update_existing" value="0" />
+                        <input type="checkbox" id="woocommerce-importer-update-existing" name="update_existing" value="1" />
+                        <label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Existing products that match by ID or SKU will be updated. Products that do not exist will be skipped.', 'woocommerce' ); ?></label>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </section>

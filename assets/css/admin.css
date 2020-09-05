@@ -5,3 +5,30 @@
     transition: unset;
     width: 20px;
 }
+.excel-resolver section > table {
+    font-weight: 600;
+    line-height: 18px;
+    padding-bottom: 5px;
+    width: 100%;
+}
+.excel-resolver__rows thead {
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+.excel-resolver__rows thead tr{
+    min-height: 2.5em;
+}
+.excel-resolver__rows thead tr > th {
+    border-bottom: 1px solid #eee;
+}
+.excel-resolver section > table > tbody tr {
+    height: 2em;
+}
+.excel-resolver section > table > tbody tr td {
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.excel-resolver__rows tbody tr:last-of-type > td {
+    border-bottom: none;
+}

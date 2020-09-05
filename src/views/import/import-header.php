@@ -1,1 +1,1 @@
-<div class="woocommerce-progress-form-wrapper" style="max-width: 70%">
+<div class="woocommerce-progress-form-wrapper">

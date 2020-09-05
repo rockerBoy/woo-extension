@@ -11,17 +11,17 @@
     }
 ?>
 
-<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer"
+<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer excel-resolver"
       method="post">
     <header>
         <h2><?= __('Проверка данных', 'extendedwoo')?></h2>
         <p></p>
     </header>
-    <section>
+    <section class="excel-resolver__rows">
         <table>
             <thead>
             <tr>
-                <?php foreach ($importer->getHeader() as $label):?>
+                <?php foreach ($labels as $label):?>
                 <th><?= __($label, 'extendedwoo') ?></th>
                 <?php endforeach; ?>
             </tr>
@@ -49,7 +49,7 @@
                             ?>
                                 <td>
                                     <?php if ($key !== 'sku' || $item ): ?>
-                                    <?= $importer->makeExcerpt($item, 0, 50) ?>
+                                    <?= $importer->makeExcerpt($item, 0, 100) ?>
                                     <?php else: ?>
                                         <input type="text" name="sku[<?= $k ?>]"
                                                required placeholder="Заполните артикль" style="border: 2px solid #e11616; max-width: 100px;"/>
