@@ -17,8 +17,6 @@ class ProductExcelImporter
     private \wpdb $db;
     private array $preImportColumns;
     private array $relationsColumns;
-    private $product = null;
-    private array $valid_products = [];
 
     public function __construct(string $fileName, array $args = [])
     {
@@ -59,7 +57,7 @@ class ProductExcelImporter
     public function getSample(): array
     {
         $start = (isset($this->params['start_from']))? $this->params['start_from'] : 1;
-        $next = $this->columns[++$start];
+        $next = $this->columns[$start];
 
         return array_values($next);
     }
@@ -97,7 +95,7 @@ class ProductExcelImporter
             $parsed_data = $this->parseRawColumn($column);
 
             if (empty($parsed_data['name']) && empty($parsed_data['sku'])) {
-               continue;
+                continue;
             }
 
             $this->process($parsed_data);
@@ -154,6 +152,7 @@ class ProductExcelImporter
             'product_uploaded' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             'product_uploaded_gmt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
+//        dd($columns);
         $product = $this->makeProduct($columns);
         /**
          * @param  string $visibility Options: 'hidden', 'visible', 'search' and 'catalog'.
@@ -170,7 +169,7 @@ class ProductExcelImporter
 
         $this->preImportColumns['is_valid'] = $this->validateRawProduct($data);
         $id = $product->save();
-        $this->saveProduct($product);
+//        $this->saveProduct($product);
 
         return false;
     }
@@ -181,7 +180,11 @@ class ProductExcelImporter
         $settings = $productData;
         $settings['type'] = 'simple';
         $new_product = $this->getProductObject($settings);
+//        dump($new_product);
         $new_product->set_name($productData['product_title']);
+        if (!empty($productData['id']) && $productData['id'] !== $new_product->get_id()) {
+            $new_product->set_id($productData['id']);
+        }
         if (!empty($productData['sku']) && $productData['sku'] !== $new_product->get_sku()) {
             $new_product->set_sku($productData['sku']);
         }
@@ -208,7 +211,7 @@ class ProductExcelImporter
             $this->relationsColumns['import_id'] = $db->insert_id;
             $this->relationsColumns['product_id'] = ($product->get_id() !== 0) ?$product->get_id(): $db->insert_id;
             $this->relationsColumns['product_category_id'] = current($product->get_category_ids());
-            $db->insert($db->prefix.'woo_pre_import_relationships', $this->relationsColumns);
+//            $db->insert($db->prefix.'woo_pre_import_relationships', $this->relationsColumns);
         }
     }
 
@@ -221,62 +224,9 @@ class ProductExcelImporter
     private function getProductObject(array $data)
     {
         $id = isset($data['id']) ? absint($data['id']) : 0;
-        $sku = $data['sku'];
 
-        if ($id && wc_get_product($id)) {
-            return wc_get_product($id);
-        }
 
-        if ($sku) {
-            $id = wc_get_product_id_by_sku($sku);
-            if (wc_get_product($id)) {
-                return wc_get_product($id);
-            }
-        }
-
-        // Type is the most important part here because we need to be using the correct class and methods.
-        if (isset($data['type'])) {
-            $types   = array_keys(wc_get_product_types());
-            $types[] = 'variation';
-
-            if (! in_array($data['type'], $types, true)) {
-                return new WP_Error('woocommerce_product_importer_invalid_type', __('Invalid product type.', 'woocommerce'), array( 'status' => 401 ));
-            }
-
-            try {
-                // Prevent getting "variation_invalid_id" error message from Variation Data Store.
-                if ('variation' === $data['type']) {
-                    $id = wp_update_post(
-                        array(
-                            'ID'        => $id,
-                            'post_type' => 'product_variation',
-                        )
-                    );
-                }
-
-                $product = wc_get_product_object($data['type'], $id);
-            } catch (WC_Data_Exception $e) {
-                return new WP_Error('woocommerce_product_csv_importer_' . $e->getErrorCode(), $e->getMessage(), array( 'status' => 401 ));
-            }
-        } elseif (! empty($data['id'])) {
-            $product = wc_get_product($id);
-
-            if (! $product) {
-                return new WP_Error(
-                    'woocommerce_product_csv_importer_invalid_id',
-                    /* translators: %d: product ID */
-                    sprintf(__('Invalid product ID %d.', 'woocommerce'), $id),
-                    array(
-                        'id'     => $id,
-                        'status' => 401,
-                    )
-                );
-            }
-        } else {
-            $product = wc_get_product_object('simple', $id);
-        }
-
-        return apply_filters('woocommerce_product_import_get_product_object', $product, $data);
+        return apply_filters('woocommerce_product_import_get_product_object', wc_get_product_object('simple'), $data);
     }
 
 
@@ -297,7 +247,7 @@ class ProductExcelImporter
             $id_exists = $product && 'importing' !== $product->get_status();
 
             if ($id_exists) {
-                $this->product = $product;
+                $product1 = $product;
                 if ($product->get_sku()) {
                     return true;
                 }
@@ -313,14 +263,14 @@ class ProductExcelImporter
             $product     = $id_from_sku ? wc_get_product($id_from_sku) : false;
 
             if (false !== $product) {
-                $this->product = $product;
+                $product1 = $product;
             }
 
             $sku_exists  = $product && 'importing' !== $product->get_status();
             $is_valid = true;
 
             if ($sku_exists) {
-                $this->product = $product;
+                $product1 = $product;
                 if ($product->get_sku()) {
                     return true;
                 }
@@ -348,13 +298,15 @@ class ProductExcelImporter
                     DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
                     LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
                     WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
-			    ");
+			    "
+        );
         $wpdb->query(
             "
                     DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
                     LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
                     WHERE wp.ID IS NULL
-                ");
+                "
+        );
         // @codingStandardsIgnoreStart.
         $wpdb->query( "
                     DELETE tr.* FROM {$wpdb->term_relationships} tr
@@ -363,19 +315,5 @@ class ProductExcelImporter
                     WHERE wp.ID IS NULL
                     AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
                 " );
-    }
-
-    public function makeExcerpt(string $str, int $startPos = 0, int $maxLength = 100): string
-    {
-        if(strlen($str) > $maxLength) {
-            $excerpt   = substr($str, $startPos, $maxLength-3);
-            $lastSpace = strrpos($excerpt, ' ');
-            $excerpt   = substr($excerpt, 0, $lastSpace);
-            $excerpt  .= '...';
-        } else {
-            $excerpt = $str;
-        }
-
-        return $excerpt;
     }
 }

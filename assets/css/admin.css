@@ -20,6 +20,7 @@
 }
 .excel-resolver__rows thead tr > th {
     border-bottom: 1px solid #eee;
+    text-align: center;
 }
 .excel-resolver section > table > tbody tr {
     height: 2em;
@@ -31,4 +32,10 @@
 
 .excel-resolver__rows tbody tr:last-of-type > td {
     border-bottom: none;
+}
+.item-danger {
+    background: rgba(255, 10, 10, .6);
+}
+.item-danger td {
+    border: 2px solid #ff0a41;
 }

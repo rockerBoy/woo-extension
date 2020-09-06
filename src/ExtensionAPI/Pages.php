@@ -6,7 +6,6 @@ namespace ExtendedWoo\ExtensionAPI;
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
-use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
@@ -40,26 +39,13 @@ final class Pages implements PageInterface
 
     public function menu(): void
     {
-        $pages =  [
-            [
-                'id'        => 'product_excel_exporter',
-                'parent'    => self::PAGE_ROOT,
-                'screen_id' => 'product_page_product_exporter',
-                'title'     => __('Export Products', 'woocommerce'),
-                'path'     => 'product_excel_exporter',
-            ],
-            [
-                'id'        => 'product_excel_importer',
-                'parent'    => self::PAGE_ROOT,
-                'screen_id' => 'product_page_product_importer',
-                'title'     => __('Import Products', 'woocommerce'),
-                'path'     => 'product_excel_importer',
-            ],
-        ];
-
-        foreach ($pages as $page) {
-            $this->registerPage($page);
-        }
+        $this->registerPage([
+            'id'        => 'product_excel_exporter',
+            'parent'    => self::PAGE_ROOT,
+            'screen_id' => 'product_page_product_exporter',
+            'title'     => __('Export Products', 'woocommerce'),
+            'path'     => 'product_excel_exporter',
+        ]);
     }
 
     public function connectPage($options): void
@@ -239,7 +225,7 @@ final class Pages implements PageInterface
                         'position'   => 'done',
                         'percentage' => 100,
                         'url'        => add_query_arg(array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
-                            admin_url('edit.php?post_type=product&page=product_excel_importer&step=result')),
+                            admin_url('admin.php?page=excel_import&step=result')),
                         'imported'   => count($results['imported']),
                         'failed'     => count($results['failed']),
                         'updated'    => count($results['updated']),
@@ -302,27 +288,6 @@ final class Pages implements PageInterface
 
         ob_start();
         require __DIR__.'/../views/admin-page-product-export.php';
-
-        return ob_get_clean();
-    }
-
-    private function productExcelImporter(): string
-    {
-        wp_localize_script(
-            'wc-product-import',
-            'wc_product_import_params',
-            array(
-                'import_nonce'    => wp_create_nonce('wc-product-import'),
-                'mapping'         => array(
-                    'from' => '',
-                    'to'   => '',
-                ),
-            )
-        );
-        wp_enqueue_script('wc-product-import');
-
-        $importer = new ProductImporterController($this->request);
-        $importer->dispatch();
 
         return ob_get_clean();
     }

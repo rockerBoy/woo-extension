@@ -3,16 +3,18 @@
 
 namespace ExtendedWoo\ExtensionAPI\import;
 
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\import\models\ProblemResolver;
+use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
 use Symfony\Component\HttpFoundation\Request;
 use WP_Error;
 
-class ProductImporterController
+class ProductImporterController extends BasicController
 {
     private const IMPORT_NONCE = 'etx-xls-importer';
-    private Request $request;
+    private ImportType $importStrategy;
     private string $step;
     private array $steps;
-    private array $errors;
     private bool $update_existing = true;
     private string $import_views_path;
     private string $file;
@@ -33,11 +35,11 @@ class ProductImporterController
                 'view'    => [$this, 'showMappingForm'],
                 'handler' => '',
             ],
-            'validation' => [
-                'name'    => __("Обработка товаров", 'extendedwoo'),
-                'view'    => [$this, 'showResolverForm'],
-                'handler' => '',
-            ],
+//            'validation' => [
+//                'name'    => __("Обработка товаров", 'extendedwoo'),
+//                'view'    => [$this, 'showResolverForm'],
+//                'handler' => '',
+//            ],
             'import'  => [
                 'name'    => __("Import", 'woocommerce'),
                 'view'    => [$this, 'showImport'],
@@ -59,6 +61,12 @@ class ProductImporterController
             : current(array_keys($this->steps));
         $this->file              = ( ! empty($request->get('file')))
             ? wc_clean(wp_unslash($request->get('file'))) : '';
+    }
+
+    public function setImportType(ImportType $import_type): self
+    {
+        $this->importStrategy = $import_type;
+        return $this;
     }
 
     public function getNextStepLink(string $step = ''): string
@@ -100,9 +108,9 @@ class ProductImporterController
         if (is_wp_error($file)) {
             $this->addErrors($file->get_error_message());
             return;
-        } else {
-            $this->file = $file;
         }
+
+        $this->file = $file;
 
         wp_redirect(esc_url_raw($this->getNextStepLink()));
     }
@@ -183,7 +191,9 @@ class ProductImporterController
             }
 
             return $upload['file'];
-        } elseif (file_exists(ABSPATH . $file_url)) {
+        }
+
+        if (file_exists(ABSPATH . $file_url)) {
             return ABSPATH . $file_url;
         }
 
@@ -211,20 +221,6 @@ class ProductImporterController
             ->showErrors();
         call_user_func($this->steps[$this->step]['view'], $this);
         $this->showFooter();
-    }
-
-    /**
-     * Add error message.
-     *
-     * @param string $message Error message.
-     * @param array  $actions List of actions with 'url' and label.
-     */
-    private function addErrors(string $message, array $actions = []): void
-    {
-        $this->errors[] = [
-            'message' => $message,
-            'actions' => $actions,
-        ];
     }
 
     /**
@@ -263,14 +259,13 @@ class ProductImporterController
 
         return $this;
     }
-
     private function showMappingForm(): void
     {
         check_admin_referer(self::IMPORT_NONCE);
         $this->startRow = $_GET['start_row'];
         $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
         $headers  = $importer->getHeader($this->startRow);
-        $mapped_items = $this->autoMapColumns($headers);
+        $mapped_items = ProductsImportHelper::autoMapColumns($headers);
         $sample = $importer->getSample();
         if (empty($sample)) {
             $this->addErrors(
@@ -297,12 +292,13 @@ class ProductImporterController
         }
         $req = $this->request;
 
-        $labels = $req->get('map_from');
+        $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
 
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
+
         update_user_option(get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to);
         $importer = new ProductExcelImporter($req->get('file'), []);
         wp_localize_script(
@@ -319,11 +315,10 @@ class ProductImporterController
             ]
         );
         wp_deregister_script('wc-product-import');
-//        wp_enqueue_script('ewoo-product-import');
+        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to);
+        $view_data = $resolver->makeViewTable();
         include_once $this->import_views_path . '/import-problem-resolver.php';
     }
-
-
     private function showImport(): void
     {
         check_admin_referer(self::IMPORT_NONCE);
@@ -369,175 +364,30 @@ class ProductImporterController
 
         return $this;
     }
-
     private function showDone(): self
     {
         check_admin_referer(self::IMPORT_NONCE);
-        $imported  = isset( $_GET['products-imported'] ) ? absint( $_GET['products-imported'] ) : 0;
-        $updated   = isset( $_GET['products-updated'] ) ? absint( $_GET['products-updated'] ) : 0;
-        $failed    = isset( $_GET['products-failed'] ) ? absint( $_GET['products-failed'] ) : 0;
-        $skipped   = isset( $_GET['products-skipped'] ) ? absint( $_GET['products-skipped'] ) : 0;
-        $file_name = isset( $_GET['file-name'] ) ? sanitize_text_field( wp_unslash( $_GET['file-name'] ) ) : '';
-        $errors    = array_filter( (array) get_user_option( 'product_import_error_log' ) );
+        $imported  = isset($_GET['products-imported']) ? absint($_GET['products-imported']) : 0;
+        $updated   = isset($_GET['products-updated']) ? absint($_GET['products-updated']) : 0;
+        $failed    = isset($_GET['products-failed']) ? absint($_GET['products-failed']) : 0;
+        $skipped   = isset($_GET['products-skipped']) ? absint($_GET['products-skipped']) : 0;
+        $file_name = isset($_GET['file-name']) ? sanitize_text_field(wp_unslash($_GET['file-name'])) : '';
+        $errors    = array_filter((array) get_user_option('product_import_error_log'));
 
         include $this->import_views_path . 'import-done.php';
 
         return $this;
     }
 
-    /**
-     * Add error message.
-     */
-    private function showErrors(): self
-    {
-        if (empty($this->errors)) {
-            return $this;
-        }
-
-        foreach ($this->errors as $error) {
-            echo '<div class="error inline">';
-            echo '<p>' . esc_html($error['message']) . '</p>';
-
-            if (! empty($error['actions'])) {
-                echo '<p>';
-                foreach ($error['actions'] as $action) {
-                    echo '<a class="button button-primary" href="'
-                         . esc_url($action['url']) . '">'
-                         . esc_html($action['label']) . '</a> ';
-                }
-                echo '</p>';
-            }
-            echo '</div>';
-        }
-
-        return $this;
-    }
-
-    private function normalizeColumnsNames(array $columns): array
-    {
-        $normalized = [];
-        foreach ($columns as $key => $column) {
-            $normalized[strtolower($key)] = $column;
-        }
-
-        return $normalized;
-    }
-
-    private function autoMapColumns(
-        array $headers,
-        bool $num_indexes = true
-    ): array {
-        $default_columns = $this->normalizeColumnsNames(
-            apply_filters(
-                'woocommerce_csv_product_import_mapping_default_columns',
-                array(
-                    __('ID', 'woocommerce')             => 'id',
-                    __('Type', 'woocommerce')           => 'type',
-                    __('SKU', 'woocommerce')            => 'sku',
-                    __('Name', 'woocommerce')           => 'name',
-                    __('Published', 'woocommerce')      => 'published',
-                    __('Is featured?', 'woocommerce')   => 'featured',
-                    __('Visibility in catalog', 'woocommerce') => 'catalog_visibility',
-                    __('Short description', 'woocommerce') => 'short_description',
-                    __('Description', 'woocommerce')    => 'description',
-                    __('Date sale price starts', 'woocommerce') => 'date_on_sale_from',
-                    __('Date sale price ends', 'woocommerce') => 'date_on_sale_to',
-//                    __('Tax status', 'woocommerce')     => 'tax_status',
-//                    __('Tax class', 'woocommerce')      => 'tax_class',
-                    __('In stock?', 'woocommerce')      => 'stock_status',
-                    __('Stock', 'woocommerce')          => 'stock_quantity',
-                    __('Backorders allowed?', 'woocommerce') => 'backorders',
-                    __('Low stock amount', 'woocommerce') => 'low_stock_amount',
-//                    __('Sold individually?', 'woocommerce') => 'sold_individually',
-//                    __('Allow customer reviews?', 'woocommerce') => 'reviews_allowed',
-                    __('Purchase note', 'woocommerce')  => 'purchase_note',
-                    __('Sale price', 'woocommerce')     => 'sale_price',
-                    __('Regular price', 'woocommerce')  => 'regular_price',
-                    __('Categories', 'woocommerce')     => 'category_ids',
-                    __('Tags', 'woocommerce')           => 'tag_ids',
-//                    __('Shipping class', 'woocommerce') => 'shipping_class_id',
-//                    __('Images', 'woocommerce')         => 'images',
-//                    __('Download limit', 'woocommerce') => 'download_limit',
-//                    __('Download expiry days', 'woocommerce') => 'download_expiry',
-                    __('Parent', 'woocommerce')         => 'parent_id',
-//                    __('Upsells', 'woocommerce')        => 'upsell_ids',
-//                    __('Cross-sells', 'woocommerce')    => 'cross_sell_ids',
-//                    __('Grouped products', 'woocommerce') => 'grouped_products',
-//                    __('External URL', 'woocommerce')   => 'product_url',
-//                    __('Button text', 'woocommerce')    => 'button_text',
-                    __('Position', 'woocommerce')       => 'menu_order',
-                ),
-                $headers
-            )
-        );
-
-        $parsed_headers = [];
-        foreach ($headers as $index => $header) {
-            $normalized_field  = strtolower($header);
-            $key = $num_indexes ? $index : $header;
-            $parsed_headers[$key] = $default_columns[$normalized_field] ??
-                                    $normalized_field;
-        }
-
-        return $parsed_headers;
-    }
-
     private function getMappingOptions(string $item = ''): array
     {
         $index = $item;
+
         if (preg_match('/\d+/', $item, $matches)) {
             $index = $matches[0];
         }
 
-        $options        = array(
-            'id'                 => __('ID', 'woocommerce'),
-            'type'               => __('Type', 'woocommerce'),
-            'sku'                => __('SKU', 'woocommerce'),
-            'name'               => __('Name', 'woocommerce'),
-            'published'          => __('Published', 'woocommerce'),
-            'featured'           => __('Is featured?', 'woocommerce'),
-            'catalog_visibility' => __('Visibility in catalog', 'woocommerce'),
-            'short_description'  => __('Short description', 'woocommerce'),
-            'description'        => __('Description', 'woocommerce'),
-            'price'              => array(
-                'name'    => __('Price', 'woocommerce'),
-                'options' => array(
-                    'regular_price'     => __('Regular price', 'woocommerce'),
-                    'sale_price'        => __('Sale price', 'woocommerce'),
-                    'date_on_sale_from' => __('Date sale price starts', 'woocommerce'),
-                    'date_on_sale_to'   => __('Date sale price ends', 'woocommerce'),
-                ),
-            ),
-            'stock_status'       => __('In stock?', 'woocommerce'),
-            'stock_quantity'     => _x('Stock', 'Quantity in stock', 'woocommerce'),
-            'backorders'         => __('Backorders allowed?', 'woocommerce'),
-            'low_stock_amount'   => __('Low stock amount', 'woocommerce'),
-            'sold_individually'  => __('Sold individually?', 'woocommerce'),
-            /* translators: %s: weight unit */
-            'category_ids'       => __('Categories', 'woocommerce'),
-            'tag_ids'            => __('Tags (comma separated)', 'woocommerce'),
-            'tag_ids_spaces'     => __('Tags (space separated)', 'woocommerce'),
-            'shipping_class_id'  => __('Shipping class', 'woocommerce'),
-            'images'             => __('Images', 'woocommerce'),
-            'parent_id'          => __('Parent', 'woocommerce'),
-            'upsell_ids'         => __('Upsells', 'woocommerce'),
-            'cross_sell_ids'     => __('Cross-sells', 'woocommerce'),
-            'grouped_products'   => __('Grouped products', 'woocommerce'),
-            'attributes'         => array(
-                'name'    => __('Attributes', 'woocommerce'),
-                'options' => array(
-                    'attributes:name' . $index     => __('Attribute name', 'woocommerce'),
-                    'attributes:value' . $index    => __('Attribute value(s)', 'woocommerce'),
-                    'attributes:taxonomy' . $index => __('Is a global attribute?', 'woocommerce'),
-                    'attributes:visible' . $index  => __('Attribute visibility', 'woocommerce'),
-                    'attributes:default' . $index  => __('Default attribute', 'woocommerce'),
-                ),
-            ),
-            'reviews_allowed'    => __('Allow customer reviews?', 'woocommerce'),
-            'purchase_note'      => __('Purchase note', 'woocommerce'),
-            'menu_order'         => __('Position', 'woocommerce'),
-        );
-
+        $options = $this->importStrategy->getColumns();
         return apply_filters('woocommerce_csv_product_import_mapping_options', $options, $item);
     }
 }

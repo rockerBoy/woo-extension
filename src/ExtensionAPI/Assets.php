@@ -2,6 +2,7 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
+use Exception;
 use ExtendedWoo\Kernel;
 
 class Assets
@@ -11,9 +12,10 @@ class Assets
      */
     public function adminStyles(): void
     {
-        wp_register_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
-        wp_enqueue_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css');
-        wp_enqueue_style( 'woocommerce_admin_styles' );
+        $ver = rand(1, 10000);
+        wp_register_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css', '', $ver);
+        wp_enqueue_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css', '', $ver);
+        wp_enqueue_style('woocommerce_admin_styles');
     }
 
     /**
@@ -29,7 +31,8 @@ class Assets
         wp_register_script(
             'ewoo-product-import',
             Kernel::pluginUrl() . '/assets/js/admin/product-import.js?ver=100.1',
-            array( 'jquery' ),'15'
+            array( 'jquery' ),
+            '15'
         );
     }
 }
