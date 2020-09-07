@@ -69,7 +69,9 @@ class ProductExcelImporter
 
     public function getColumns(): array
     {
-        return array_values($this->columns);
+        $columns = array_values($this->columns);
+        array_shift($columns);
+        return $columns;
     }
 
     public function import(): array
@@ -83,7 +85,6 @@ class ProductExcelImporter
         ];
 
         $this->startTime = time();
-
         foreach ($this->getColumns() as $index => $column) {
             $column = array_values($column);
             $start = (isset($this->params['start_from']))? $this->params['start_from'] : 1;
@@ -91,9 +92,7 @@ class ProductExcelImporter
             if ($column === $this->getHeader($start)) {
                 continue;
             }
-
             $parsed_data = $this->parseRawColumn($column);
-
             if (empty($parsed_data['name']) && empty($parsed_data['sku'])) {
                 continue;
             }
@@ -152,23 +151,21 @@ class ProductExcelImporter
             'product_uploaded' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             'product_uploaded_gmt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
-//        dd($columns);
-        $product = $this->makeProduct($columns);
-        /**
-         * @param  string $visibility Options: 'hidden', 'visible', 'search' and 'catalog'.
-         */
 
-        $product->set_catalog_visibility('hidden');
-        if ($categories) {
-            $categories_ids = $this->parseCategoriesField($categories);
-            $data['category_ids'] = $categories_ids;
-            if (!empty($categories_ids)) {
-                $product->set_category_ids($categories_ids);
+        if ($columns['sku']) {
+            $product = $this->makeProduct($columns);
+            $product->set_catalog_visibility('hidden');
+            if ($categories) {
+                $categories_ids = $this->parseCategoriesField($categories);
+                $data['category_ids'] = $categories_ids;
+                if (!empty($categories_ids)) {
+                    $product->set_category_ids($categories_ids);
+                }
             }
-        }
 
-        $this->preImportColumns['is_valid'] = $this->validateRawProduct($data);
-        $id = $product->save();
+            $this->preImportColumns['is_valid'] = $this->validateRawProduct($data);
+            $product->save();
+        }
 //        $this->saveProduct($product);
 
         return false;
@@ -179,24 +176,21 @@ class ProductExcelImporter
     {
         $settings = $productData;
         $settings['type'] = 'simple';
+
         $new_product = $this->getProductObject($settings);
-//        dump($new_product);
-        $new_product->set_name($productData['product_title']);
-        if (!empty($productData['id']) && $productData['id'] !== $new_product->get_id()) {
-            $new_product->set_id($productData['id']);
+        $new_product->set_name($settings['product_title']);
+        if (!empty($productData['sku'])) {
+            $new_product->set_sku($settings['sku']);
         }
-        if (!empty($productData['sku']) && $productData['sku'] !== $new_product->get_sku()) {
-            $new_product->set_sku($productData['sku']);
-        }
-        $new_product->set_short_description($productData['product_excerpt']);
-        $new_product->set_description($productData['product_content']);
+        $new_product->set_short_description($settings['product_excerpt']);
+        $new_product->set_description($settings['product_content']);
 
         if ($productData['max_price'] > 0) {
-            $new_product->set_regular_price($productData['max_price']);
+            $new_product->set_regular_price($settings['max_price']);
         }
         if ($productData['min_price'] > 0) {
-            $new_product->set_price($productData['min_price']);
-            $new_product->set_sale_price($productData['min_price']);
+            $new_product->set_price($settings['min_price']);
+            $new_product->set_sale_price($settings['min_price']);
         }
 
         return $new_product;
@@ -224,9 +218,62 @@ class ProductExcelImporter
     private function getProductObject(array $data)
     {
         $id = isset($data['id']) ? absint($data['id']) : 0;
+        $sku = $data['sku'];
 
+        if ($id && wc_get_product($id)) {
+            return wc_get_product($id);
+        }
 
-        return apply_filters('woocommerce_product_import_get_product_object', wc_get_product_object('simple'), $data);
+        if ($sku) {
+            $id = wc_get_product_id_by_sku($sku);
+            if (wc_get_product($id)) {
+                return wc_get_product($id);
+            }
+        }
+
+        // Type is the most important part here because we need to be using the correct class and methods.
+        if (isset($data['type'])) {
+            $types   = array_keys(wc_get_product_types());
+            $types[] = 'variation';
+
+            if (! in_array($data['type'], $types, true)) {
+                return new WP_Error('woocommerce_product_importer_invalid_type', __('Invalid product type.', 'woocommerce'), array( 'status' => 401 ));
+            }
+
+            try {
+                // Prevent getting "variation_invalid_id" error message from Variation Data Store.
+                if ('variation' === $data['type']) {
+                    $id = wp_update_post(
+                        array(
+                            'ID'        => $id,
+                            'post_type' => 'product_variation',
+                        )
+                    );
+                }
+
+                $product = wc_get_product_object($data['type'], $id);
+            } catch (WC_Data_Exception $e) {
+                return new WP_Error('woocommerce_product_csv_importer_' . $e->getErrorCode(), $e->getMessage(), array( 'status' => 401 ));
+            }
+        } elseif (! empty($data['id'])) {
+            $product = wc_get_product($id);
+
+            if (! $product) {
+                return new WP_Error(
+                    'woocommerce_product_csv_importer_invalid_id',
+                    /* translators: %d: product ID */
+                    sprintf(__('Invalid product ID %d.', 'woocommerce'), $id),
+                    array(
+                        'id'     => $id,
+                        'status' => 401,
+                    )
+                );
+            }
+        } else {
+            $product = wc_get_product_object('simple', $id);
+        }
+
+        return apply_filters('woocommerce_product_import_get_product_object', $product, $data);
     }
 
 
@@ -247,7 +294,7 @@ class ProductExcelImporter
             $id_exists = $product && 'importing' !== $product->get_status();
 
             if ($id_exists) {
-                $product1 = $product;
+                $this->product = $product;
                 if ($product->get_sku()) {
                     return true;
                 }
@@ -263,14 +310,14 @@ class ProductExcelImporter
             $product     = $id_from_sku ? wc_get_product($id_from_sku) : false;
 
             if (false !== $product) {
-                $product1 = $product;
+                $this->product = $product;
             }
 
             $sku_exists  = $product && 'importing' !== $product->get_status();
             $is_valid = true;
 
             if ($sku_exists) {
-                $product1 = $product;
+                $this->product = $product;
                 if ($product->get_sku()) {
                     return true;
                 }

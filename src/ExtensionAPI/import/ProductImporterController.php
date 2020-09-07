@@ -35,11 +35,11 @@ class ProductImporterController extends BasicController
                 'view'    => [$this, 'showMappingForm'],
                 'handler' => '',
             ],
-//            'validation' => [
-//                'name'    => __("Обработка товаров", 'extendedwoo'),
-//                'view'    => [$this, 'showResolverForm'],
-//                'handler' => '',
-//            ],
+            'validation' => [
+                'name'    => __("Обработка товаров", 'extendedwoo'),
+                'view'    => [$this, 'showResolverForm'],
+                'handler' => '',
+            ],
             'import'  => [
                 'name'    => __("Import", 'woocommerce'),
                 'view'    => [$this, 'showImport'],

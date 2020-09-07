@@ -33,6 +33,9 @@
 .excel-resolver__rows tbody tr:last-of-type > td {
     border-bottom: none;
 }
+.excel-resolver__rows tbody tr select, .excel-resolver__rows tbody tr input{
+    max-width: 90px;
+}
 .item-danger {
     background: rgba(255, 10, 10, .6);
 }

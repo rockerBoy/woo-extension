@@ -6,6 +6,7 @@ namespace ExtendedWoo\ExtensionAPI\import\models;
 use ExtendedWoo\Entities\ProductBuilder;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\import\ExcelImportProductItemBuilder;
+use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 
 final class ProblemResolver
 {
@@ -26,12 +27,11 @@ final class ProblemResolver
     {
         $table_output = '';
         $products = [];
-
+        $categories = ProductsImportHelper::getCategories();
         if (ProductsImportHelper::validateMapping($this->mapping)) {
             $uniqueSKU = ProductsImportHelper::validateRows($this->dataRows, $this->mapping);
-
             foreach ($this->dataRows as $key => $row) {
-                $prepared_row = ProductsImportHelper::validateRow($row);
+                $prepared_row = array_values($row);
                 if (! empty($prepared_row)) {
                     $start_from = 1;
                     $parsed_row = ProductsImportHelper::parseRow($row, $this->mapping);
@@ -45,26 +45,45 @@ final class ProblemResolver
                     foreach ($prepared_row as $index => $item) {
                         $key = $this->mapping[$index] ?? '';
                         $item = ($item) ?? '';
+                        $make_excerpt = true;
                         switch ($key) {
                             case 'id':
                                 if ($item && $item > 0) {
                                     $product_builder->setID((int)$item);
+                                    $make_excerpt = false;
                                 }
                                 break;
                             case 'sku':
-                                dump(($item && $item !== ''));
-                                if ($item && $item !== '') {
+                                if (!empty($item)) {
                                     $product_builder->setSKU($item);
                                 } else {
-                                    $item = '<input type="text"/>';
+                                    $item = '<input type="text" name="sku[]"/>';
                                 }
                                 break;
                             case 'name':
                                 $product_builder->setName($item);
                                 break;
+                            case 'category_ids':
+                                $cat = (ProductCatTaxonomy::parseCategoriesString($item)) ?? [];
+                                $cat_list = ProductsImportHelper::getCategories();
+                                $product_builder->setName($item);
+                                if (empty($cat)) {
+                                    $item = '<select name="category[]">';
+                                    foreach ($cat_list as $cat) {
+                                        $item .= "<option value='$cat->term_id'>$cat->name</option>";
+                                    }
+                                    $item .= '</select>';
+                                    $make_excerpt = false;
+                                }
+                                break;
                         }
+
                         $table_output .= '<td>';
-                        $table_output .= ProductsImportHelper::makeExcerpt($item, 0, 50);
+                        if ($make_excerpt) {
+                            $table_output .= ProductsImportHelper::makeExcerpt($item, 0, 50);
+                        } else {
+                            $table_output .= $item;
+                        }
                         $table_output .= '</td>';
                     }
                     $table_output .= '</tr>';

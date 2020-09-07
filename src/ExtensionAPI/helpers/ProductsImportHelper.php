@@ -3,6 +3,8 @@
 
 namespace ExtendedWoo\ExtensionAPI\helpers;
 
+use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
+
 final class ProductsImportHelper
 {
     public static $uniqueIDs = [];
@@ -95,27 +97,30 @@ final class ProductsImportHelper
     public static function validateRows(array $rows, array $mapping): array
     {
         $rows = self::prepareRows($rows);
-
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
             foreach ($row as $i => $cell) {
                 $key = $mapping[$i] ?? '';
                 $item = ($cell) ?? false;
                 switch ($key) {
                     case 'id':
                         if (! empty($item) && !in_array($item, self::$uniqueIDs, true)) {
-                            self::$uniqueIDs[] = $item;
+                            self::$uniqueIDs[$index] = $item;
                         } else {
-                            self::$uniqueIDs[] = false;
+                            self::$uniqueIDs[$index] = false;
                         }
                         break;
                     case 'sku':
                         if (! empty($item) && !in_array($item, self::$uniqueSKUs, true)) {
-                            self::$uniqueSKUs[] = $item;
+                            self::$uniqueSKUs[$index] = $item;
                         } else {
-                            self::$uniqueSKUs[] = false;
+                            self::$uniqueSKUs[$index] = false;
                         }
                         break;
                     case 'category_ids':
+                        $cat = (ProductCatTaxonomy::parseCategoriesString($item)) ?? [];
+                        if (empty($cat)) {
+                            self::$uniqueSKUs[$index] = false;
+                        }
                         break;
                 }
             }
@@ -166,5 +171,12 @@ final class ProductsImportHelper
         }
 
         return null;
+    }
+
+    public static function getCategories(): array
+    {
+        $term_list = get_terms( ['taxonomy' => 'product_cat', 'hide_empty' => false] );
+
+        return $term_list;
     }
 }
