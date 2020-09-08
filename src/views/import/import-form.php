@@ -1,5 +1,4 @@
-
-    <form method="post" class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data">
+<form method="post" class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data">
         <header>
             <h2></h2>
             <p><?= __('Этот инструмент позволяет импортировать (или дописывать) данные товаров из Excel файла к вашему магазину.', 'extendedwoo')?></p>
@@ -46,8 +45,16 @@
                     <th><label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Update existing products', 'woocommerce' ); ?></label><br/></th>
                     <td>
                         <input type="hidden" name="update_existing" value="0" />
-                        <input type="checkbox" id="woocommerce-importer-update-existing" name="update_existing" value="1" />
-                        <label for="woocommerce-importer-update-existing"><?php esc_html_e( 'Existing products that match by ID or SKU will be updated. Products that do not exist will be skipped.', 'woocommerce' ); ?></label>
+                        <input type="checkbox" id="update_existing" name="update_existing" value="1" checked />
+                        <label for="update_existing"><?php esc_html_e( 'Existing products that match by ID or SKU will be updated. Products that do not exist will be skipped.', 'woocommerce' ); ?></label>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="woocommerce-importer-update-existing"><?= __( 'Отображать только ошибки импорта', 'woocommerce' ) ?></label><br/></th>
+                    <td>
+                        <input type="hidden" name="show_errors_only" value="0" />
+                        <input type="checkbox" id="show_errors_only" name="show_errors_only" value="1" checked/>
+                        <label for="show_errors_only"</label>
                     </td>
                 </tr>
                 </tbody>

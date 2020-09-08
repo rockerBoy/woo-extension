@@ -12,10 +12,13 @@ final class ProblemResolver
 {
     private array $dataRows;
     private array $mapping;
-    public function __construct(array $dataRows, array $mapping_to)
+    private bool $showErrorsOnly = true;
+
+    public function __construct(array $dataRows, array $mapping_to, $showErrorsOnly = true)
     {
         $this->dataRows = $dataRows;
         $this->mapping = $mapping_to;
+        $this->showErrorsOnly = $showErrorsOnly;
     }
 
     private function checkUniqueRows(string $sku): bool
@@ -37,6 +40,9 @@ final class ProblemResolver
                     $parsed_row = ProductsImportHelper::parseRow($row, $this->mapping);
                     $product_builder = new ProductBuilder();
                     if ($uniqueSKU[$key]) {
+                        if ($this->showErrorsOnly) {
+                            continue;
+                        }
                         $table_output .= '<tr>';
                     } else {
                         $table_output .= '<tr class="item-danger">';
@@ -49,26 +55,27 @@ final class ProblemResolver
                         switch ($key) {
                             case 'id':
                                 if ($item && $item > 0) {
-                                    $product_builder->setID((int)$item);
+//                                    $product_builder->setID((int)$item);
                                     $make_excerpt = false;
                                 }
                                 break;
                             case 'sku':
                                 if (!empty($item)) {
-                                    $product_builder->setSKU($item);
+//                                    $product_builder->setSKU($item);
                                 } else {
-                                    $item = '<input type="text" name="sku[]"/>';
+                                    $item = '<input type="text" name="sku['.$index.']" required />';
                                 }
                                 break;
                             case 'name':
-                                $product_builder->setName($item);
+//                                $product_builder->setName($item);
                                 break;
                             case 'category_ids':
                                 $cat = (ProductCatTaxonomy::parseCategoriesString($item)) ?? [];
                                 $cat_list = ProductsImportHelper::getCategories();
-                                $product_builder->setName($item);
+//                                $product_builder->setName($item);
                                 if (empty($cat)) {
-                                    $item = '<select name="category[]">';
+                                    $item = '<select name="category['.$index.']" required>';
+                                    $item .= "<option value=''>----------</option>";
                                     foreach ($cat_list as $cat) {
                                         $item .= "<option value='$cat->term_id'>$cat->name</option>";
                                     }
@@ -88,8 +95,6 @@ final class ProblemResolver
                     }
                     $table_output .= '</tr>';
 
-                    $product = $product_builder->makeProduct();
-                    $products[] = $product;
                 }
             }
             return $table_output;

@@ -58,7 +58,8 @@
                 value="<?= __('Run the importer', 'woocommerce'); ?>"
                 name="save_step"><?php esc_html_e('Начать проверку', 'woocommerce'); ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
-        <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing; ?>" />
+        <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing ?>" />
+        <input type="hidden" name="show_errors_only" value="<?=  $this->showErrorsOnly ?>" />
         <?php wp_nonce_field( 'etx-xls-importer' ); ?>
     </div>
 </form>

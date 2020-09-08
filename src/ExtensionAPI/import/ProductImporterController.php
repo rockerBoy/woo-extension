@@ -19,6 +19,7 @@ class ProductImporterController extends BasicController
     private string $import_views_path;
     private string $file;
     private int $startRow = 1;
+    private int $showErrorsOnly;
 
     public function __construct(Request $request)
     {
@@ -61,6 +62,10 @@ class ProductImporterController extends BasicController
             : current(array_keys($this->steps));
         $this->file              = ( ! empty($request->get('file')))
             ? wc_clean(wp_unslash($request->get('file'))) : '';
+        $this->update_existing = ( ! empty($request->get('update_existing')))
+            ? wc_clean(wp_unslash($request->get('update_existing'))) : '';
+        $this->showErrorsOnly = ( ! empty($request->get('showErrorsOnly')))
+            ? wc_clean(wp_unslash($request->get('showErrorsOnly'))) : 1;
     }
 
     public function setImportType(ImportType $import_type): self
@@ -95,6 +100,7 @@ class ProductImporterController extends BasicController
             ),
             'start_row' => $this->startRow,
             'update_existing' => $this->update_existing,
+            'show_errors_only' => $this->showErrorsOnly,
             '_wpnonce'        => wp_create_nonce('etx-xls-importer'),
         ];
         return add_query_arg($params);
@@ -104,7 +110,7 @@ class ProductImporterController extends BasicController
     {
         check_admin_referer(self::IMPORT_NONCE);
         $file = $this->handleUpload();
-
+        $request = $this->request;
         if (is_wp_error($file)) {
             $this->addErrors($file->get_error_message());
             return;
@@ -112,6 +118,8 @@ class ProductImporterController extends BasicController
 
         $this->file = $file;
 
+        $this->showErrorsOnly = (! is_null($request->get('show_errors_only')))
+            ? wc_clean(wp_unslash($request->get('show_errors_only'))) : 1;
         wp_redirect(esc_url_raw($this->getNextStepLink()));
     }
 
@@ -209,6 +217,8 @@ class ProductImporterController extends BasicController
     public function dispatch(): void
     {
         $request = $this->request;
+        $this->showErrorsOnly = (! is_null($this->request->get('show_errors_only')))
+            ? wc_clean(wp_unslash($this->request->get('show_errors_only'))) : 1;
         if (! empty($this->steps[$this->step]['handler'])
              &&
              ! empty($request->get('save_step'))
@@ -259,13 +269,17 @@ class ProductImporterController extends BasicController
 
         return $this;
     }
+
     private function showMappingForm(): void
     {
         check_admin_referer(self::IMPORT_NONCE);
+        $request = $this->request;
         $this->startRow = $_GET['start_row'];
         $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
         $headers  = $importer->getHeader($this->startRow);
         $mapped_items = ProductsImportHelper::autoMapColumns($headers);
+        $this->showErrorsOnly = (! is_null($request->get('show_errors_only')))
+            ? wc_clean(wp_unslash($request->get('show_errors_only'))) : 1;
         $sample = $importer->getSample();
         if (empty($sample)) {
             $this->addErrors(
@@ -294,7 +308,7 @@ class ProductImporterController extends BasicController
 
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
-
+        $errors_only = $this->showErrorsOnly;
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
@@ -311,11 +325,13 @@ class ProductImporterController extends BasicController
                     'to' => $mapping_to,
                 ],
                 'file' => $this->file,
-                'update_existing' => $this->update_existing
+                'update_existing' => $this->update_existing,
+                'show_errors_only' => $this->showErrorsOnly,
+                'show_errors_only' => $errors_only,
             ]
         );
         wp_deregister_script('wc-product-import');
-        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to);
+        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to, $errors_only);
         $view_data = $resolver->makeViewTable();
         include_once $this->import_views_path . '/import-problem-resolver.php';
     }
@@ -329,7 +345,8 @@ class ProductImporterController extends BasicController
         }
 
         $req = $this->request;
-
+        $fixed_sku = $req->get('sku')?? [];
+        $fixed_cat_ids = $req->get('category') ?? [];
         if (!empty($req->get('map_from')) && ! empty($req->get('map_to'))) {
             $mapping_from = $req->get('map_from');
             $mapping_to = $req->get('map_to');
@@ -349,8 +366,12 @@ class ProductImporterController extends BasicController
                     'from' => $mapping_from,
                     'to' => $mapping_to,
                 ],
+                'fixes' => [
+                  'sku'  => $fixed_sku,
+                  'categories'  => $fixed_cat_ids,
+                ],
                 'file' => $this->file,
-                'update_existing' => $this->update_existing
+                'update_existing' => $this->update_existing,
             ]
         );
 

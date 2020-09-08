@@ -8,6 +8,7 @@
         this.$form           = $form;
         this.xhr             = false;
         this.mapping         = ewoo_product_import_params.mapping;
+        this.fixes           = ewoo_product_import_params.fixes;
         this.position        = 0;
         this.file            = ewoo_product_import_params.file;
         this.update_existing = ewoo_product_import_params.update_existing;
@@ -41,6 +42,7 @@
                 action          : 'ext_do_ajax_product_import',
                 position        : $this.position,
                 mapping         : $this.mapping,
+                fixes           : $this.fixes,
                 file            : $this.file,
                 update_existing : $this.update_existing,
                 security        : $this.security

@@ -96,6 +96,22 @@ class ProductExcelImporter
             if (empty($parsed_data['name']) && empty($parsed_data['sku'])) {
                 continue;
             }
+            if (empty($parsed_data['sku'])) {
+                $sku = $this->params['fixes']['sku'][$index];
+                if (! empty($sku)) {
+                    $parsed_data['sku'] = $sku;
+                } else {
+                    continue;
+                }
+            }
+
+            if (empty($parsed_data['categories_id'])) {
+                $categories_id = $this->params['fixes']['categories'][$index];
+                if (! empty($categories_id)) {
+                    $cat = get_term($categories_id);
+                    $parsed_data['category_ids'] = $cat->name;
+                }
+            }
 
             $this->process($parsed_data);
             $data['imported'][$index] = $parsed_data;
