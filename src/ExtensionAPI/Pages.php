@@ -5,6 +5,7 @@ namespace ExtendedWoo\ExtensionAPI;
 
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -218,7 +219,7 @@ final class Pages implements PageInterface
             $results = $importer->import();
 
             if (! empty($results)) {
-                $importer->clearDatabase();
+                ProductsImportHelper::clearDatabase();
 
                 // Send success.
                 wp_send_json_success(
@@ -237,10 +238,6 @@ final class Pages implements PageInterface
         }
     }
 
-    public function doAjaxProductImportResolve(): void
-    {
-        dump('resolver');
-    }
 
     public function downloadExportFile(): void
     {

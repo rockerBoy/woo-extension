@@ -2,6 +2,8 @@
 
 namespace ExtendedWoo\ExtensionAPI\import;
 
+use ExtendedWoo\Entities\ProductBuilder;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use WC_Data_Exception;
@@ -12,6 +14,13 @@ class ProductExcelImporter
 {
     private int $startTime;
     private array $columns = [];
+    private array $importedRows = [
+        'author_id' => 0,
+        'imported' => [],
+        'failed'   => [],
+        'updated'  => [],
+        'skipped'  => [],
+    ];
     private string $fileName;
     private array $params;
     private \wpdb $db;
@@ -76,6 +85,8 @@ class ProductExcelImporter
 
     public function import(): array
     {
+        $update_existing = $_POST['update_existing'];
+        $uniqueItems = [];
         $data = [
             'author_id' => get_current_user_id(),
             'imported' => [],
@@ -104,6 +115,13 @@ class ProductExcelImporter
                     continue;
                 }
             }
+            if (false === (bool) $update_existing) {
+                if (! in_array($parsed_data['sku'], $uniqueItems, true)) {
+                    $uniqueItems[] = $parsed_data['sku'];
+                } else {
+                    continue;
+                }
+            }
 
             if (empty($parsed_data['categories_id'])) {
                 $categories_id = $this->params['fixes']['categories'][$index];
@@ -113,8 +131,14 @@ class ProductExcelImporter
                 }
             }
 
-            $this->process($parsed_data);
-            $data['imported'][$index] = $parsed_data;
+            $product = $this->process($parsed_data);
+            if (! is_bool($product) && $product->is_updated) {
+                $data['updated'][$index] = $parsed_data;
+            } elseif (! is_bool($product) && $product->is_saved) {
+                $data['imported'][$index] = $parsed_data;
+            } else {
+                $data['failed'][$index] = $parsed_data;
+            }
         }
 
         return $data;
@@ -149,7 +173,7 @@ class ProductExcelImporter
     }
 
 
-    private function process(array $data): bool
+    private function process(array $data)
     {
         $sku = $data['sku'] ?? '';
         $id = $data['id'] ? absint($data['id']): 0;
@@ -167,7 +191,6 @@ class ProductExcelImporter
             'product_uploaded' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
             'product_uploaded_gmt' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
-
         if ($columns['sku']) {
             $product = $this->makeProduct($columns);
             $product->set_catalog_visibility('hidden');
@@ -178,11 +201,11 @@ class ProductExcelImporter
                     $product->set_category_ids($categories_ids);
                 }
             }
-
             $this->preImportColumns['is_valid'] = $this->validateRawProduct($data);
             $product->save();
+
+            return $product;
         }
-//        $this->saveProduct($product);
 
         return false;
     }
@@ -193,44 +216,40 @@ class ProductExcelImporter
         $settings = $productData;
         $settings['type'] = 'simple';
 
-        $new_product = $this->getProductObject($settings);
-        $new_product->set_name($settings['product_title']);
-        if (!empty($productData['sku'])) {
-            $new_product->set_sku($settings['sku']);
+        $productExists = ProductsImportHelper::getProductBySKU($settings['sku']);
+        $productBuilder = ($productExists) ? new ProductBuilder($productExists) : new ProductBuilder();
+        if (! empty($settings['id'])) {
+            $productBuilder->setID($settings['id']);
         }
-        $new_product->set_short_description($settings['product_excerpt']);
-        $new_product->set_description($settings['product_content']);
+        if (! empty($settings['product_title'])) {
+            $productBuilder->setName($settings['product_title']);
+        }
+
+        if (! empty($productData['sku'])) {
+            $productBuilder->setSKU($settings['sku']);
+        }
+
+        if ( !empty($settings['product_excerpt'])) {
+            $productBuilder->setShortDescription($settings['product_excerpt']);
+        }
+        if ( !empty($settings['product_content'])) {
+            $productBuilder->setDescription($settings['product_content']);
+        }
 
         if ($productData['max_price'] > 0) {
-            $new_product->set_regular_price($settings['max_price']);
+            $productBuilder->setRegularPrice($settings['max_price']);
         }
         if ($productData['min_price'] > 0) {
-            $new_product->set_price($settings['min_price']);
-            $new_product->set_sale_price($settings['min_price']);
+            $productBuilder
+                ->setPrice($settings['min_price'])
+                ->setSalePrice($settings['min_price']);
         }
 
-        return $new_product;
+        return $productBuilder->makeProduct();
     }
 
 
-    private function saveProduct(WC_Product $product): void
-    {
-        $db = $this->db;
-        $db->insert($db->prefix.'woo_pre_import', $this->preImportColumns);
-        if ($product->get_id()) {
-            $this->relationsColumns['import_id'] = $db->insert_id;
-            $this->relationsColumns['product_id'] = ($product->get_id() !== 0) ?$product->get_id(): $db->insert_id;
-            $this->relationsColumns['product_category_id'] = current($product->get_category_ids());
-//            $db->insert($db->prefix.'woo_pre_import_relationships', $this->relationsColumns);
-        }
-    }
 
-
-    /**
-     * @param array $data
-     *
-     * @return WC_Product|WP_Error
-     */
     private function getProductObject(array $data)
     {
         $id = isset($data['id']) ? absint($data['id']) : 0;
@@ -292,7 +311,6 @@ class ProductExcelImporter
         return apply_filters('woocommerce_product_import_get_product_object', $product, $data);
     }
 
-
     private function validateRawProduct(array $product_data): bool
     {
         $id = (isset($product_data['id']))? absint($product_data['id']): 0;
@@ -341,42 +359,5 @@ class ProductExcelImporter
         }
 
         return $is_valid;
-    }
-
-    public function clearDatabase(): void
-    {
-        $wpdb = $this->db;
-
-        $wpdb->delete($wpdb->postmeta, array( 'meta_key' => '_original_id' ));
-        $wpdb->delete($wpdb->posts, array(
-            'post_type'   => 'product',
-            'post_status' => 'importing',
-        ));
-        $wpdb->delete($wpdb->posts, array(
-            'post_type'   => 'product_variation',
-            'post_status' => 'importing',
-        ));
-        $wpdb->query(
-            "
-                    DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
-                    WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
-			    "
-        );
-        $wpdb->query(
-            "
-                    DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
-                    WHERE wp.ID IS NULL
-                "
-        );
-        // @codingStandardsIgnoreStart.
-        $wpdb->query( "
-                    DELETE tr.* FROM {$wpdb->term_relationships} tr
-                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
-                    LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-                    WHERE wp.ID IS NULL
-                    AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
-                " );
     }
 }

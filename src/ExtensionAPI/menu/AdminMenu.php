@@ -45,30 +45,30 @@ final class AdminMenu
             null,
             '55.6'
         );
-        add_submenu_page(
-            'excel_import',
-            __('Первичный импорт товаров', 'extendedwoo'),
-            __('Первичный импорт товаров', 'extendedwoo'),
-            'manage_options',
-            'excel_import_prices',
-            [$this, 'productsPricingImportPage']
-        );
-        add_submenu_page(
-            'excel_import',
-            __('Импорт цен', 'extendedwoo'),
-            __('Импорт цен', 'extendedwoo'),
-            'manage_options',
-            'excel_import_prices',
-            [$this, 'productsPricingImportPage']
-        );
-        add_submenu_page(
-            'excel_import',
-            __('Импорт акций', 'extendedwoo'),
-            __('Импорт акций', 'extendedwoo'),
-            'manage_options',
-            'excel_sales_import',
-            [$this, 'productsSalesImportPage']
-        );
+//        add_submenu_page(
+//            'excel_import',
+//            __('Первичный импорт товаров', 'extendedwoo'),
+//            __('Первичный импорт товаров', 'extendedwoo'),
+//            'manage_options',
+//            'excel_import_prices',
+//            [$this, 'productsPricingImportPage']
+//        );
+//        add_submenu_page(
+//            'excel_import',
+//            __('Импорт цен', 'extendedwoo'),
+//            __('Импорт цен', 'extendedwoo'),
+//            'manage_options',
+//            'excel_import_prices',
+//            [$this, 'productsPricingImportPage']
+//        );
+//        add_submenu_page(
+//            'excel_import',
+//            __('Импорт акций', 'extendedwoo'),
+//            __('Импорт акций', 'extendedwoo'),
+//            'manage_options',
+//            'excel_sales_import',
+//            [$this, 'productsSalesImportPage']
+//        );
     }
 
     public function productsImportPage(): void

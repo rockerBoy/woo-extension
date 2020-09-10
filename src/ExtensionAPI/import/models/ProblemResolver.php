@@ -5,7 +5,6 @@ namespace ExtendedWoo\ExtensionAPI\import\models;
 
 use ExtendedWoo\Entities\ProductBuilder;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\import\ExcelImportProductItemBuilder;
 use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 
 final class ProblemResolver
@@ -37,8 +36,8 @@ final class ProblemResolver
                 $prepared_row = array_values($row);
                 if (! empty($prepared_row)) {
                     $start_from = 1;
-                    $parsed_row = ProductsImportHelper::parseRow($row, $this->mapping);
-                    $product_builder = new ProductBuilder();
+//                    $parsed_row = ProductsImportHelper::parseRow($row, $this->mapping);
+//                    $product_builder = new ProductBuilder();
                     if ($uniqueSKU[$key]) {
                         if ($this->showErrorsOnly) {
                             continue;

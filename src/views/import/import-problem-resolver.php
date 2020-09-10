@@ -12,8 +12,11 @@
         <table>
             <thead>
             <tr>
-                <?php foreach ($labels as $label) :?>
-                <th><?= __($label, 'extendedwoo') ?></th>
+                <?php
+                    $defaultCols = array_flip(ProductsImportHelper::getDefaultFields());
+                ?>
+                <?php foreach ($mapping_to as $key) :?>
+                <th><?= __($defaultCols[$key], 'extendedwoo') ?></th>
                 <?php endforeach; ?>
             </tr>
             </thead>

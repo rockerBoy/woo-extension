@@ -11,6 +11,33 @@ final class ProductsImportHelper
     public static $uniqueSKUs = [];
     public static $validSKUs = [];
 
+    public static function getDefaultFields(): array
+    {
+        return [
+                __('ID', 'woocommerce')             => 'id',
+                __('Type', 'woocommerce')           => 'type',
+                __('SKU', 'woocommerce')            => 'sku',
+                __('Name', 'woocommerce')           => 'name',
+                __('Published', 'woocommerce')      => 'published',
+                __('Is featured?', 'woocommerce')   => 'featured',
+                __('Visibility in catalog', 'woocommerce') => 'catalog_visibility',
+                __('Short description', 'woocommerce') => 'short_description',
+                __('Description', 'woocommerce')    => 'description',
+                __('Date sale price starts', 'woocommerce') => 'date_on_sale_from',
+                __('Date sale price ends', 'woocommerce') => 'date_on_sale_to',
+                __('In stock?', 'woocommerce')      => 'stock_status',
+                __('Stock', 'woocommerce')          => 'stock_quantity',
+                __('Backorders allowed?', 'woocommerce') => 'backorders',
+                __('Low stock amount', 'woocommerce') => 'low_stock_amount',
+                __('Purchase note', 'woocommerce')  => 'purchase_note',
+                __('Sale price', 'woocommerce')     => 'sale_price',
+                __('Regular price', 'woocommerce')  => 'regular_price',
+                __('Categories', 'woocommerce')     => 'category_ids',
+                __('Tags', 'woocommerce')           => 'tag_ids',
+                __('Parent', 'woocommerce')         => 'parent_id',
+                __('Position', 'woocommerce')       => 'menu_order',
+            ];
+    }
     public static function normalizeRowNames(array $columns): array
     {
         $normalized = [];
@@ -26,32 +53,9 @@ final class ProductsImportHelper
         bool $num_indexes = true
     ): array {
         $default_columns = self::normalizeRowNames(
+            self::getDefaultFields(),
             apply_filters(
                 'woocommerce_csv_product_import_mapping_default_columns',
-                array(
-                    __('ID', 'woocommerce')             => 'id',
-                    __('Type', 'woocommerce')           => 'type',
-                    __('SKU', 'woocommerce')            => 'sku',
-                    __('Name', 'woocommerce')           => 'name',
-                    __('Published', 'woocommerce')      => 'published',
-                    __('Is featured?', 'woocommerce')   => 'featured',
-                    __('Visibility in catalog', 'woocommerce') => 'catalog_visibility',
-                    __('Short description', 'woocommerce') => 'short_description',
-                    __('Description', 'woocommerce')    => 'description',
-                    __('Date sale price starts', 'woocommerce') => 'date_on_sale_from',
-                    __('Date sale price ends', 'woocommerce') => 'date_on_sale_to',
-                    __('In stock?', 'woocommerce')      => 'stock_status',
-                    __('Stock', 'woocommerce')          => 'stock_quantity',
-                    __('Backorders allowed?', 'woocommerce') => 'backorders',
-                    __('Low stock amount', 'woocommerce') => 'low_stock_amount',
-                    __('Purchase note', 'woocommerce')  => 'purchase_note',
-                    __('Sale price', 'woocommerce')     => 'sale_price',
-                    __('Regular price', 'woocommerce')  => 'regular_price',
-                    __('Categories', 'woocommerce')     => 'category_ids',
-                    __('Tags', 'woocommerce')           => 'tag_ids',
-                    __('Parent', 'woocommerce')         => 'parent_id',
-                    __('Position', 'woocommerce')       => 'menu_order',
-                ),
                 $headers
             )
         );
@@ -178,5 +182,49 @@ final class ProductsImportHelper
         $term_list = get_terms( ['taxonomy' => 'product_cat', 'hide_empty' => false] );
 
         return $term_list;
+    }
+
+    public static function getProductBySKU(string $sku)
+    {
+        $id = wc_get_product_id_by_sku($sku);
+
+        return wc_get_product($id);
+    }
+
+    public static function clearDatabase(): void
+    {
+        global $wpdb;
+
+        $wpdb->delete($wpdb->postmeta, array( 'meta_key' => '_original_id' ));
+        $wpdb->delete($wpdb->posts, array(
+            'post_type'   => 'product',
+            'post_status' => 'importing',
+        ));
+        $wpdb->delete($wpdb->posts, array(
+            'post_type'   => 'product_variation',
+            'post_status' => 'importing',
+        ));
+        $wpdb->query(
+            "
+                    DELETE {$wpdb->posts}.* FROM {$wpdb->posts}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->posts}.post_parent
+                    WHERE wp.ID IS NULL AND {$wpdb->posts}.post_type = 'product_variation'
+			    "
+        );
+        $wpdb->query(
+            "
+                    DELETE {$wpdb->postmeta}.* FROM {$wpdb->postmeta}
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = {$wpdb->postmeta}.post_id
+                    WHERE wp.ID IS NULL
+                "
+        );
+        // @codingStandardsIgnoreStart.
+        $wpdb->query( "
+                    DELETE tr.* FROM {$wpdb->term_relationships} tr
+                    LEFT JOIN {$wpdb->posts} wp ON wp.ID = tr.object_id
+                    LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                    WHERE wp.ID IS NULL
+                    AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
+                " );
     }
 }
