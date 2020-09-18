@@ -31,6 +31,10 @@ class ProductExcelImporter
     {
         global $wpdb;
 
+        if (! is_file($fileName)) {
+            wp_redirect(esc_url_raw('admin.php?page=excel_import'));
+        }
+
         $this->db = $wpdb;
         $this->fileName = $fileName;
         $this->params = $args;
@@ -85,8 +89,10 @@ class ProductExcelImporter
 
     public function import(): array
     {
-        $update_existing = $_POST['update_existing'];
-        $uniqueItems = [];
+        $uniqueItems = [
+            'id' => [],
+            'sku' => [],
+        ];
         $data = [
             'author_id' => get_current_user_id(),
             'imported' => [],
@@ -96,6 +102,7 @@ class ProductExcelImporter
         ];
 
         $this->startTime = time();
+
         foreach ($this->getColumns() as $index => $column) {
             $column = array_values($column);
             $start = (isset($this->params['start_from']))? $this->params['start_from'] : 1;
@@ -103,10 +110,13 @@ class ProductExcelImporter
             if ($column === $this->getHeader($start)) {
                 continue;
             }
+
             $parsed_data = $this->parseRawColumn($column);
+
             if (empty($parsed_data['name']) && empty($parsed_data['sku'])) {
                 continue;
             }
+
             if (empty($parsed_data['sku'])) {
                 $sku = $this->params['fixes']['sku'][$index];
                 if (! empty($sku)) {
@@ -115,12 +125,16 @@ class ProductExcelImporter
                     continue;
                 }
             }
-            if (false === (bool) $update_existing) {
-                if (! in_array($parsed_data['sku'], $uniqueItems, true)) {
-                    $uniqueItems[] = $parsed_data['sku'];
-                } else {
-                    continue;
-                }
+
+            if (! in_array($parsed_data['sku'], $uniqueItems['sku'], true)) {
+                $uniqueItems['sku'][] = $parsed_data['sku'];
+            } else {
+                continue;
+            }
+            if (! in_array($parsed_data['id'], $uniqueItems['id'], true)) {
+                $uniqueItems['id'][] = $parsed_data['id'];
+            } else {
+                continue;
             }
 
             if (empty($parsed_data['categories_id'])) {
@@ -132,6 +146,7 @@ class ProductExcelImporter
             }
 
             $product = $this->process($parsed_data);
+
             if (! is_bool($product) && $product->is_updated) {
                 $data['updated'][$index] = $parsed_data;
             } elseif (! is_bool($product) && $product->is_saved) {

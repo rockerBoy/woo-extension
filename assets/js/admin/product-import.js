@@ -11,7 +11,6 @@
         this.fixes           = ewoo_product_import_params.fixes;
         this.position        = 0;
         this.file            = ewoo_product_import_params.file;
-        this.update_existing = ewoo_product_import_params.update_existing;
         this.security        = ewoo_product_import_params.import_nonce;
 
         // Number of import successes/failures.
@@ -44,7 +43,6 @@
                 mapping         : $this.mapping,
                 fixes           : $this.fixes,
                 file            : $this.file,
-                update_existing : $this.update_existing,
                 security        : $this.security
             },
             dataType: 'json',

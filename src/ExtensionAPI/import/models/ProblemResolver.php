@@ -11,13 +11,11 @@ final class ProblemResolver
 {
     private array $dataRows;
     private array $mapping;
-    private bool $showErrorsOnly = true;
 
-    public function __construct(array $dataRows, array $mapping_to, $showErrorsOnly = true)
+    public function __construct(array $dataRows, array $mapping_to)
     {
         $this->dataRows = $dataRows;
         $this->mapping = $mapping_to;
-        $this->showErrorsOnly = $showErrorsOnly;
     }
 
     private function checkUniqueRows(string $sku): bool
@@ -39,9 +37,9 @@ final class ProblemResolver
 //                    $parsed_row = ProductsImportHelper::parseRow($row, $this->mapping);
 //                    $product_builder = new ProductBuilder();
                     if ($uniqueSKU[$key]) {
-                        if ($this->showErrorsOnly) {
+//                        if ($this->showErrorsOnly) {
                             continue;
-                        }
+//                        }
                         $table_output .= '<tr>';
                     } else {
                         $table_output .= '<tr class="item-danger">';

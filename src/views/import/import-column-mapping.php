@@ -1,4 +1,10 @@
-<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer"
+<?php
+
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+
+wp_enqueue_script('ewoo-product-validation');
+?>
+<form action="<?= esc_url($this->getNextStepLink())?>" class="extended-mapping wc-progress-form-content woocommerce-importer"
       method="post">
     <header>
         <h2><?= __('Назначить XLS поля товарам', 'extendedwoo'); ?></h2>
@@ -13,52 +19,51 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
+            <?php foreach ($headers as $index => $header): ?>
+            <?php
+                $mapped_value = $mapped_items[$index];
+                $options = ($mapped_value) ? ProductsImportHelper::getMappingOptions($mapped_value, $labels): [];
+            ?>
+                <tr class="<?= ($mapped_value)? 'field-'.$mapped_value : ''?>">
                     <td class="wc-importer-mapping-table-name">
+                        <?= $header ?>
                         <span class="description"></span>
                     </td>
                     <td>
-                        <?php foreach ( $headers as $index => $name ) :
-                            $mapped_value = $mapped_items[$index];
-                        ?>
-                        <tr>
-                            <td class="wc-importer-mapping-table-name">
-                                <?= esc_html($name) ?>
-                                <?php if ( ! empty($sample[$index])) : ?>
-                                    <span class="description"><?php esc_html_e( 'Sample:', 'woocommerce' ); ?> <code><?= esc_html( $sample[ $index ] ) ?></code></span>
+                        <?php if (! empty($options)): ?>
+                        <select name="map_to[<?= esc_html($index) ?>]">
+                            <option value=""><?= esc_html_e( 'Do not import', 'woocommerce' ) ?></option>
+                            <option value="">--------------</option>
+                            <?php  foreach ( $options as $key => $value ) : ?>
+                                <?php if ( is_array( $value ) ) : ?>
+                                    <optgroup label="<?= esc_attr( $value['name'] ) ?>">
+                                        <?php foreach ( $value['options'] as $sub_key => $sub_value ) : ?>
+                                            <option value="<?= esc_attr( $sub_key ) ?>" <?php selected( $mapped_value, $sub_key ); ?>><?= esc_html( $sub_value ) ?></option>
+                                        <?php endforeach ?>
+                                    </optgroup>
+                                <?php else : $mapped_value = $mapped_items[$key]; ?>
+                                    <option value="<?= esc_attr( $mapped_value ) ?>" <?php selected( $mapped_value, $key ); ?>><?= esc_html( $value )?></option>
                                 <?php endif; ?>
-                            </td>
-                            <td class="wc-importer-mapping-table-field">
-                                <input type="hidden" name="map_from[<?= esc_html($index) ?>]" value="<?= esc_html($name) ?>" />
-                                <select name="map_to[<?= esc_html($index) ?>]">
-                                    <option value=""><?= esc_html_e( 'Do not import', 'woocommerce' ) ?></option>
-                                    <option value="">--------------</option>
-                                    <?php  foreach ( $this->getMappingOptions($mapped_value) as $key => $value ) : ?>
-                                        <?php if ( is_array( $value ) ) : ?>
-                                            <optgroup label="<?= esc_attr( $value['name'] ) ?>">
-                                                <?php foreach ( $value['options'] as $sub_key => $sub_value ) : ?>
-                                                    <option value="<?= esc_attr( $sub_key ) ?>" <?php selected( $mapped_value, $sub_key ); ?>><?= esc_html( $sub_value ) ?></option>
-                                                <?php endforeach ?>
-                                            </optgroup>
-                                        <?php else : ?>
-                                            <option value="<?= esc_attr( $key ) ?>" <?php selected( $mapped_value, $key ); ?>><?= esc_html( $value )?></option>
-                                        <?php endif; ?>
-                                    <?php endforeach ?>
-                                </select>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                            <?php endforeach ?>
+                        </select>
+                        <?php endif; ?>
                     </td>
                 </tr>
+            <?php endforeach;?>
             </tbody>
         </table>
     </section>
+    <?php foreach ($mapped_items as $key=>$item):?>
+        <input type="hidden" name="<?= esc_html($item) ?>" value="" required/>
+    <?php endforeach; ?>
     <div class="wc-actions">
         <button type="submit" class="button button-primary button-next"
                 value="<?= __('Run the importer', 'woocommerce'); ?>"
                 name="save_step"><?php esc_html_e('Начать проверку', 'woocommerce'); ?></button>
+        <button type="submit" class="button button-primary button-prev"
+                value="<?= __('Вернутся назад', 'woocommerce'); ?>"
+                name="remove_step"><?php esc_html_e('Вернутся назад', 'woocommerce'); ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
-        <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing ?>" />
         <input type="hidden" name="show_errors_only" value="<?=  $this->showErrorsOnly ?>" />
         <?php wp_nonce_field( 'etx-xls-importer' ); ?>
     </div>

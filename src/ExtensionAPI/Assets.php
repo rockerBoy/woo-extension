@@ -32,7 +32,12 @@ class Assets
             'ewoo-product-import',
             Kernel::pluginUrl() . '/assets/js/admin/product-import.js',
             array( 'jquery' ),
-            '102'
+            '103'
+        );
+        wp_register_script(
+            'ewoo-product-validation',
+            Kernel::pluginUrl() . '/assets/js/admin/product-validation.js',
+            array( 'jquery' )
         );
     }
 }

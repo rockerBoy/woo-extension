@@ -30,7 +30,7 @@
                 value="<?= __('Continue', 'woocommerce') ?>"
                 name="save_step"><?= __('Run the importer', 'woocommerce') ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
-        <input type="hidden" name="update_existing" value="<?= (int) $this->update_existing; ?>" />
+
         <?php  foreach ($labels as $index => $map_from) : ?>
             <input type="hidden" name="map_from[<?= esc_html($index) ?>]" value="<?= $map_from ?>"/>
         <?php endforeach; ?>

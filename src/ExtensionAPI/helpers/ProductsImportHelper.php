@@ -227,4 +227,16 @@ final class ProductsImportHelper
                     AND tt.taxonomy IN ( '" . implode( "','", array_map( 'esc_sql', get_object_taxonomies( 'product' ) ) ) . "' )
                 " );
     }
+
+    public static function getMappingOptions(string $item = '', array $options): array
+    {
+        $index = $item;
+
+        if (preg_match('/\d+/', $item, $matches)) {
+            $index = $matches[0];
+        }
+
+        return apply_filters('woocommerce_csv_product_import_mapping_options', $options, $item);
+
+    }
 }

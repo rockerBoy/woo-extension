@@ -15,11 +15,9 @@ class ProductImporterController extends BasicController
     private ImportType $importStrategy;
     private string $step;
     private array $steps;
-    private bool $update_existing = true;
     private string $import_views_path;
     private string $file;
     private int $startRow = 1;
-    private int $showErrorsOnly;
 
     public function __construct(Request $request)
     {
@@ -62,10 +60,6 @@ class ProductImporterController extends BasicController
             : current(array_keys($this->steps));
         $this->file              = ( ! empty($request->get('file')))
             ? wc_clean(wp_unslash($request->get('file'))) : '';
-        $this->update_existing = ( ! empty($request->get('update_existing')))
-            ? wc_clean(wp_unslash($request->get('update_existing'))) : '';
-        $this->showErrorsOnly = ( ! empty($request->get('showErrorsOnly')))
-            ? wc_clean(wp_unslash($request->get('showErrorsOnly'))) : 1;
     }
 
     public function setImportType(ImportType $import_type): self
@@ -99,8 +93,6 @@ class ProductImporterController extends BasicController
                 $this->file
             ),
             'start_row' => $this->startRow,
-            'update_existing' => $this->update_existing,
-            'show_errors_only' => $this->showErrorsOnly,
             '_wpnonce'        => wp_create_nonce('etx-xls-importer'),
         ];
         return add_query_arg($params);
@@ -118,8 +110,6 @@ class ProductImporterController extends BasicController
 
         $this->file = $file;
 
-        $this->showErrorsOnly = (! is_null($request->get('show_errors_only')))
-            ? wc_clean(wp_unslash($request->get('show_errors_only'))) : 1;
         wp_redirect(esc_url_raw($this->getNextStepLink()));
     }
 
@@ -217,8 +207,14 @@ class ProductImporterController extends BasicController
     public function dispatch(): void
     {
         $request = $this->request;
-        $this->showErrorsOnly = (! is_null($this->request->get('show_errors_only')))
-            ? wc_clean(wp_unslash($this->request->get('show_errors_only'))) : 1;
+        if (! empty($request->get('remove_step'))) {
+            if (is_file($this->file)) {
+                global $wpdb;
+                $last_file_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY ID DESC LIMIT 1");
+                wp_delete_attachment($last_file_id);
+            }
+            wp_redirect(esc_url_raw('admin.php?page=excel_import'));
+        }
         if (! empty($this->steps[$this->step]['handler'])
              &&
              ! empty($request->get('save_step'))
@@ -277,9 +273,20 @@ class ProductImporterController extends BasicController
         $this->startRow = $_GET['start_row'];
         $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
         $headers  = $importer->getHeader($this->startRow);
-        $mapped_items = ProductsImportHelper::autoMapColumns($headers);
-        $this->showErrorsOnly = (! is_null($request->get('show_errors_only')))
-            ? wc_clean(wp_unslash($request->get('show_errors_only'))) : 1;
+        $labels = array_values($this->importStrategy->getColumns());
+        $mapped_items = ProductsImportHelper::autoMapColumns($labels);
+
+        wp_localize_script(
+            'ewoo-product-validation',
+            'ewoo_product_import_params',
+            [
+                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'mapping' => [
+                    'required' => array_keys($this->importStrategy->getColumns())
+                ],
+                'file' => $this->file,
+            ]
+        );
         $sample = $importer->getSample();
         if (empty($sample)) {
             $this->addErrors(
@@ -308,7 +315,6 @@ class ProductImporterController extends BasicController
 
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
-        $errors_only = $this->showErrorsOnly;
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
@@ -325,13 +331,10 @@ class ProductImporterController extends BasicController
                     'to' => $mapping_to,
                 ],
                 'file' => $this->file,
-                'update_existing' => $this->update_existing,
-                'show_errors_only' => $this->showErrorsOnly,
-                'show_errors_only' => $errors_only,
             ]
         );
         wp_deregister_script('wc-product-import');
-        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to, $errors_only);
+        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to);
         $view_data = $resolver->makeViewTable();
         include_once $this->import_views_path . '/import-problem-resolver.php';
     }
@@ -371,7 +374,6 @@ class ProductImporterController extends BasicController
                   'categories'  => $fixed_cat_ids,
                 ],
                 'file' => $this->file,
-                'update_existing' => $this->update_existing,
             ]
         );
 
@@ -400,15 +402,4 @@ class ProductImporterController extends BasicController
         return $this;
     }
 
-    private function getMappingOptions(string $item = ''): array
-    {
-        $index = $item;
-
-        if (preg_match('/\d+/', $item, $matches)) {
-            $index = $matches[0];
-        }
-
-        $options = $this->importStrategy->getColumns();
-        return apply_filters('woocommerce_csv_product_import_mapping_options', $options, $item);
-    }
 }
