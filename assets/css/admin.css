@@ -42,12 +42,14 @@
 .item-success {
     background: rgba(3, 198, 47, .6) !important;
 }
-.item-danger td {
-    border: 2px solid #ff0a41;
-}
-.item-success td {
-    border: 2px solid #03c62f;
-}
+
 .button-prev {
     float: left !important;
+}
+
+.extended-errors {
+    color: #ff0a41;
+}
+.extended-error-label {
+    font-weight: 600;
 }
