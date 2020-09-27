@@ -45,22 +45,6 @@ final class AdminMenu
             null,
             '55.6'
         );
-//        add_submenu_page(
-//            'excel_import',
-//            __('Первичный импорт товаров', 'extendedwoo'),
-//            __('Первичный импорт товаров', 'extendedwoo'),
-//            'manage_options',
-//            'excel_import_prices',
-//            [$this, 'productsImportPage']
-//        );
-//        add_submenu_page(
-//            'excel_import',
-//            __('Вторичный импорт товаров', 'extendedwoo'),
-//            __('Вторичный импорт товаров', 'extendedwoo'),
-//            'manage_options',
-//            'excel_import_prices',
-//            [$this, 'productsImportPage']
-//        );
         add_submenu_page(
             'excel_import',
             __('Импорт цен', 'extendedwoo'),

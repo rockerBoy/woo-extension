@@ -21,6 +21,8 @@ class ProductImporterController extends BasicController
 
     public function __construct(Request $request)
     {
+        wp_deregister_script('wc-product-import');
+
         $this->request           = $request;
         $this->import_views_path = __DIR__ . '/../../views/import/';
         $default_steps           = [
@@ -100,7 +102,6 @@ class ProductImporterController extends BasicController
 
     public function uploadFormHandler(): void
     {
-        check_admin_referer(self::IMPORT_NONCE);
         $file = $this->handleUpload();
         $request = $this->request;
         if (is_wp_error($file)) {
@@ -115,7 +116,6 @@ class ProductImporterController extends BasicController
 
     public function uploadImportHandler(): void
     {
-        check_admin_referer(self::IMPORT_NONCE);
         $file = $this->handleUpload();
         if (is_wp_error($file)) {
             $this->addErrors($file->get_error_message());
@@ -184,7 +184,10 @@ class ProductImporterController extends BasicController
             if ($f_size <= 1) {
                 return new WP_Error(
                     'extendedwoo_product_xls_importer_upload_invalid_file',
-                    __('The file is empty or using a different encoding than UTF-8, please try again with a new file.', 'woocommerce')
+                    __(
+                        'The file is empty or using a different encoding than UTF-8, please try again with a new file.',
+                        'woocommerce'
+                    )
                 );
             }
 
@@ -207,20 +210,22 @@ class ProductImporterController extends BasicController
     public function dispatch(): void
     {
         $request = $this->request;
+        global $wpdb;
         if (! empty($request->get('remove_step'))) {
             if (is_file($this->file)) {
-                global $wpdb;
                 $last_file_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY ID DESC LIMIT 1");
                 wp_delete_attachment($last_file_id);
             }
             wp_redirect(esc_url_raw('admin.php?page=excel_import'));
         }
+
         if (! empty($this->steps[$this->step]['handler'])
              &&
              ! empty($request->get('save_step'))
         ) {
             call_user_func($this->steps[$this->step]['handler'], $this);
         }
+
         $this
             ->showHeader()
             ->showSteps()
@@ -241,6 +246,14 @@ class ProductImporterController extends BasicController
         return $this;
     }
 
+
+    private function showFooter(): self
+    {
+        include $this->import_views_path . 'import-footer.php';
+
+        return $this;
+    }
+    
     /**
      * Display steps view.
      *
@@ -268,7 +281,6 @@ class ProductImporterController extends BasicController
 
     private function showMappingForm(): void
     {
-        check_admin_referer(self::IMPORT_NONCE);
         $request = $this->request;
         $this->startRow = $_GET['start_row'];
         $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
@@ -306,21 +318,35 @@ class ProductImporterController extends BasicController
 
     private function showResolverForm(): void
     {
-        check_admin_referer(self::IMPORT_NONCE);
         if (! is_file($this->file)) {
-            $this->addErrors(__('The file does not exist, please try again.', 'woocommerce'));
+            $this->addErrors(__(
+                'The file does not exist, please try again.',
+                'woocommerce'
+            ));
             $this->showErrors();
         }
-        $req = $this->request;
 
+        $req = $this->request;
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
+
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
 
         update_user_option(get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to);
-        $importer = new ProductExcelImporter($req->get('file'), []);
+        $importer = new ProductExcelImporter($this->file, []);
+        wp_localize_script(
+            'ewoo-product-validation',
+            'ewoo_product_import_params',
+            [
+                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'mapping' => [
+                    'required' => array_keys($this->importStrategy->getColumns())
+                ],
+                'file' => $this->file,
+            ]
+        );
         wp_localize_script(
             'ewoo-product-import',
             'ewoo_product_import_params',
@@ -333,15 +359,23 @@ class ProductImporterController extends BasicController
                 'file' => $this->file,
             ]
         );
-        wp_deregister_script('wc-product-import');
-        $resolver = new ProblemResolver($importer->getColumns(), $mapping_to);
-        $view_data = $resolver->makeViewTable();
+
+        if (! empty($mapping_to) && ! empty($importer->getColumns())) {
+            $resolver = new ProblemResolver(
+                $this->importStrategy,
+                $importer->getColumns(),
+                $mapping_to
+            );
+        } else {
+            wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
+            return;
+        }
+
         include_once $this->import_views_path . '/import-problem-resolver.php';
     }
+
     private function showImport(): void
     {
-        check_admin_referer(self::IMPORT_NONCE);
-
         if (! is_file($this->file)) {
             $this->addErrors(__('The file does not exist, please try again.', 'woocommerce'));
             $this->showErrors();
@@ -377,19 +411,12 @@ class ProductImporterController extends BasicController
             ]
         );
 
-        wp_deregister_script('wc-product-import');
         wp_enqueue_script('ewoo-product-import');
         include_once $this->import_views_path . '/import-progress.php';
     }
-    private function showFooter(): self
-    {
-        include $this->import_views_path . 'import-footer.php';
-
-        return $this;
-    }
+    
     private function showDone(): self
     {
-        check_admin_referer(self::IMPORT_NONCE);
         $imported  = isset($_GET['products-imported']) ? absint($_GET['products-imported']) : 0;
         $updated   = isset($_GET['products-updated']) ? absint($_GET['products-updated']) : 0;
         $failed    = isset($_GET['products-failed']) ? absint($_GET['products-failed']) : 0;
@@ -401,5 +428,4 @@ class ProductImporterController extends BasicController
 
         return $this;
     }
-
 }

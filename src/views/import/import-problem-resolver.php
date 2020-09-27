@@ -1,34 +1,21 @@
 <?php
-    use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-?>
 
-<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer excel-resolver"
-      method="post">
-    <header>
-        <h2><?= __('Проверка данных', 'extendedwoo')?></h2>
-        <p></p>
-    </header>
-    <section class="excel-resolver__rows">
-        <table>
-            <thead>
-            <tr>
-                <?php
-                    $defaultCols = array_flip(ProductsImportHelper::getDefaultFields());
-                ?>
-                <?php foreach ($mapping_to as $key) :?>
-                <th><?= __($defaultCols[$key], 'extendedwoo') ?></th>
-                <?php endforeach; ?>
-            </tr>
-            </thead>
-            <tbody>
-               <?= $view_data ?>
-            </tbody>
-        </table>
-    </section>
+$labels = array_values($this->importStrategy->getColumns());
+$mapping_to = $req->get('map_to');
+$resulting_table = $resolver->makeViewTable();
+?>
+<form action="<?= esc_url($this->getNextStepLink())?>" class="wc-progress-form-content woocommerce-importer excel-resolver" method="post">
+
+    <?php include __DIR__.'/import-validation/validation-header.php' ?>
+    <?php include __DIR__.'/import-validation/validation-body.php' ?>
+
     <div class="wc-actions">
-        <button type="submit" class="button button-primary button-next"
+        <button type="submit" class="button button-primary button-next hidden"
                 value="<?= __('Continue', 'woocommerce') ?>"
                 name="save_step"><?= __('Run the importer', 'woocommerce') ?></button>
+        <button type="submit" class="button button-primary button-next btn-check-form"
+                value="<?= __('Начать проверку', 'woocommerce') ?>"
+                name="save_step"><?= __('Начать проверку', 'woocommerce') ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
 
         <?php  foreach ($labels as $index => $map_from) : ?>

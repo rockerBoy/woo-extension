@@ -3,10 +3,11 @@
 namespace ExtendedWoo\Entities;
 
 use ExtendedWoo\ExtensionAPI\interfaces\import\ProductItemBuilder;
+use WC_Product;
 
 class ProductBuilder implements ProductItemBuilder
 {
-    private \WC_Product $product;
+    private WC_Product $product;
 
     public function __construct($product = 0)
     {
@@ -95,9 +96,15 @@ class ProductBuilder implements ProductItemBuilder
         return $this;
     }
 
-    public function makeProduct(): \WC_Product
+    public function setValidationFlag(bool $is_valid): self
+    {
+        $this->product->setValidationFlag($is_valid);
+
+        return $this;
+    }
+
+    public function makeProduct(): WC_Product
     {
         return $this->product;
     }
-
 }

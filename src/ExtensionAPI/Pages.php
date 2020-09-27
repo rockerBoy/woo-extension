@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
+use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
@@ -225,8 +226,10 @@ final class Pages implements PageInterface
                     array(
                         'position'   => 'done',
                         'percentage' => 100,
-                        'url'        => add_query_arg(array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
-                            admin_url('admin.php?page=excel_import&step=result')),
+                        'url'        => add_query_arg(
+                            array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
+                            admin_url('admin.php?page=excel_import&step=result')
+                        ),
                         'imported'   => count($results['imported']),
                         'failed'     => count($results['failed']),
                         'updated'    => count($results['updated']),
@@ -235,6 +238,129 @@ final class Pages implements PageInterface
                 );
             }
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function doAjaxProductRemove(): void
+    {
+        $request = $this->request;
+        check_ajax_referer('ewoo-product-import', 'security');
+
+        $product_id = $request->get('prod_id');
+
+        (new Product())
+            ->deletePreImportedProduct($product_id);
+        wp_send_json_success(
+            array(
+                'result'   => 'done',
+            )
+        );
+    }
+
+    public function doAjaxCheckResolverForm(): void
+    {
+        global $wpdb;
+
+        $request = $this->request;
+        check_ajax_referer('ewoo-product-import', 'security');
+
+        $form_data = $request->get('form_data');
+        $results = [
+            'products' => [],
+        ];
+
+        $check_item = new Product();
+        if (! empty($form_data)) {
+            foreach ($form_data as $item) {
+                $item_type = $item['item'];
+                $item_value = $item['value'];
+                $rel_id = $item['relation_id'];
+                $product_id = $item['product_id'];
+
+                $product = new Product();
+                $product->setNewID($product_id);
+
+                switch ($item_type) {
+                    case "sku":
+                        $is_exists = $wpdb->prepare("SELECT id 
+                                                FROM {$wpdb->prefix}woo_pre_import
+                                                WHERE
+                                                 sku = %s", $item_value);
+                        $is_exists = $wpdb->get_var($is_exists);
+
+                        if (false === (bool)$is_exists) {
+                            $import_id = $product
+                                ->getPreImportID();
+                            $wpdb->query($wpdb->prepare(
+                                "UPDATE {$wpdb->prefix}woo_pre_import
+                                    SET sku = %s, is_valid = 1 
+                                    WHERE id = %d",
+                                $item_value,
+                                $import_id
+                            ));
+                            $results['products'][$rel_id] = [
+                                'result'   => 'done',
+                                'status'   => 'ok',
+                                'sku' => $item_value,
+                                'row_id' => $rel_id,
+                            ];
+                        } else {
+                            $results['products'][$rel_id] = [
+                                'result'   => 'done',
+                                'status'   => 'error',
+                                'msg' => __('Артикль уже существует', 'extendedwoo'),
+                                'row_id' => $rel_id,
+                                'sku' => $item_value,
+                            ];
+                            wp_send_json_success($results);
+                        }
+                        break;
+                    case "category":
+                        $import_id = $product
+                            ->getPreImportID();
+                        $term = get_term($item_value);
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}woo_pre_import_relationships
+                        SET product_category_id = %d, product_parent_category_id = %d
+                        WHERE product_id = %d",
+                            $term->term_id,
+                            ($term->parent) ?? 0,
+                            $product_id
+                        ));
+
+                        $wpdb->query($wpdb->prepare(
+                            "UPDATE {$wpdb->prefix}woo_pre_import
+                        SET is_valid = 1
+                        WHERE id = %d",
+                            $import_id
+                        ));
+                        $results['products'][$rel_id] = [
+                            'result'   => 'done',
+                            'status'   => 'ok',
+                            'category' => $term->name,
+                            'row_id' => $rel_id,
+                        ];
+                        break;
+                }
+
+                $total = $product->getTotal();
+                $valid = $product->getValid();
+                $results['total'] = $total;
+                $results['success'] = $valid;
+                $results['errors'] = $total-$valid;
+            }
+        }
+
+        $total = $check_item->getTotal();
+        $valid = $check_item->getValid();
+
+        if ($total - $valid === 0) {
+            $results['errors'] = $total-$valid;
+            $results['status'] = 'ok';
+        }
+        wp_send_json_success($results);
     }
 
 
