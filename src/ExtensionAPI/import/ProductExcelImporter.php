@@ -67,16 +67,9 @@ class ProductExcelImporter extends Import
         ];
 
         $import_products = $this->getPreImportedRows();
-        foreach ($import_products as $product) {
-            $product_item = $this->process($product);
 
-            if ($product_item->is_updated) {
-                $data['updated'][] = $product_item;
-            } elseif ($product_item->is_saved) {
-                $data['imported'][] = $product_item;
-            } else {
-                $data['failed'][] = $product_item;
-            }
+        foreach ($import_products as $product) {
+            $data['imported'][] = $this->process($product);
         }
 
         return $data;

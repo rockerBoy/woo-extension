@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI\import\models;
 
+use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\ProductBuilder;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
@@ -32,6 +33,7 @@ final class ProblemResolver
     {
         $table_output = '';
         $temp_products = $this->temporaryProductList;
+
         if (ProductsImportHelper::validateMapping($this->mapping)) {
             foreach ($temp_products as $index => $product) {
                 $validation_flag = $this->validationResult[$index]['status'];
@@ -61,16 +63,18 @@ final class ProblemResolver
 
                     $input_set['category_ids']  .= '</select>';
 
+                    $id = ($product->getNewID() > 0) ? $product->getNewID(): $product->getRealID();
+
                     $meta_data = [
-                        'id' => $product->getNewID(),
+                        'id' => $id,
                         'sku' => $product->get_sku(),
                         'name' => ProductsImportHelper::makeExcerpt($product->get_name(), 0, 50),
                         'category_ids' => $product->getCategory(),
                     ];
 
                     foreach ($this->mapping as $item => $value) {
-                        $item = (empty($meta_data[$value]))? $input_set[$value]: $meta_data[$value];
-                        $table_output .= $this->makeRow($item);
+                        $item = (empty($meta_data[$value]))? $input_set[$value]: ((! empty($meta_data[$value])) ?  $meta_data[$value] : '');
+                        $table_output .= $this->makeRow(($item)??'');
                     }
 
                     if (! $validation_flag) {
@@ -95,6 +99,10 @@ final class ProblemResolver
         foreach ($raw_rows as $index => $row) {
             $prepared_row = array_slice(array_values($row), 0, $required_max);
             $prepared_row = ProductsImportHelper::parseRow($prepared_row, $this->mapping);
+
+            if (! is_numeric($prepared_row['id'])) {
+                continue;
+            }
 
             $validation_result = $this->strategy->validateColumnsData($prepared_row);
             $rules = $this->strategy->getRules();
@@ -127,14 +135,23 @@ final class ProblemResolver
         ];
         $data['category_ids'] = ProductCatTaxonomy::parseCategoriesString($data['category_ids']);
         $data['category_ids'] = current($data['category_ids']);
+        $isExists = false;
 
-        $temp_product = $builder
+        if (!empty($data['sku'])) {
+            $isExists = wc_get_product_id_by_sku($data['sku']);
+        }
+
+        if (! $isExists) {
+            $temp_product = $builder
             ->setID($data['id'])
-            ->setSKU($data['sku'])
             ->setName($data['name'])
+            ->setSKU($data['sku'])
             ->setCategory($data['category_ids'])
             ->setValidationFlag($is_valid)
             ->makeProduct();
+        } else {
+            $temp_product = new Product($isExists);
+        }
 
         $temp_product->saveTemporary();
 

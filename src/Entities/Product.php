@@ -46,8 +46,12 @@ final class Product extends \WC_Product_Simple
     {
         $relations_query = $this->db
             ->prepare(
-                "SELECT id FROM {$this->relation_table} WHERE `product_id` = %d order by id DESC LIMIT 1",
-                $this->new_id
+                "SELECT id 
+                        FROM {$this->relation_table}
+                        WHERE 
+                            `product_id` = %d
+                        order by id DESC LIMIT 1",
+                $this->getRealID()
             );
         $relations_query = $this->db->get_var($relations_query);
 
@@ -69,23 +73,59 @@ final class Product extends \WC_Product_Simple
         return $import_id;
     }
 
+    public function getRealID():int
+    {
+        if (empty($this->new_id)) {
+            $real_id_query = $this->db
+                ->prepare("SELECT product_id FROM {$this->relation_table}
+                    WHERE
+                        post_id = %d
+                    ", $this->get_id());
+            $real_id = $this->db->get_var($real_id_query);
+        } else {
+            $real_id = $this->new_id;
+        }
+
+        return (! empty($real_id)) ? (int)$real_id : 0;
+    }
+
     public function getTotal(): int
     {
-        $total_query = $this->db->get_var("SELECT COUNT(id) FROM {$this->relation_table}");
+        $total_query = $this->db->get_var("
+            SELECT
+            COUNT(rel.id) FROM {$this->relation_table} rel
+            INNER JOIN {$this->pre_import_table} pi ON rel.import_id = pi.id
+            WHERE pi.is_imported <> 1 OR rel.post_id = 0
+            ");
         return $total_query ? (int) $total_query: 0;
     }
 
     public function getValid(): int
     {
-        return (int) $this->db->get_var("SELECT COUNT(id) FROM {$this->pre_import_table} WHERE is_valid <> 0");
+        return (int) $this->db->get_var("
+                            SELECT COUNT(id)
+                             FROM {$this->pre_import_table}  
+                             WHERE is_valid <> 0 AND is_imported <> 1");
     }
 
     public function getErrors(): int
     {
-        return (int) $this->db->get_var("
-                        SELECT COUNT(id) 
-                        FROM {$this->pre_import_table}
-                         WHERE is_valid <> 1");
+        $duplicates = $this->db->get_results(
+            "select
+                    id
+                    FROM {$this->relation_table} rel
+                    WHERE (select count(id) FROM fz_woo_pre_import_relationships WHERE product_id = rel.product_id) > 1
+                    GROUP BY product_id
+                    ORDER BY id DESC");
+        $other_errors = (int) $this->db->get_var("
+                        SELECT COUNT(pi.id) 
+                        FROM {$this->pre_import_table} pi
+                        INNER JOIN {$this->relation_table} rel ON pi.id = rel.import_id
+                         WHERE
+                            pi.is_imported = 0 AND
+                             pi.is_valid = 0");
+
+        return $other_errors+count($duplicates);
     }
 
     public function setImportedFlag(bool $is_imported): self
@@ -105,8 +145,22 @@ final class Product extends \WC_Product_Simple
     public function save(): int
     {
         $id = parent::save();
-        $this->saveTemporary();
+        $this->setImportedFlag(1);
 
+        $import_id = $this->getPreImportID();
+        $relation_id = $this->getRelationsID();
+
+        $query = $this->db
+            ->prepare("UPDATE {$this->pre_import_table} pi
+        SET pi.is_imported = 1 WHERE id = %d", $import_id);
+        $this->db->query($query);
+
+        $query = $this->db
+            ->prepare("UPDATE {$this->relation_table}
+                        SET post_id = %d 
+                        WHERE import_id = %d", $id,
+                $import_id);
+        $this->db->query($query);
         return $id;
     }
 
@@ -116,10 +170,11 @@ final class Product extends \WC_Product_Simple
         $cat_list = [];
 
         foreach ($ids as $cat) {
-            $category = get_term($cat);
-
-            if (! empty($category)) {
+            if (! empty($cat)) {
+                $category   = get_term($cat);
                 $cat_list[] = $category->name;
+            } else {
+                $cat_list[] = '';
             }
         }
 
@@ -180,16 +235,19 @@ final class Product extends \WC_Product_Simple
     private function saveRelationships(int $product_id): void
     {
         $db = $this->db;
+        $sku = $this->get_sku();
         $pre_import_id = $db->get_var(
-            $db->prepare("SELECT id FROM {$this->pre_import_table} WHERE `sku`= %s LIMIT 1", $this->get_sku())
+            $db->prepare("SELECT id FROM {$this->pre_import_table} WHERE `sku`= %s LIMIT 1", $sku)
         );
+
         $category_id = current($this->get_category_ids());
         $category = get_term($category_id);
         $parent_id = ($category->parent)??0;
+
         $relations = [
             'post_id' => $this->get_id(),
             'import_id' => $pre_import_id,
-            'product_id' => $this->new_id,
+            'product_id' => $this->getRealID(),
             'product_category_id' => $category_id,
             'product_parent_category_id' => $parent_id,
             'product_author_id' => get_current_user_id(),
@@ -198,13 +256,9 @@ final class Product extends \WC_Product_Simple
         $record_id = $db->get_var(
             $db->prepare("SELECT id FROM {$this->relation_table} WHERE `post_id`= %d LIMIT 1", $post_id)
         );
-
-        if (true === (bool)$record_id && $this->get_id() > 0) {
-            $this->is_updated = true;
-//            $db->update($this->relation_table, $relations, ['id' => $record_id]);
-        } else {
-            $this->is_saved = true;
-            $db->insert($this->relation_table, $relations);
-        }
+//        if ($post_id === 0) {
+        $this->is_saved = true;
+        $db->insert($this->relation_table, $relations);
+//        }
     }
 }

@@ -59,7 +59,8 @@ class RuleSet implements RuleSetBuilder
         $item_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_pre_import
                                 WHERE `sku` = %s", $this->row['sku']));
 
-        if (! $item_id) {
+        $product = wc_get_product_id_by_sku($this->row['sku']);
+        if (! $item_id && !$product) {
             $this->rules['unique']['sku'] = true;
             $item_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_pre_import_relationships
                                 WHERE `product_id` = %i", $this->row['id']));

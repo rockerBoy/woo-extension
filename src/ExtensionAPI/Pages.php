@@ -346,19 +346,36 @@ final class Pages implements PageInterface
 
                 $total = $product->getTotal();
                 $valid = $product->getValid();
+                $errors = $product->getErrors();
+
                 $results['total'] = $total;
                 $results['success'] = $valid;
-                $results['errors'] = $total-$valid;
+
+                if ($valid > 0 && $errors === 0) {
+                    $results['errors'] = $total-$valid;
+                } else {
+                    $results['errors'] = $total;
+                }
             }
         }
 
         $total = $check_item->getTotal();
         $valid = $check_item->getValid();
+        $errors = $check_item->getErrors();
 
-        if ($total - $valid === 0) {
-            $results['errors'] = $total-$valid;
+        if ($valid > 0 && $errors === 0) {
+            if ($total - $valid === 0) {
+                $results['errors'] = $total-$valid;
+                $results['status'] = 'ok';
+            }
+        } elseif ($errors > 0) {
+            $results['status'] = 'nok';
+            $results['errors'] = $errors;
+        } else {
             $results['status'] = 'ok';
+            $results['errors'] = $errors;
         }
+
         wp_send_json_success($results);
     }
 

@@ -328,7 +328,7 @@ class ProductImporterController extends BasicController
         $req = $this->request;
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
-
+        $this->startRow = $_GET['start_row'];
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
@@ -360,9 +360,17 @@ class ProductImporterController extends BasicController
         );
 
         if (! empty($mapping_to) && ! empty($importer->getColumns())) {
+            $columns = [];
+
+            foreach ($importer->getColumns() as $index => $column) {
+                if ($index >= $this->startRow) {
+                    $columns[] = $column;
+                }
+            }
+
             $resolver = new ProblemResolver(
                 $this->importStrategy,
-                $importer->getColumns(),
+                $columns,
                 $mapping_to
             );
         } else {
