@@ -4,6 +4,7 @@
 namespace ExtendedWoo\ExtensionAPI\import\models;
 
 use DateTimeImmutable;
+use ExtendedWoo\Entities\ProductBuilder;
 use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 use wpdb;
 
@@ -53,6 +54,26 @@ abstract class Import
         }
 
         return $row;
+    }
+
+    public function getPreImportedRows(): array
+    {
+        $product_builder = new ProductBuilder();
+        $product_query = $this->db->prepare("
+                SELECT 
+                rel.product_id as id,
+                pi.sku,
+                pi.product_title as name,
+                rel.product_category_id,
+                rel.import_id
+                FROM {$this->db->prefix}woo_pre_import_relationships rel
+                INNER JOIN {$this->db->prefix}woo_pre_import pi ON rel.import_id = pi.id
+                WHERE 
+                    `pi`.is_valid = 1 AND 
+                    `pi`.is_imported = 0
+        ");
+        return $this->db->get_results($product_query, ARRAY_A);
+
     }
 
     protected function parseCategoriesField(string $categories): array

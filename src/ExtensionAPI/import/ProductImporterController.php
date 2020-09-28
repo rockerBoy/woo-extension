@@ -246,7 +246,6 @@ class ProductImporterController extends BasicController
         return $this;
     }
 
-
     private function showFooter(): self
     {
         include $this->import_views_path . 'import-footer.php';
@@ -382,8 +381,6 @@ class ProductImporterController extends BasicController
         }
 
         $req = $this->request;
-        $fixed_sku = $req->get('sku')?? [];
-        $fixed_cat_ids = $req->get('category') ?? [];
         if (!empty($req->get('map_from')) && ! empty($req->get('map_to'))) {
             $mapping_from = $req->get('map_from');
             $mapping_to = $req->get('map_to');
@@ -402,10 +399,6 @@ class ProductImporterController extends BasicController
                 'mapping' => [
                     'from' => $mapping_from,
                     'to' => $mapping_to,
-                ],
-                'fixes' => [
-                  'sku'  => $fixed_sku,
-                  'categories'  => $fixed_cat_ids,
                 ],
                 'file' => $this->file,
             ]

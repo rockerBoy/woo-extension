@@ -145,6 +145,7 @@ final class Product extends \WC_Product_Simple
             );
         }
     }
+
     private function saveToPreImport(): self
     {
         $db = $this->db;

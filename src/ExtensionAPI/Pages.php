@@ -213,8 +213,7 @@ final class Pages implements PageInterface
         if (!empty($request->get('file'))) {
             $params = array(
                 'mapping'         => isset($_POST['mapping']) ? (array) wc_clean(wp_unslash($_POST['mapping'])) : array(), // PHPCS: input var ok.
-                'fixes'             => isset($_POST['fixes']) ? (array) wc_clean(wp_unslash($_POST['fixes'])) : array(), // PHPCS: input var ok.
-            );
+             );
             $importer = new ProductExcelImporter($request->get('file'), $params);
             $results = $importer->import();
 
