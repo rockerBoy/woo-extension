@@ -23,8 +23,8 @@ class ProductPriceImportType implements ImportType
         return array_merge($this->basicColumns, $columns);
     }
 
-    public function validateColumnsData(array $columns_data): bool
+    public function validateColumnsData(array $columns_data): array
     {
-        return false;
+        return [];
     }
 }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "46211ffbeb8a20133d250a24fe773c25",
+    "content-hash": "9802658055663a8860a84123ba16c406",
     "packages": [
         {
             "name": "graham-campbell/result-type",
@@ -678,6 +678,67 @@
                 "simple-cache"
             ],
             "time": "2017-10-23T01:57:42+00:00"
+        },
+        {
+            "name": "rdlowrey/auryn",
+            "version": "v1.4.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/rdlowrey/auryn.git",
+                "reference": "8c4dc07943599ba84f4f89eab8cf43efeef80395"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/rdlowrey/auryn/zipball/8c4dc07943599ba84f4f89eab8cf43efeef80395",
+                "reference": "8c4dc07943599ba84f4f89eab8cf43efeef80395",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "require-dev": {
+                "athletic/athletic": "~0.1",
+                "fabpot/php-cs-fixer": "~1.9",
+                "phpunit/phpunit": "^4.7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Auryn\\": "lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dan Ackroyd",
+                    "email": "Danack@basereality.com",
+                    "homepage": "http://www.basereality.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Levi Morrison",
+                    "email": "levim@php.net",
+                    "homepage": "http://morrisonlevi.github.com/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Daniel Lowrey",
+                    "email": "rdlowrey@gmail.com",
+                    "homepage": "https://github.com/rdlowrey",
+                    "role": "Creator / Main Developer"
+                }
+            ],
+            "description": "Auryn is a dependency injector for bootstrapping object-oriented PHP applications.",
+            "homepage": "https://github.com/rdlowrey/auryn",
+            "keywords": [
+                "dependency injection",
+                "dic",
+                "ioc"
+            ],
+            "time": "2017-05-15T06:26:46+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",

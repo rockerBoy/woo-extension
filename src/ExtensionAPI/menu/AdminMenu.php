@@ -101,6 +101,7 @@ final class AdminMenu
             ->setImportType(ImportTypeFactory::getImportType(ProductPriceImportType::class))
             ->dispatch();
     }
+
     public function productsSalesImportPage(): void
     {
         wp_localize_script(
