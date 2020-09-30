@@ -27,6 +27,7 @@ final class Exporter implements ExporterInterface
             $this->file_export = $file_export;
             $this->productModel = $product;
             $this->columnNames = $this->productModel->getDefaultColumnNames();
+
             $this->setProductTypesToExport(
                 array_merge(
                     array_keys(
@@ -58,6 +59,7 @@ final class Exporter implements ExporterInterface
         $this->productTypesToExport = array_map('wc_clean', $types);
         return $this;
     }
+
     public function setLimit(int $limit): ExporterInterface
     {
         $this->limit = $limit;
@@ -185,6 +187,10 @@ final class Exporter implements ExporterInterface
         $columns = $this->getColumnNames();
         $row     = [];
         $categories = $this->productModel->getCategory($product);
+        $brands = $this->productModel->getBrand($product);
+        $countries = $this->productModel->getCountry($product);
+        $parent_categories = $this->productModel->getCategory($product, true);
+
         foreach ($columns as $column_id => $column_name) {
             $column_id = strstr($column_id, ':') ? current(explode(':', $column_id)) : $column_id;
 
@@ -203,16 +209,27 @@ final class Exporter implements ExporterInterface
                 $value = $product->{"get_{$column_id}"}('edit');
             }
 
-            if ($column_id === 'category_ids') {
-                $value = $categories;
+            switch ($column_id) {
+                case "category_ids":
+                    $value = $categories;
+                    break;
+                case "parent_category_ids":
+                    $value = $parent_categories;
+                    break;
+                case "brands":
+                    $value = html_entity_decode($brands);
+                    break;
+                case "manufacturers":
+                    $value = $countries;
+                    break;
             }
+
             if ('description' === $column_id || 'short_description' === $column_id) {
                 $value = $this->filterDescriptionField($value);
             }
 
             $row[$column_id] = $value;
         }
-
         return apply_filters('woocommerce_product_export_row_data', $row, $product);
     }
 }
