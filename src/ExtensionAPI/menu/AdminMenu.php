@@ -4,6 +4,7 @@
 namespace ExtendedWoo\ExtensionAPI\menu;
 
 use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
+use ExtendedWoo\ExtensionAPI\import\PriceImportController;
 use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
@@ -82,6 +83,7 @@ final class AdminMenu
             ->setImportType(ImportTypeFactory::getImportType(ProductImportType::class))
             ->dispatch();
     }
+
     public function productsPricingImportPage(): void
     {
         wp_localize_script(
@@ -96,7 +98,7 @@ final class AdminMenu
             ]
         );
         wp_enqueue_script('wc-product-import');
-        $controller = new ProductImporterController($this->request);
+        $controller = new PriceImportController($this->request);
         $controller
             ->setImportType(ImportTypeFactory::getImportType(ProductPriceImportType::class))
             ->dispatch();

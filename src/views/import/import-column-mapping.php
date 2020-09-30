@@ -67,12 +67,12 @@ wp_enqueue_script('ewoo-product-validation');
     <?php endforeach; ?>
     <div class="wc-actions">
         <button type="submit" class="button button-primary button-next"
-                value="<?= __('Run the importer', 'woocommerce'); ?>"
+                value="<?= __('Run the importer', 'woocommerce') ?>"
                 name="save_step"><?php esc_html_e('Начать проверку', 'woocommerce'); ?></button>
         <button type="submit" class="button button-primary button-prev"
-                value="<?= __('Вернутся назад', 'woocommerce'); ?>"
+                value="<?= __('Вернутся назад', 'woocommerce') ?>"
                 name="remove_step"><?php esc_html_e('Вернутся назад', 'woocommerce'); ?></button>
-        <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
+        <input type="hidden" name="file" value="<?= esc_attr($this->file) ?>" />
         <?php wp_nonce_field('etx-xls-importer'); ?>
     </div>
 </form>

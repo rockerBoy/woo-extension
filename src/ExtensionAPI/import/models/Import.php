@@ -26,7 +26,16 @@ abstract class Import
 
     public function getHeader(): array
     {
-        return array_values($this->columns[$this->startImportFrom]);
+        $row = array_values($this->columns[$this->startImportFrom]);
+        $header = [];
+
+        foreach ($row as $cell) {
+            if (! empty($cell)) {
+                $header[] = $cell;
+            }
+        }
+
+        return $header;
     }
 
     public function getImportSize(): int
