@@ -14,8 +14,6 @@
  * @var boolean on_sale
  * @var string stock_status
  * @var string tax_class
- * @var DateTimeImmutable product_uploaded
- * @var DateTimeImmutable product_uploaded_gmt
  */
 
 namespace ExtendedWoo\Entities;
@@ -25,7 +23,6 @@ use ExtendedWoo\ExtensionAPI\interfaces\import\ProductInterface;
 class Products implements ProductInterface
 {
     public const POST_TYPE = 'product';
-    private string $export_type = 'product';
 
     private array $product_args = [];
     /**
@@ -34,34 +31,31 @@ class Products implements ProductInterface
      */
     public function getDefaultColumnNames(): array
     {
-        $columns = [
-            'id'                 => __('ID', 'woocommerce'),
-            'type'               => __('Type', 'woocommerce'),
-            'sku'                => __('SKU', 'woocommerce'),
-            'name'               => __('Name', 'woocommerce'),
-            'published'          => __('Published', 'woocommerce'),
-            'featured'           => __('Is featured?', 'woocommerce'),
-            'catalog_visibility' => __('Visibility in catalog', 'woocommerce'),
-            'short_description'  => __('Short description', 'woocommerce'),
-            'description'        => __('Description', 'woocommerce'),
-            'date_on_sale_from'  => __('Date sale price starts', 'woocommerce'),
-            'date_on_sale_to'    => __('Date sale price ends', 'woocommerce'),
-            'stock_status'       => __('In stock?', 'woocommerce'),
-            'stock'              => __('Stock', 'woocommerce'),
-            'low_stock_amount'   => __('Low stock amount', 'woocommerce'),
-            'sold_individually'  => __('Sold individually?', 'woocommerce'),
-            'reviews_allowed'    => __('Allow customer reviews?', 'woocommerce'),
-            'purchase_note'      => __('Purchase note', 'woocommerce'),
-            'sale_price'         => __('Sale price', 'woocommerce'),
-            'regular_price'      => __('Regular price', 'woocommerce'),
-            'category_ids'       => __('Categories', 'woocommerce'),
-            'tag_ids'            => __('Tags', 'woocommerce'),
-            'images'             => __('Images', 'woocommerce'),
+        return [
+            'id'                        => __('ID', 'woocommerce'),
+            'sku'                       => __('SKU', 'woocommerce'),
+            'name'                      => __('Name', 'woocommerce'),
+            'published'                 => __('Published', 'woocommerce'),
+            'featured'                  => __('Is featured?', 'woocommerce'),
+            'catalog_visibility'        => __('Visibility in catalog', 'woocommerce'),
+            'short_description'         => __('Short description', 'woocommerce'),
+            'description'               => __('Description', 'woocommerce'),
+            'date_on_sale_from'         => __('Date sale price starts', 'woocommerce'),
+            'date_on_sale_to'           => __('Date sale price ends', 'woocommerce'),
+            'stock_status'              => __('In stock?', 'woocommerce'),
+            'stock'                     => __('Stock', 'woocommerce'),
+            'low_stock_amount'          => __('Low stock amount', 'woocommerce'),
+            'sold_individually'         => __('Sold individually?', 'woocommerce'),
+            'reviews_allowed'           => __('Allow customer reviews?', 'woocommerce'),
+            'purchase_note'             => __('Purchase note', 'woocommerce'),
+            'sale_price'                => __('Sale price', 'woocommerce'),
+            'regular_price'             => __('Regular price', 'woocommerce'),
+            'parent_category_ids'       => __('Родительские категории', 'woocommerce'),
+            'category_ids'              => __('Дочерние категории', 'woocommerce'),
+            'brands'                    => __('Бренд', 'woocommerce'),
+            'manufacturers'             => __('Страна производитель', 'woocommerce'),
+            'tag_ids'                   => __('Tags', 'woocommerce'),
         ];
-        return apply_filters(
-            "woocommerce_product_export_{$this->export_type}_default_columns",
-            $columns,
-        );
     }
 
     public function setProductArgs(array $args):self
@@ -75,69 +69,58 @@ class Products implements ProductInterface
     {
         return wc_get_products(
             apply_filters(
-                "woocommerce_product_export_{$this->exportType}_query_args",
+                "woocommerce_product_export_product_query_args",
                 $this->product_args
             )
         );
     }
 
-    public function getCategory($product):string
+    public function getCategory($product, bool $is_parent = false):string
     {
         $term_ids = $product->get_category_ids('edit');
+        $term_ids = wp_parse_id_list($term_ids);
+        $taxonomy = get_term(current($term_ids), 'product_cat');
 
-        return $this->formatTermIDs($term_ids, 'product_cat');
+        if (! $is_parent) {
+            return $taxonomy->name;
+        } else {
+            $parent_id = $taxonomy->parent;
+            return $parent_id > 0 ? get_term($parent_id, 'product_cat')->name : '';
+        }
     }
 
-    private function formatTermIDs(array $term_ids, string $taxonomy): string
+    public function getBrand($product): string
     {
-        $term_ids = wp_parse_id_list($term_ids);
-
-        if (! count($term_ids)) {
-            return '';
+        $taxonomy = get_the_terms($product->id, 'brands');
+        $brand = '';
+        if (false !== $taxonomy) {
+            $brand = current($taxonomy)->name;
         }
 
-        $formatted_terms = array();
+        return $brand;
+    }
 
-        if (is_taxonomy_hierarchical($taxonomy)) {
-            foreach ($term_ids as $term_id) {
-                $formatted_term = array();
-                $ancestor_ids   = array_reverse(get_ancestors($term_id, $taxonomy));
+    public function getCountry($product): string
+    {
+        $taxonomies = get_the_terms($product->id, 'manufacturers');
+        $countries = [];
 
-                foreach ($ancestor_ids as $ancestor_id) {
-                    $term = get_term($ancestor_id, $taxonomy);
-                    if ($term && ! is_wp_error($term)) {
-                        $formatted_term[] = $term->name;
-                    }
-                }
-
-                $term = get_term($term_id, $taxonomy);
-
-                if ($term && ! is_wp_error($term)) {
-                    $formatted_term[] = $term->name;
-                }
-
-                $formatted_terms[] = implode(' > ', $formatted_term);
-            }
-        } else {
-            foreach ($term_ids as $term_id) {
-                $term = get_term($term_id, $taxonomy);
-
-                if ($term && ! is_wp_error($term)) {
-                    $formatted_terms[] = $term->name;
-                }
+        if (false !== $taxonomies) {
+            foreach ($taxonomies as $taxonomy) {
+                $countries[] = $taxonomy->name;
             }
         }
 
-        return implode(' , ', $formatted_terms);
+        return implode(' ', $countries);
     }
 
     public function checkIfExists(string $product_name): bool
     {
-        // TODO: Implement checkIfExists() method.
+        return  false;
     }
 
     public function getProductTerms(): array
     {
-        // TODO: Implement getProductTerms() method.
+        return  [];
     }
 }

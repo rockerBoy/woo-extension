@@ -24,12 +24,10 @@ $products = new Products();
                             <td>
                                 <select id="woocommerce-exporter-columns" class="woocommerce-exporter-columns wc-enhanced-select" style="width:100%;" multiple data-placeholder="<?php esc_attr_e( 'Export all columns', 'woocommerce' ); ?>">
                                     <?php
-                                    foreach ( $products->getDefaultColumnNames() as $column_id => $column_name ) {
-                                        echo '<option value="' . esc_attr( $column_id ) . '">' . esc_html( $column_name ) . '</option>';
-                                    }
+                                        foreach ( $products->getDefaultColumnNames() as $column_id => $column_name ) {
+                                            echo '<option value="' . esc_attr( $column_id ) . '">' . esc_html( $column_name ) . '</option>';
+                                        }
                                     ?>
-                                    <option value="downloads"><?php esc_html_e( 'Downloads', 'woocommerce' ); ?></option>
-                                    <option value="attributes"><?php esc_html_e( 'Attributes', 'woocommerce' ); ?></option>
                                 </select>
                             </td>
                         </tr>
@@ -38,7 +36,7 @@ $products = new Products();
                                 <label for="woocommerce-exporter-category"><?php esc_html_e( 'Which product category should be exported?', 'woocommerce' ); ?></label>
                             </th>
                             <td>
-                                <select id="woocommerce-exporter-category" class="woocommerce-exporter-category wc-enhanced-select" style="width:100%;" multiple data-placeholder="<?php esc_attr_e( 'Export all categories', 'woocommerce' ); ?>">
+                                <select id="woocommerce-exporter-category" required class="woocommerce-exporter-category wc-enhanced-select" style="width:100%;" multiple data-placeholder="<?php esc_attr_e( 'Выберите категорию', 'woocommerce' ); ?>">
                                     <?php
                                     $categories = get_categories(
                                         array(
