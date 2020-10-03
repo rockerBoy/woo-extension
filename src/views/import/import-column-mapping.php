@@ -13,9 +13,11 @@ wp_enqueue_script('ewoo-product-validation');
     <section class="extended-errors hidden">
         <?php
             $required_fields = $this->importStrategy->getColumns();
-        foreach ($required_fields as $id => $label) {
-            echo sprintf('<div id="required_%s" class="hidden">Обязательное поле <span class="extended-error-label">"%s"</span> не задано</div>', $id, $label);
-        }
+            foreach ($required_fields as $id => $label) {
+                if (! is_array($label)) {
+                    echo sprintf('<div id="required_%s" class="hidden">Обязательное поле <span class="extended-error-label">"%s"</span> не задано</div>', $id, $label);
+                }
+            }
         ?>
     </section>
     <section class="wc-importer-mapping-table-wrapper">
@@ -33,25 +35,25 @@ wp_enqueue_script('ewoo-product-validation');
                 $options = ($mapped_value) ?
                     ProductsImportHelper::getMappingOptions($mapped_value, $labels): [];
                 ?>
-                <tr class="<?= ($mapped_value)? 'field-'.$mapped_value : ''?>">
+                <tr class="<?= ($mapped_value)? 'field-'.$mapped_value : ''?> mapping-field">
                     <td class="wc-importer-mapping-table-name">
                         <?= $header ?>
                         <span class="description"></span>
                     </td>
                     <td>
-                        <select name="map_to[<?= esc_html($index) ?>]">
+                        <select name="map_to[]">
                             <option value=""><?= esc_html_e('Do not import', 'woocommerce') ?></option>
                             <option value="">--------------</option>
                             <?php  foreach ($labels as $key => $label) : ?>
                                 <?php $value = $mapped_items[$key] ?>
-                                <?php if (is_array($value)) : ?>
-                                    <optgroup label="<?= esc_attr($value['name']) ?>">
-                                        <?php foreach ($value['options'] as $sub_key => $sub_value) : ?>
+                                <?php
+                                if (is_array($label)) : ?>
+                                    <optgroup label="<?= esc_attr($label['name']) ?>">
+                                        <?php foreach ($label['options'] as $sub_key => $sub_value) : ?>
                                             <option value="<?= esc_attr($sub_key) ?>" <?php selected($mapped_value, $sub_key); ?>><?= esc_html($sub_value) ?></option>
                                         <?php endforeach ?>
                                     </optgroup>
-                                <?php else :
-                                    $mapped_value = $mapped_items[$key]; ?>
+                                <?php else : $mapped_value = $mapped_items[$key]; ?>
                                     <option value="<?= esc_attr($mapped_value) ?>" <?php selected($mapped_value, $key); ?>><?= esc_html($label)?></option>
                                 <?php endif; ?>
                             <?php endforeach ?>
@@ -62,9 +64,6 @@ wp_enqueue_script('ewoo-product-validation');
             </tbody>
         </table>
     </section>
-    <?php foreach ($mapped_items as $key => $item) :?>
-        <input type="hidden" name="<?= esc_html($item) ?>" value="" required/>
-    <?php endforeach; ?>
     <div class="wc-actions">
         <button type="submit" class="button button-primary button-next"
                 value="<?= __('Run the importer', 'woocommerce') ?>"

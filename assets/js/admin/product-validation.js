@@ -1,87 +1,88 @@
 /*global ajaxurl, ewoo_product_import_params */
 ;(function ($, window) {
-    if (Array.prototype.equals) {
-        console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
-    }
-// attach the .equals method to Array's prototype to call it on any array
-    Array.prototype.equals = function (array) {
-        // if the other array is a falsy value, return
-        if (!array) {
-            return false;
-        }
-
-        // compare lengths - can save a lot of time
-        if (this.length != array.length) {
-            return false;
-        }
-
-        for (let i = 0, l=this.length; i < l; i++) {
-            // Check if we have nested arrays
-            if (this[i] instanceof Array && array[i] instanceof Array) {
-                // recurse into the nested arrays
-                if (!this[i].equals(array[i])) {
-                    return false;
-                }
-            } else if (this[i] != array[i]) {
-                // Warning - two different object instances will never be equal: {x:20} != {x:20}
-                return false;
-            }
-        }
-        return true;
-    }
-// Hide method from for-in loops
-    Object.defineProperty(Array.prototype, "equals", {enumerable: false});
-
     let mappingForm = function ( $form ) {
         this.form = $form;
         this.requiredFields = ewoo_product_import_params.mapping.required
         this.selectedFields = [];
+        this.markers = {
+            'danger': 'rgba(255, 10, 10, .6)',
+            'success': 'rgba(3, 198, 47, .6)',
+        };
         this.setFields = this.setFields.bind(this);
         this.setFields();
+        let validationFields = {};
+        this.requiredFields.forEach((name, key) => {
+            validationFields[name] = false;
+        });
+        this.requiredFields = validationFields;
     };
-
 
     mappingForm.prototype.setFields = function () {
         let $this = this;
-        $this.selectedFields = [];
-        $this.form.find('button[name=save_step]').on('click', function (e) {
-            let data = {};
-            let formData = new FormData($this.form[0]);
-            formData.forEach((value, key) => {data[key] = value});
 
+        $this.form.find('button[name=save_step]').on('click', function (e) {
             $this.selectedFields = [];
+            let isMappingValid = false;
+            let mappingData = new FormData(document.querySelector('form'));
+            let mappedValues = mappingData.getAll('map_to[]');
 
             $('body').find('.extended-errors').removeClass('hidden');
+
             $('.extended-errors').each(function () {
                 $(this).find('div').addClass('hidden');
             });
 
-            $this.requiredFields.forEach((name, key) => {
-                let mappingSelect = $this.form.find('select').eq(key);
-                let selected = mappingSelect.val();
-                mappingSelect.parents('td').removeAttr('class');
+            let required = Object.assign({}, $this.requiredFields);
+            let validFields = 0;
+            let minSize = Object.getOwnPropertyNames($this.requiredFields).length;
 
-                if (
-                   typeof selected != 'undefined' &&
-                   $this.requiredFields.includes(selected) &&
-                   ! $this.selectedFields.includes(selected)
-               ) {
-                   $this.selectedFields[key] = selected;
-                   mappingSelect.parents('td').addClass('item-success');
-                } else {
-                    $('body').find('.extended-errors').removeClass('hidden');
-                    $('#required_'+name).removeClass('hidden');
-                    mappingSelect.parents('td').addClass('item-danger');
+            mappedValues.forEach((name, key) => {
+                let row = $('.mapping-field:eq('+key+')');
+                let selectCell = row.find('td:eq(1)');
+                selectCell.removeAttr('style');
+                selectCell.removeClass('item-danger');
+
+                // if (mappedValues.length >= minSize && minSize > validFields) {
+                    if ((typeof name == 'undefined' || name === '') && validFields < minSize) {
+                        selectCell.css({background: $this.markers.danger});
+                        selectCell.addClass('item-danger');
+                        return false
+                    }
+
+                    if (typeof name != 'undefined' && required[name] === false) {
+                        required[name] = true;
+                        selectCell.css({background: $this.markers.success});
+                        validFields++;
+                    } else if (required[name]) {
+                        selectCell.css({background: $this.markers.danger});
+                        selectCell.addClass('item-danger');
+                        return false;
+                    }
+                // }
+            });
+
+            let reqProps = Object.getOwnPropertyNames(required);
+
+            reqProps.forEach((item, key) => {
+                $('#required_'+item).addClass('hidden');
+
+                if (required[item] == false) {
+                    $('#required_'+item).removeClass('hidden');
                 }
             });
 
-            if (!$this.selectedFields.equals($this.requiredFields)) {
-                return false;
+            if (validFields >= minSize) {
+                $('.item-danger').each(function (){
+                    $(this).removeAttr('style');
+                    $(this).removeClass('item-danger');
+                });
+
+                isMappingValid = true;
             }
+
+            return isMappingValid;
         });
-
-    };
-
+    }
     let excelResolverForm = function ( $form ) {
         this.form = $form;
         this.errorsCounter = $('.extended-validation-msg')
