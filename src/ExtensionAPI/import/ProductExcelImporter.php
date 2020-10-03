@@ -104,6 +104,7 @@ class ProductExcelImporter extends Import
         try {
             $product->set_catalog_visibility('hidden');
         } catch (\WC_Data_Exception $e) {
+            throw new \WC_Data_Exception($e->getCode(), $e->getMessage());
         }
 
         $product->save();

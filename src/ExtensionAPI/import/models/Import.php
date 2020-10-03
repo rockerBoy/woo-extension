@@ -81,8 +81,8 @@ abstract class Import
                     `pi`.is_valid = 1 AND 
                     `pi`.is_imported = 0
         ");
-        return $this->db->get_results($product_query, ARRAY_A);
 
+        return $this->db->get_results($product_query, ARRAY_A);
     }
 
     protected function parseCategoriesField(string $categories): array

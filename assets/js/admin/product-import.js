@@ -8,7 +8,7 @@
         this.$form           = $form;
         this.xhr             = false;
         this.mapping         = ewoo_product_import_params.mapping;
-        this.fixes           = ewoo_product_import_params.fixes;
+        this.import_type     = ewoo_product_import_params.import_type;
         this.position        = 0;
         this.file            = ewoo_product_import_params.file;
         this.security        = ewoo_product_import_params.import_nonce;
@@ -41,7 +41,7 @@
                 action          : 'ext_do_ajax_product_import',
                 position        : $this.position,
                 mapping         : $this.mapping,
-                fixes           : $this.fixes,
+                import_type     : $this.import_type,
                 file            : $this.file,
                 security        : $this.security
             },

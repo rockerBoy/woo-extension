@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI\menu;
 
+use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
 use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
 use ExtendedWoo\ExtensionAPI\import\PriceImportController;
 use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
@@ -118,7 +119,7 @@ final class AdminMenu
             ]
         );
         wp_enqueue_script('wc-product-import');
-        $controller = new ProductImporterController($this->request);
+        $controller = new DiscountsImportController($this->request);
         $controller
             ->setImportType(ImportTypeFactory::getImportType(ProductSalesImportType::class))
             ->dispatch();

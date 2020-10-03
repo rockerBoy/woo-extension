@@ -17,15 +17,10 @@ class ProductSalesImportType implements ImportType
     public function getColumns(): array
     {
         $columns = [
-            'price'              => [
-                'name'    => __('Price', 'woocommerce'),
-                'options' => [
-                    'regular_price'     => __('Regular price', 'woocommerce'),
-                    'sale_price'        => __('Sale price', 'woocommerce'),
-                    'date_on_sale_from' => __('Date sale price starts', 'woocommerce'),
-                    'date_on_sale_to'   => __('Date sale price ends', 'woocommerce'),
-                ],
-            ],
+            'regular_price'     => __('Regular price', 'woocommerce'),
+            'sale_price'        => __('Sale price', 'woocommerce'),
+            'date_on_sale_from' => __('Date sale price starts', 'woocommerce'),
+            'date_on_sale_to'   => __('Date sale price ends', 'woocommerce'),
         ];
         return array_merge($this->basicColumns, $columns);
     }

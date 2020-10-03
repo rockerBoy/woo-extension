@@ -4,14 +4,10 @@
 namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\import\models\ProblemResolver;
-use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
 use Symfony\Component\HttpFoundation\Request;
-use WP_Error;
 
-class ProductImporterController extends BasicController
+class SecondaryImportController extends BasicController
 {
-    private const IMPORT_NONCE = 'etx-xls-importer';
 
     public function __construct(Request $request)
     {
@@ -28,11 +24,6 @@ class ProductImporterController extends BasicController
                 'view'    => [$this, 'showMappingForm'],
                 'handler' => '',
             ],
-            'validation' => [
-                'name'    => __("Обработка товаров", 'extendedwoo'),
-                'view'    => [$this, 'showResolverForm'],
-                'handler' => '',
-            ],
             'import'  => [
                 'name'    => __("Import", 'woocommerce'),
                 'view'    => [$this, 'showImport'],
@@ -44,11 +35,10 @@ class ProductImporterController extends BasicController
                 'handler' => '',
             ],
         ];
-        $this->steps
-                                 = apply_filters(
-                                     'woocommerce_product_csv_importer_steps',
-                                     $default_steps
-                                 );
+        $this->steps             = apply_filters(
+            'woocommerce_product_csv_importer_steps',
+            $default_steps
+        );
         $this->step              = ( ! empty($request->get('step'))) ?
             sanitize_key($request->get('step'))
             : current(array_keys($this->steps));
@@ -106,72 +96,6 @@ class ProductImporterController extends BasicController
         include_once $this->import_views_path . '/import-column-mapping.php';
     }
 
-    protected function showResolverForm(): void
-    {
-        if (! is_file($this->file)) {
-            $this->addErrors(__(
-                'The file does not exist, please try again.',
-                'woocommerce'
-            ));
-            $this->showErrors();
-        }
-
-        $req = $this->request;
-        $labels = array_values($this->importStrategy->getColumns());
-        $mapping_to = $req->get('map_to');
-        $this->startRow = $_GET['start_row'];
-        if (empty($mapping_to)) {
-            wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
-        }
-
-        update_user_option(get_current_user_id(), 'woocommerce_product_import_mapping', $mapping_to);
-        $importer = new ProductExcelImporter($this->file, []);
-        wp_localize_script(
-            'ewoo-product-validation',
-            'ewoo_product_import_params',
-            [
-                'import_nonce' => wp_create_nonce('ewoo-product-import'),
-                'mapping' => [
-                    'required' => array_keys($this->importStrategy->getColumns())
-                ],
-                'file' => $this->file,
-            ]
-        );
-        wp_localize_script(
-            'ewoo-product-import',
-            'ewoo_product_import_params',
-            [
-                'import_nonce' => wp_create_nonce('ewoo-product-import'),
-                'mapping' => [
-                    'from' => $labels,
-                    'to' => $mapping_to,
-                ],
-                'file' => $this->file,
-            ]
-        );
-
-        if (! empty($mapping_to) && ! empty($importer->getColumns())) {
-            $columns = [];
-
-            foreach ($importer->getColumns() as $index => $column) {
-                if ($index >= $this->startRow) {
-                    $columns[] = $column;
-                }
-            }
-
-            $resolver = new ProblemResolver(
-                $this->importStrategy,
-                $columns,
-                $mapping_to
-            );
-        } else {
-            wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
-            return;
-        }
-
-        include_once $this->import_views_path . '/import-problem-resolver.php';
-    }
-
     protected function showImport(): void
     {
         if (! is_file($this->file)) {
@@ -199,7 +123,6 @@ class ProductImporterController extends BasicController
                     'from' => $mapping_from,
                     'to' => $mapping_to,
                 ],
-                'import_type' => 'primary_import',
                 'file' => $this->file,
             ]
         );
@@ -207,7 +130,7 @@ class ProductImporterController extends BasicController
         wp_enqueue_script('ewoo-product-import');
         include_once $this->import_views_path . '/import-progress.php';
     }
-    
+
     protected function showDone(): self
     {
         $imported  = isset($_GET['products-imported']) ? absint($_GET['products-imported']) : 0;

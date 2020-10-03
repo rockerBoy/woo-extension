@@ -143,10 +143,18 @@
 
     excelResolverForm.prototype.removeRow = function () {
         let $this = this;
-        $this.form.find('#show_all').on('change', function () {
-            $this.form.find('.item-success').each(function () {
-                $(this).toggleClass('hidden');
-            });
+
+        $('#show_all').on('change', function () {
+            let status = $('#show_all').prop('checked');
+            if (typeof status != 'undefined' && status == true) {
+                $this.form.find('.item-success').each(function () {
+                    $(this).removeClass('hidden');
+                });
+            } else {
+                $this.form.find('.item-success').each(function () {
+                    $(this).addClass('hidden');
+                });
+            }
         });
     };
 
@@ -205,7 +213,7 @@
                 },
                 dataType: 'json',
                 success: function ( response ) {
-                    let successClass = 'item-success';
+                    let successClass = 'item-success hidden';
                     let errorClass = 'item-danger';
                     if ( response.success ) {
                         formData.forEach((value, key) => {
