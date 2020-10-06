@@ -162,7 +162,8 @@ class ProductImporterController extends BasicController
             $resolver = new ProblemResolver(
                 $this->importStrategy,
                 $columns,
-                $mapping_to
+                $mapping_to,
+                $this->file
             );
         } else {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));

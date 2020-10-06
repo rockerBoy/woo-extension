@@ -65,6 +65,7 @@ class PreImportTable implements TableInterface
                 `product_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_parent_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_author_id`  bigint(20) unsigned NOT NULL default '0',
+                `imported_file_token` varchar(200) NULL default '',
                 `order` int(11) unsigned NULL default 0,
                 PRIMARY KEY (id),
                 KEY import_id (import_id),

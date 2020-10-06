@@ -8,6 +8,7 @@ use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
 final class Product extends \WC_Product_Simple
 {
     private int $new_id = 0;
+    private string $filename = '';
     private \wpdb $db;
     private \DateTimeImmutable $time;
     private bool $is_valid = false;
@@ -33,6 +34,13 @@ final class Product extends \WC_Product_Simple
     public function setNewID(int $id)
     {
         $this->new_id = absint($id);
+
+        return $this;
+    }
+
+    public function setFilename(string $filename)
+    {
+        $this->filename = $filename;
 
         return $this;
     }
@@ -91,32 +99,44 @@ final class Product extends \WC_Product_Simple
 
     public function getTotal(): int
     {
+        $hash = md5($this->filename);
         $total_query = $this->db->get_var("
             SELECT
             COUNT(rel.id) FROM {$this->relation_table} rel
             INNER JOIN {$this->pre_import_table} pi ON rel.import_id = pi.id
-            WHERE pi.is_imported <> 1 OR rel.post_id = 0
+            WHERE pi.is_imported <> 1 OR rel.post_id = 0 AND rel.imported_file_token = \"$hash\"
             ");
         return $total_query ? (int) $total_query: 0;
     }
 
     public function getValid(): int
     {
+        $hash = md5($this->filename);
+
         return (int) $this->db->get_var("
-                            SELECT COUNT(id)
-                             FROM {$this->pre_import_table}  
-                             WHERE is_valid <> 0 AND is_imported <> 1");
+                            SELECT 
+                                COUNT(`pit`.id) as id
+                             FROM {$this->pre_import_table}  `pit`
+                             LEFT JOIN {$this->relation_table} `rel` ON `pit`.`id` = `rel`.`import_id`
+                             WHERE 
+                                `pit`.is_valid <> 0 AND
+                                `pit`.is_imported <> 1 AND 
+                                rel.imported_file_token = \"$hash\"");
     }
 
     public function getErrors(): int
     {
+        $hash = md5($this->filename);
         $duplicates = $this->db->get_results(
             "select
                     id
                     FROM {$this->relation_table} rel
-                    WHERE (select count(id) FROM fz_woo_pre_import_relationships WHERE product_id = rel.product_id) > 1
+                    WHERE 
+                        (select count(id) FROM fz_woo_pre_import_relationships WHERE product_id = rel.product_id) > 1 AND 
+                        rel.imported_file_token = \"$hash\"
                     GROUP BY product_id
-                    ORDER BY id DESC");
+                    ORDER BY id DESC"
+        );
         $other_errors = (int) $this->db->get_var("
                         SELECT COUNT(pi.id) 
                         FROM {$this->pre_import_table} pi
@@ -156,10 +176,13 @@ final class Product extends \WC_Product_Simple
         $this->db->query($query);
 
         $query = $this->db
-            ->prepare("UPDATE {$this->relation_table}
+            ->prepare(
+                "UPDATE {$this->relation_table}
                         SET post_id = %d 
-                        WHERE import_id = %d", $id,
-                $import_id);
+                        WHERE import_id = %d",
+                $id,
+                $import_id
+            );
         $this->db->query($query);
         return $id;
     }
@@ -191,11 +214,21 @@ final class Product extends \WC_Product_Simple
     public function deletePreImportedProduct(int $relation_id): void
     {
         if (! empty($relation_id)) {
+            $import_id = $this->db->get_var("SELECT import_id FROM {$this->relation_table}
+                WHERE `id` = $relation_id LIMIT 1
+            ");
             $this->db
             ->query(
                 $this->db->prepare(
                     "DELETE FROM {$this->relation_table} WHERE id = %d",
                     $relation_id
+                )
+            );
+            $this->db
+            ->query(
+                $this->db->prepare(
+                    "DELETE FROM {$this->pre_import_table} WHERE id = %d AND is_valid <> 1 AND is_imported <> 1",
+                    $import_id
                 )
             );
         }
@@ -251,14 +284,15 @@ final class Product extends \WC_Product_Simple
             'product_category_id' => $category_id,
             'product_parent_category_id' => $parent_id,
             'product_author_id' => get_current_user_id(),
+            'imported_file_token' => md5($this->filename),
         ];
+
         $post_id = $this->get_id() ?? 0;
+
         $record_id = $db->get_var(
             $db->prepare("SELECT id FROM {$this->relation_table} WHERE `post_id`= %d LIMIT 1", $post_id)
         );
-//        if ($post_id === 0) {
         $this->is_saved = true;
         $db->insert($this->relation_table, $relations);
-//        }
     }
 }

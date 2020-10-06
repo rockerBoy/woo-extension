@@ -22,20 +22,14 @@ final class ProductCatTaxonomy implements TaxonomyInterface
     }
     public function addTaxonomyFields(): void
     {
-        ob_start();
         require __DIR__.'/../../views/taxonomies/product_cat_add_fields.php';
-        $view = ob_get_clean();
-        echo $view;
     }
 
     public function editTaxonomyFields($term): void
     {
         $fields = $this->filters->getCategoryFilters($term->term_id);
 
-        ob_start();
         require __DIR__.'/../../views/taxonomies/product_cat_edit_fields.php';
-        $view = ob_get_clean();
-        echo $view;
     }
 
     public function saveTaxonomyFields(int $term_id, string $tt_id = '', string $taxonomy = ''): void

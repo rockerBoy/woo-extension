@@ -4,12 +4,14 @@
 namespace ExtendedWoo\ExtensionAPI\menu;
 
 use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\import\importing_strategies\FullProductImportType;
 use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
 use ExtendedWoo\ExtensionAPI\import\PriceImportController;
 use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductSalesImportType;
+use ExtendedWoo\ExtensionAPI\import\SecondaryImportController;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 
@@ -49,6 +51,14 @@ final class AdminMenu
         );
         add_submenu_page(
             'excel_import',
+            __('Вторичный импорт товаров', 'extendedwoo'),
+            __('Вторичный импорт товаров', 'extendedwoo'),
+            'manage_options',
+            'excel_update_products',
+            [$this, 'productsUpdatePage']
+        );
+        add_submenu_page(
+            'excel_import',
             __('Импорт цен', 'extendedwoo'),
             __('Импорт цен', 'extendedwoo'),
             'manage_options',
@@ -82,6 +92,26 @@ final class AdminMenu
         $controller = new ProductImporterController($this->request);
         $controller
             ->setImportType(ImportTypeFactory::getImportType(ProductImportType::class))
+            ->dispatch();
+    }
+
+    public function productsUpdatePage(): void
+    {
+        wp_localize_script(
+            'wc-product-import',
+            'wc_product_import_params',
+            [
+                'import_nonce'    => wp_create_nonce('wc-product-import'),
+                'mapping'         => [
+                    'from' => '',
+                    'to'   => '',
+                ]
+            ]
+        );
+        wp_enqueue_script('wc-product-import');
+        $controller = new SecondaryImportController($this->request);
+        $controller
+            ->setImportType(ImportTypeFactory::getImportType(FullProductImportType::class))
             ->dispatch();
     }
 
@@ -124,7 +154,6 @@ final class AdminMenu
             ->setImportType(ImportTypeFactory::getImportType(ProductSalesImportType::class))
             ->dispatch();
     }
-
 
     public function menuOrder(array $menu_order): array
     {

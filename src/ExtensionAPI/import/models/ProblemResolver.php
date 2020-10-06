@@ -16,15 +16,18 @@ final class ProblemResolver
     private ImportType $strategy;
     public array $validationResult = [];
     private array $temporaryProductList = [];
+    private string $filename;
 
     public function __construct(
         ImportType $strategy,
         array $dataRows = [],
-        array $mapping_to = []
+        array $mapping_to = [],
+        string $filename = ''
     ) {
         $this->dataRows = $dataRows;
         $this->mapping = $this->clearMapping($mapping_to);
         $this->strategy = $strategy;
+        $this->filename = $filename;
         $this->validateRows($dataRows);
     }
 
@@ -152,7 +155,7 @@ final class ProblemResolver
         } else {
             $temp_product = new Product($isExists);
         }
-
+        $temp_product->setFilename($this->filename);
         $temp_product->saveTemporary();
 
         $this->temporaryProductList[] = $temp_product;
