@@ -39,7 +39,9 @@ final class ProductCatTaxonomy implements TaxonomyInterface
         $request = $this->request;
         if ($taxonomy === self::TAXONOMY && !empty($request->get('additional_field'))) {
             $fields = $request->get('additional_field');
+
             foreach ($fields as $key => $field) {
+                $field = trim($field);
                 $is_exists = $wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_category_attributes
                 WHERE attribute_category_id = %d AND attribute_label = %s", $field, 'additional_field_'.$key);
                 if (! $wpdb->query($is_exists)) {

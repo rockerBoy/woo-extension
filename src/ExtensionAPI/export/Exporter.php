@@ -27,7 +27,6 @@ final class Exporter implements ExporterInterface
             $this->file_export = $file_export;
             $this->productModel = $product;
             $this->columnNames = $this->productModel->getDefaultColumnNames();
-
             $this->setProductTypesToExport(
                 array_merge(
                     array_keys(
@@ -175,6 +174,13 @@ final class Exporter implements ExporterInterface
             $headers[] = $column_name;
         }
 
+        $cat_id = get_term_by('slug', current($this->categoriesToExport), 'product_cat');
+        $attributes = $this->productModel->getCategoryAttributes($cat_id->term_id);
+
+        if (! empty($attributes)) {
+            $headers = array_merge($headers, $attributes);
+        }
+
         return $headers;
     }
     /**
@@ -188,6 +194,8 @@ final class Exporter implements ExporterInterface
         $row     = [];
         $categories = $this->productModel->getCategory($product);
         $brands = $this->productModel->getBrand($product);
+        $cat_id = current($product->category_ids);
+        $attributes = $this->productModel->getCategoryAttributes($cat_id);
         $countries = $this->productModel->getCountry($product);
         $parent_categories = $this->productModel->getCategory($product, true);
 
@@ -230,6 +238,22 @@ final class Exporter implements ExporterInterface
 
             $row[$column_id] = $value;
         }
-        return apply_filters('woocommerce_product_export_row_data', $row, $product);
+
+        $extra = [];
+        if (! empty($attributes)) {
+            $atts = $product->get_attributes();
+            foreach ($attributes as $index => $name) {
+                foreach ($atts as $item) {
+                    if ($name === $item['data']['name']) {
+                        $extra[$index] = implode(', ', $item['data']['options']);
+                    } else if(empty($extra[$index])) {
+                        $extra[$index] = '';
+                    }
+                }
+            }
+            $row = array_merge($row, $extra);
+        }
+
+        return $row;
     }
 }

@@ -114,6 +114,29 @@ class Products implements ProductInterface
         return implode(' ', $countries);
     }
 
+    public function getCategoryAttributes(int $category): array
+    {
+        global $wpdb;
+
+        $result_attributes = [];
+        $attributes = $wpdb->prepare(
+            "SELECT
+                        `attribute_name`
+                    FROM {$wpdb->prefix}woo_category_attributes
+                    WHERE
+                        `attribute_category_id` = %d AND 
+                        `attribute_public` <> 0",
+            $category
+        );
+        $attributes_list = $wpdb->get_results($attributes, ARRAY_A);
+
+        foreach ($attributes_list as $attribute) {
+            $result_attributes[] = $attribute['attribute_name'];
+        }
+
+        return $result_attributes;
+    }
+
     public function checkIfExists(string $product_name): bool
     {
         return  false;
