@@ -16,6 +16,8 @@ class ProductPriceImportType implements ImportType
 
     public function getColumns(): array
     {
+        unset($this->basicColumns['id']);
+
         $columns = [
             'regular_price'     => __('Regular price', 'woocommerce'),
         ];

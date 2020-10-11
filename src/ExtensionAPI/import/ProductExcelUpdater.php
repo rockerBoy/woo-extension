@@ -51,7 +51,7 @@ class ProductExcelUpdater extends Import
 
     public function update(): array
     {
-        $prices = $this->prepareRows();
+        $prices = $this->prepareRows();;
         $data = [
             'author_id' => get_current_user_id(),
             'failed'   => [],
@@ -73,12 +73,11 @@ class ProductExcelUpdater extends Import
     {
         $prepared_data = [];
         $mapping = $this->params['mapping']['to'];
-
         foreach ($this->columns as $index => $row) {
             $prepared_row = array_slice(array_values($row), 0, count($mapping));
             $prepared_row = ProductsImportHelper::parseRow($prepared_row, $mapping);
 
-            if (! is_numeric($prepared_row['id'])) {
+            if (! is_string($prepared_row['sku'])) {
                 continue;
             }
 

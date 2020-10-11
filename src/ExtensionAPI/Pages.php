@@ -240,7 +240,10 @@ final class Pages implements PageInterface
 
             if (! empty($results)) {
                 ProductsImportHelper::clearDatabase();
-
+                $imported = empty($results['imported']) ? [] :$results['imported'];
+                $updated = empty($results['updated']) ? [] :$results['updated'];
+                $failed = empty($results['failed']) ? [] :$results['failed'];
+                $skipped = empty($results['skipped']) ? [] :$results['skipped'];
                 // Send success.
                 wp_send_json_success(
                     array(
@@ -250,10 +253,10 @@ final class Pages implements PageInterface
                             array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
                             admin_url('admin.php?page=excel_import&step=result')
                         ),
-                        'imported'   => count($results['imported']),
-                        'failed'     => count($results['failed']),
-                        'updated'    => count($results['updated']),
-                        'skipped'    => count($results['skipped']),
+                        'imported'   => count($imported),
+                        'failed'     => count($failed),
+                        'updated'    => count($updated),
+                        'skipped'    => count($skipped),
                     )
                 );
             }
