@@ -35,8 +35,8 @@ class ProductImportType implements ImportType
             ->setProductRow($columns_data)
             ->checkForNonEmpty()
             ->checkCategory()
-            ->checkForUnique()
             ->checkFormatting('/\d+\.\d+\.\d+/')
+            ->checkForUnique()
             ->getResult();
     }
 }

@@ -83,16 +83,17 @@
             return isMappingValid;
         });
     }
+
     let excelResolverForm = function ( $form ) {
         this.form = $form;
         this.errorsCounter = $('.extended-validation-msg')
-            .find('div:eq(2)')
+            .find('div:eq(3)')
             .find('strong');
         this.success = $('.extended-validation-msg')
-            .find('div:eq(1)')
+            .find('div:eq(2)')
             .find('strong');
         this.total = $('.extended-validation-msg')
-            .find('div:eq(0)')
+            .find('div:eq(1)')
             .find('strong');
         this.showInfo = this.showInfo.bind(this);
         this.removeRow = this.removeRow.bind(this);
@@ -111,7 +112,13 @@
             let ID = $this.attr('data-rel');
             let row = $this.parents('tr');
             let errorsCounter = $('.extended-validation-msg')
+                .find('div:eq(3)')
+                .find('strong');
+            let validCounter = $('.extended-validation-msg')
                 .find('div:eq(2)')
+                .find('strong');
+            let totalCounter = $('.extended-validation-msg')
+                .find('div:eq(1)')
                 .find('strong');
             row.hide();
 
@@ -127,8 +134,13 @@
                 success: function ( response ) {
                     if ( response.success ) {
                         if ( 'done' === response.data.result ) {
-                            let errors = errorsCounter.html();
-                            errorsCounter.html(--errors);
+                            errorsCounter.html(response.data.errors);
+                            totalCounter.html(response.data.total);
+
+                            if (response.data.errors == 0) {
+                                $('.button-prev').removeClass('hidden');
+                                $('.btn-check-form').remove();
+                            }
                             row.remove();
                         }
                     }
@@ -186,6 +198,25 @@
                     }
                 }
             });
+            $this.form.find('.edit-product-name').each(function () {
+                let relID = $(this).attr('data-rel');
+                let row = $('#row-'+relID);
+                let productID = row.find('.remove-item').val();
+                let val = $(this).val();
+
+                let data = {
+                    item: 'name',
+                    relation_id: relID,
+                    product_id: productID,
+                    value: val.trim()
+                }
+
+                if (typeof data.value != 'undefined') {
+                    if (data.value != '') {
+                        formData.push(data);
+                    }
+                }
+            });
 
             $this.form.find('.select_valid_category').each(function () {
                 let relID = $(this).attr('data-rel');
@@ -216,43 +247,69 @@
                     let successClass = 'item-success hidden';
                     let errorClass = 'item-danger';
                     if ( response.success ) {
-                        formData.forEach((value, key) => {
-                            let id = value.relation_id;
-                            let row = $('#row-'+id);
-                            let dataItem = response.data.products[id];
+                        let results = response.data.products;
 
-                            switch (value.item) {
+                        let counter = 0;
+                        for (let key in results) {
+                            let tr = $('#row-'+key);
+                            let row = results[key];
+                            let dataSent = formData[counter];
+                            switch (dataSent.item) {
                                 case "sku":
-                                    if (typeof dataItem != "undefined" && dataItem.status == "ok") {
-                                        row.removeClass(errorClass).addClass(successClass);
-                                        row.find('td:eq(1)').html(dataItem.sku);
-                                        row.find('td:eq(4)').html('&nbsp;');
+                                    if (typeof row != "undefined" && row.status == "ok") {
+                                        tr.removeClass(errorClass).addClass(successClass);
                                     } else {
-                                        row.find('td:eq(1)').find('input').focus();
-                                        alert(dataItem.msg)
+                                        tr.find('td:eq(1)').find('input').focus();
+                                        alert(row.errors)
                                         return false;
                                     }
                                     break;
-                                case "category":
-                                    if (typeof dataItem != "undefined" && dataItem.status == "ok") {
-                                        row.removeClass(errorClass).addClass(successClass);
-                                        row.find('td:eq(3)').html(dataItem.category);
-                                        row.find('td:eq(4)').html('&nbsp;');
+                                case "name":
+                                    if (typeof row != "undefined" && row.status == "ok") {
+                                        tr.removeClass(errorClass).addClass(successClass);
                                     } else {
-                                        row.find('td:eq(3)').find('select').focus();
-                                        alert(dataItem.msg)
+                                        tr.find('td:eq(2)').find('input').focus();
+                                        alert(row.errors);
+                                        return false;
+                                    }
+                                    break;
+
+                                case "category":
+                                    if (typeof row != "undefined" && row.status == "ok") {
+                                        tr.removeClass(errorClass).addClass(successClass);;
+                                    } else {
+                                        tr.find('td:eq(3)').find('select').focus();
+                                        alert(row.errors);
                                         return false;
                                     }
                                     break;
                             }
-                        });
+
+                            if (tr.hasClass(successClass)) {
+                                tr.find('input').each(function (){
+                                    $(this).attr('disabled', true);
+                                });
+                                tr.find('select').attr('disabled', true);
+                                tr.find('td:eq(4)').html('&nbsp;');
+                                tr.find('td:eq(5)').html('&nbsp;');
+                            }
+                            counter++;
+                        }
 
                         $this.errorsCounter.html(response.data.errors);
-                        $this.success.html(response.data.success);
+                        $this.success.html(response.data.valid);
+                        $this.total.html(response.data.total);
 
-                        if (response.data.status === 'ok' && response.data.errors === 0) {
+                        if (response.data.status === 'ok' && response.data.errors === 0 && response.data.valid > 0) {
+                            $('.extended-validation-msg-complete').removeClass('hidden');
+
                             $('.btn-check-form').remove();
                             $('.button-next').removeClass('hidden');
+                        }
+
+                        if (response.data.status === 'ok' && response.data.errors === 0 && response.data.valid === 0) {
+                            $('.button-prev').removeClass('hidden');
+                            $('.btn-check-form').addClass('hidden');
                         }
                     }
                 }

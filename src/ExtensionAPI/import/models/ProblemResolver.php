@@ -17,6 +17,7 @@ final class ProblemResolver
     public array $validationResult = [];
     private array $temporaryProductList = [];
     private string $filename;
+    private string $uuid;
 
     public function __construct(
         ImportType $strategy,
@@ -38,10 +39,10 @@ final class ProblemResolver
         $temp_products = $this->temporaryProductList;
 
         if (ProductsImportHelper::validateMapping($this->mapping)) {
+            $unique_rel_ids = [];
             foreach ($temp_products as $index => $product) {
                 $validation_flag = $this->validationResult[$index]['status'];
                 $rel_id = $product->getRelationsID();
-
                 if (! empty($this->validationResult)) {
                     if ($validation_flag === true) {
                         $table_output .= "<tr id='row-{$rel_id}' class='item-success hidden'>";
@@ -55,6 +56,11 @@ final class ProblemResolver
                          data-rel="'.$rel_id.'"
                          required />',
                         'category_ids' => '',
+                        'name' => '<input type="text" class="edit-product-name"
+                         name="name['.$rel_id.']" 
+                         data-rel="'.$rel_id.'"
+                         required />',
+                        'category_ids' => '',
                     ];
                     $input_set['category_ids'] = '<select class="select_valid_category" 
                     name="category['.$rel_id.']" data-rel="'.$rel_id.'" required>';
@@ -65,8 +71,14 @@ final class ProblemResolver
                     }
 
                     $input_set['category_ids']  .= '</select>';
-
                     $id = ($product->getNewID() > 0) ? $product->getNewID(): $product->getRealID();
+                    $is_unique = $this->validationResult[$index]['data']['unique'];
+
+                    if (!$is_unique['id'] || !$is_unique['sku']) {
+                        foreach ($input_set as $key => $item) {
+                            $input_set[$key] = '';
+                        }
+                    }
 
                     $meta_data = [
                         'id' => $id,
@@ -76,15 +88,45 @@ final class ProblemResolver
                     ];
 
                     foreach ($this->mapping as $item => $value) {
-                        $item = (empty($meta_data[$value]))? $input_set[$value]: ((! empty($meta_data[$value])) ?  $meta_data[$value] : '');
-                        $table_output .= $this->makeRow(($item)??'');
+                        if (isset($meta_data[$value])) {
+                            $item = (empty($meta_data[$value]))? $input_set[$value]: $meta_data[$value];
+                        } elseif (isset($input_set[$value])) {
+                            $item = (empty($meta_data[$value]))? $input_set[$value]: $meta_data[$value];
+                        }
+
+                        $table_output .= $this->makeRow((! empty($item))? $item:'');
                     }
 
+                    $error_msg = '';
                     if (! $validation_flag) {
                         $table_output .= $this->makeRow('<button class="button button-primary remove-item" data-rel="'.$rel_id.'" value="'.$meta_data['id'].'">Удалить продукт</button>');
-                    } else {
-                        $table_output .= $this->makeRow('');
+//                        $is_unique = $this->validationResult[$index]['data']['unique'];
+                        $is_not_empty = $this->validationResult[$index]['data']['non_empty'];
+                        $is_format_correct = $this->validationResult[$index]['data']['wrong_formatted'];
+
+                        if (! $is_unique['sku'] || ! $is_unique['id']) {
+                            $error_msg = __('Такой товар уже существует', 'extendedwoo');
+                        }
+
+                        $field_names = [
+                            'id'                => 'ID',
+                            'name'              => 'Имя',
+                            'category_ids'      => 'Категория',
+                            'sku'               => 'Артикул',
+                        ];
+
+
+                        if (empty($error_msg)) {
+                            foreach ($is_not_empty as $field => $value) {
+                                if (false === $value) {
+                                    $error_msg = sprintf('Поле %s не задано', $field_names[$field]);
+                                    break;
+                                }
+                            }
+                        }
                     }
+
+                    $table_output .= $this->makeRow($error_msg);
                     $table_output .= '</tr>';
                 }
             }
@@ -98,6 +140,11 @@ final class ProblemResolver
     {
         $validation_statuses = [];
         $required_max = count($this->strategy->getColumns());
+
+        $this->uuid = uniqid('import_'.date('Y-m-d').'_', true);
+        $products = new Product();
+
+        $products->clearDuplicatedRelations();
 
         foreach ($raw_rows as $index => $row) {
             $prepared_row = array_slice(array_values($row), 0, $required_max);
@@ -155,8 +202,11 @@ final class ProblemResolver
         } else {
             $temp_product = new Product($isExists);
         }
-        $temp_product->setFilename($this->filename);
-        $temp_product->saveTemporary();
+
+        $temp_product
+            ->setFilename($this->filename)
+            ->setUUID($this->uuid)
+            ->saveTemporary();
 
         $this->temporaryProductList[] = $temp_product;
     }

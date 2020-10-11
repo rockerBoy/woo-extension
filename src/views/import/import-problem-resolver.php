@@ -13,9 +13,12 @@ $resulting_table = $resolver->makeViewTable();
         <button type="submit" class="button button-primary button-next hidden"
                 value="<?= __('Continue', 'woocommerce') ?>"
                 name="save_step"><?= __('Run the importer', 'woocommerce') ?></button>
+        <button type="submit" class="button button-primary button-prev hidden"
+                value="<?= __('Вернутся назад', 'woocommerce') ?>"
+                name="remove_step"><?php esc_html_e('Вернутся назад', 'woocommerce'); ?></button>
         <button type="submit" class="button button-primary button-next btn-check-form"
-                value="<?= __('Начать проверку', 'woocommerce') ?>"
-                name="save_step"><?= __('Начать проверку', 'woocommerce') ?></button>
+                value="<?= __('Повторить проверку', 'woocommerce') ?>"
+                name="save_step"><?= __('Повторить проверку', 'woocommerce') ?></button>
         <input type="hidden" name="file" value="<?= esc_attr($this->file); ?>" />
 
         <?php  foreach ($labels as $index => $map_from) : ?>

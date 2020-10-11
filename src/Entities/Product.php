@@ -3,8 +3,6 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
-
 final class Product extends \WC_Product_Simple
 {
     private int $new_id = 0;
@@ -15,9 +13,9 @@ final class Product extends \WC_Product_Simple
     private bool $is_imported = false;
     private string $pre_import_table;
     private string $relation_table;
+    private string $uuid;
     public bool $is_updated = false;
     public bool $is_saved = false;
-
 
     public function __construct($product = 0)
     {
@@ -45,6 +43,29 @@ final class Product extends \WC_Product_Simple
         return $this;
     }
 
+    /**
+     * Setting up unique transaction ID
+     *
+     * @param string $uuid
+     *
+     * @return $this
+     */
+    public function setUUID(string $uuid): self
+    {
+        $this->uuid = $uuid;
+
+        return $this;
+    }
+
+    public function getUUID(): string
+    {
+        if (empty($this->uuid)) {
+            return $this->db->get_var("SELECT `imported_file_token` FROM $this->relation_table ORDER BY id DESC LIMIT 1") ?? '';
+        } else {
+            return $this->uuid;
+        }
+    }
+
     public function getNewID(): int
     {
         return $this->new_id;
@@ -52,16 +73,34 @@ final class Product extends \WC_Product_Simple
 
     public function getRelationsID(): int
     {
-        $relations_query = $this->db
-            ->prepare(
-                "SELECT id 
-                        FROM {$this->relation_table}
-                        WHERE 
-                            `product_id` = %d
-                        order by id DESC LIMIT 1",
-                $this->getRealID()
-            );
-        $relations_query = $this->db->get_var($relations_query);
+        $uuid = $this->getUUID();
+
+        if (! empty($uuid)) {
+            $relations_query = $this->db
+                ->prepare(
+                    "SELECT
+                                id
+                            FROM {$this->relation_table}
+                            WHERE
+                                `product_id` = %d AND 
+                                `imported_file_token` = %s
+                            order by id ASC LIMIT 1",
+                    $this->getRealID(),
+                    $uuid
+                );
+            $relations_query = $this->db->get_var($relations_query);
+        } else {
+            $relations_query = $this->db
+                ->prepare(
+                    "SELECT
+                                id
+                            FROM {$this->relation_table}
+                            WHERE
+                                `product_id` = %d
+                            order by id ASC LIMIT 1",
+                    $this->getRealID()
+                );
+        }
 
         return ( ! empty($relations_query)) ? $relations_query : 0;
     }
@@ -78,7 +117,7 @@ final class Product extends \WC_Product_Simple
             );
         $import_id = $this->db->get_var($import_id);
 
-        return $import_id;
+        return (!$import_id)? 0: $import_id;
     }
 
     public function getRealID():int
@@ -99,53 +138,70 @@ final class Product extends \WC_Product_Simple
 
     public function getTotal(): int
     {
-        $hash = md5($this->filename);
-        $total_query = $this->db->get_var("
+        $uuid = $this->getUUID();
+        if (!empty($uuid)) {
+            $this->uuid = $uuid;
+            $total_query = $this->db->get_var("
+            SELECT COUNT(rel.id) FROM {$this->relation_table} rel
+            WHERE 
+                rel.imported_file_token = \"$this->uuid\"
+            ");
+        } else {
+            $total_query = $this->db->get_var("
             SELECT
             COUNT(rel.id) FROM {$this->relation_table} rel
             INNER JOIN {$this->pre_import_table} pi ON rel.import_id = pi.id
-            WHERE pi.is_imported <> 1 OR rel.post_id = 0 AND rel.imported_file_token = \"$hash\"
+            WHERE pi.is_imported <> 1 OR rel.post_id = 0
             ");
+        }
+
         return $total_query ? (int) $total_query: 0;
     }
 
     public function getValid(): int
     {
-        $hash = md5($this->filename);
+        $uuid = $this->getUUID();
+        $valid = 0;
 
-        return (int) $this->db->get_var("
-                            SELECT 
-                                COUNT(`pit`.id) as id
-                             FROM {$this->pre_import_table}  `pit`
-                             LEFT JOIN {$this->relation_table} `rel` ON `pit`.`id` = `rel`.`import_id`
-                             WHERE 
-                                `pit`.is_valid <> 0 AND
-                                `pit`.is_imported <> 1 AND 
-                                rel.imported_file_token = \"$hash\"");
+        if (! empty($uuid)) {
+            $valid = (int) $this->db->get_var("
+                                SELECT 
+                                    COUNT(`pit`.id) as id
+                                 FROM {$this->pre_import_table}  `pit`
+                                 LEFT JOIN {$this->relation_table} `rel` ON `pit`.`id` = `rel`.`import_id`
+                                 WHERE 
+                                    (`pit`.sku != '' AND `pit`.product_title != '' AND `rel`.product_category_id <> 0) AND
+                                    `rel`.imported_file_token = \"$uuid\"");
+            $duplicates = $this->db->get_results("SELECT
+                                                                COUNT(rel.id) as qnu
+                                                            FROM {$this->relation_table} rel
+                                                            GROUP BY rel.product_id
+                                                            HAVING  qnu > 1");
+            $duplicates_qnt = sizeof($duplicates);
+            if ($duplicates_qnt <= $valid) {
+                $valid -= $duplicates_qnt;
+            }
+        }
+
+        return $valid;
     }
 
     public function getErrors(): int
     {
-        $hash = md5($this->filename);
-        $duplicates = $this->db->get_results(
-            "select
-                    id
-                    FROM {$this->relation_table} rel
-                    WHERE 
-                        (select count(id) FROM fz_woo_pre_import_relationships WHERE product_id = rel.product_id) > 1 AND 
-                        rel.imported_file_token = \"$hash\"
-                    GROUP BY product_id
-                    ORDER BY id DESC"
-        );
-        $other_errors = (int) $this->db->get_var("
-                        SELECT COUNT(pi.id) 
-                        FROM {$this->pre_import_table} pi
-                        INNER JOIN {$this->relation_table} rel ON pi.id = rel.import_id
-                         WHERE
-                            pi.is_imported = 0 AND
-                             pi.is_valid = 0");
+        $uuid = $this->getUUID();
+        $errors = 0;
 
-        return $other_errors+count($duplicates);
+        if (! empty($uuid)) {
+            $errors = (int) $this->db->get_var("
+                            SELECT COUNT(rel.id) 
+                            FROM {$this->relation_table} rel
+                            INNER JOIN {$this->pre_import_table} pi ON rel.import_id = pi.id
+                             WHERE
+                                (rel.product_category_id = 0 OR pi.sku = '') AND
+                                rel.imported_file_token = \"$uuid\"
+                            ");
+        }
+        return $errors;
     }
 
     public function setImportedFlag(bool $is_imported): self
@@ -214,7 +270,16 @@ final class Product extends \WC_Product_Simple
     public function deletePreImportedProduct(int $relation_id): void
     {
         if (! empty($relation_id)) {
-            $import_id = $this->db->get_var("SELECT import_id FROM {$this->relation_table}
+            $product_id = $this->db->get_var("SELECT `product_id` FROM {$this->relation_table}
+                WHERE `id` IN($relation_id) LIMIT 1");
+            $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
+                WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
+
+//            if (true === (bool)$is_duplicate) {
+//                $relation_id = $is_duplicate;
+//            }
+
+            $import_id = $this->db->get_var("SELECT `import_id` FROM {$this->relation_table}
                 WHERE `id` = $relation_id LIMIT 1
             ");
             $this->db
@@ -284,7 +349,7 @@ final class Product extends \WC_Product_Simple
             'product_category_id' => $category_id,
             'product_parent_category_id' => $parent_id,
             'product_author_id' => get_current_user_id(),
-            'imported_file_token' => md5($this->filename),
+            'imported_file_token' => $this->uuid,
         ];
 
         $post_id = $this->get_id() ?? 0;
@@ -294,5 +359,121 @@ final class Product extends \WC_Product_Simple
         );
         $this->is_saved = true;
         $db->insert($this->relation_table, $relations);
+    }
+
+    public function clearDuplicatedRelations(): self
+    {
+        $existing_product_ids = get_posts(array(
+            'post_type' => 'product',
+            'numberposts' => -1,
+            'post_status' => 'publish',
+            'fields' => 'ids',
+        ));
+        $list_of_product_skus = [];
+
+        foreach ($existing_product_ids as $id) {
+            $product = wc_get_product($id);
+            $list_of_product_skus[] = $product->get_sku();
+        }
+
+        if (! empty($existing_product_ids)) {
+            $limit = sizeof($existing_product_ids);
+            $product_ids = implode(', ', $existing_product_ids);
+            $unique_ids = [];
+            $unique_products = $this->db
+                ->prepare("SELECT `id`
+                                    FROM {$this->relation_table}
+                                    WHERE `post_id` IN($product_ids) GROUP BY `post_id` LIMIT %d  
+                                 ", $limit);
+            $unique_products_list = $this->db->get_results($unique_products, ARRAY_A);
+
+            foreach ($unique_products_list as $row) {
+                $unique_ids[] = $row['id'];
+            }
+            $unique_ids_list = implode(', ', $unique_ids);
+            $product_skus_list = '"'.implode('", "', $list_of_product_skus).'"';
+
+            if (! empty($product_skus_list)) {
+                $this->db->query("DELETE FROM {$this->pre_import_table}
+                    WHERE `sku` NOT IN($product_skus_list)");
+            }
+
+            if (! empty($unique_ids_list)) {
+                $this->db->query("DELETE FROM {$this->relation_table}
+                    WHERE `id` NOT IN($unique_ids_list)");
+                $this->db->query("DELETE FROM {$this->relation_table}
+                    WHERE `post_id` = 0 AND `product_category_id` = 0");
+            }
+        } else {
+            $this->db->query("DELETE FROM {$this->relation_table}
+                WHERE `post_id` = 0");
+        }
+
+        return $this;
+    }
+
+
+    public function getStoredInfoByProduct(int $relation_id, int $product_id)
+    {
+        $stored_data = $this->db->prepare("
+                                            SELECT
+                                                pi.id as id,
+                                                IF(pi.product_title = '', false, pi.product_title) as name,
+                                                IF(pi.sku = '', false, pi.sku) as sku,
+                                                rel.product_category_id as category
+                                            FROM {$this->relation_table} rel
+                                            INNER JOIN {$this->pre_import_table} pi on rel.import_id = pi.id
+                                            WHERE
+                                                `rel`.id = %d AND
+                                                `rel`.product_id = %d
+                                            LIMIT 1", $relation_id, $product_id);
+        return $this->db->get_row($stored_data, ARRAY_A);
+    }
+
+    public function fixUploadedProductName(int $import_id, string $name)
+    {
+        $prepare_fix = $this->db->prepare(
+            "UPDATE {$this->pre_import_table} SET `product_title` = %s WHERE `id` = %d",
+            $name,
+            $import_id
+        );
+
+        return $this->db->query($prepare_fix);
+    }
+
+    public function fixUploadedProductCategory(int $relation_id, int $category)
+    {
+        $term = get_term($category);
+        $prepared_query = $this->db
+            ->prepare(
+                "UPDATE {$this->relation_table}
+                    SET product_category_id = %d,
+                        product_parent_category_id = %d
+                      WHERE id = %d",
+                $term->term_id,
+                ($term->parent) ?? 0,
+                $relation_id
+            );
+
+        return $this->db->query($prepared_query);
+    }
+
+    public function fixUploadedProductSKU(int $import_id, string $sku)
+    {
+        $is_post_exists = wc_get_product_id_by_sku($sku);
+        $is_preimported  = $this->db->get_var("SELECT `id` FROM {$this->pre_import_table}
+                                                        WHERE `sku` = '{$sku}'
+                                                        LIMIT 1");
+
+        if (!$is_preimported && !$is_post_exists) {
+            $prepare_fix = $this->db->prepare(
+                "UPDATE {$this->pre_import_table} SET `sku` = %s WHERE `id` = %d",
+                $sku,
+                $import_id
+            );
+            return $this->db->query($prepare_fix);
+        }
+
+        return false;
     }
 }

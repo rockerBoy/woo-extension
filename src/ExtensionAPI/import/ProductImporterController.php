@@ -115,11 +115,11 @@ class ProductImporterController extends BasicController
             ));
             $this->showErrors();
         }
-
         $req = $this->request;
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
         $this->startRow = $_GET['start_row'];
+
         if (empty($mapping_to)) {
             wp_redirect(esc_url_raw($this->getNextStepLink('upload')));
         }
@@ -217,6 +217,15 @@ class ProductImporterController extends BasicController
         $skipped   = isset($_GET['products-skipped']) ? absint($_GET['products-skipped']) : 0;
         $file_name = isset($_GET['file-name']) ? sanitize_text_field(wp_unslash($_GET['file-name'])) : '';
         $errors    = array_filter((array) get_user_option('product_import_error_log'));
+
+        if (! empty($file_name)) {
+            global $wpdb;
+            $last_file_id = $wpdb->get_var("
+                SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' AND `post_name` LIKE('%{$file_name}%') ORDER BY ID DESC LIMIT 1");
+            if (! empty($last_file_id)) {
+                wp_delete_attachment($last_file_id);
+            }
+        }
 
         include $this->import_views_path . 'import-done.php';
 

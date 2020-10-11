@@ -33,8 +33,11 @@
 .excel-resolver__rows tbody tr:last-of-type > td {
     border-bottom: none;
 }
-.excel-resolver__rows tbody tr select, .excel-resolver__rows tbody tr input{
+.excel-resolver__rows tbody tr input{
     max-width: 90px;
+}
+.excel-resolver__rows tbody tr select {
+    max-width: 8rem;
 }
 .item-danger {
     background: rgba(255, 10, 10, .6) !important;
@@ -53,4 +56,15 @@
 }
 .extended-error-label {
     font-weight: 600;
+}
+.extended-validation-msg-complete {
+    position: absolute;
+    left: 48%;
+}
+.extended-validation-msg-complete h2 {
+    color: rgba(3, 198, 47, 1) !important;
+}
+
+.woocommerce-progress-form-wrapper {
+    max-width: 75vw !important;
 }

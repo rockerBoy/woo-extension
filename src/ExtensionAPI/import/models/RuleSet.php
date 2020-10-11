@@ -11,6 +11,7 @@ class RuleSet implements RuleSetBuilder
         'non_empty' => [
             'id' => false,
             'sku' => false,
+            'name' => false,
             'category_ids' => false,
         ],
         'unique' => [
@@ -42,6 +43,9 @@ class RuleSet implements RuleSetBuilder
             if (! empty($this->row[$key]) && $this->row[$key] !== '') {
                 $this->rules['non_empty'][$key] = true;
                 $this->isValid = true;
+            } else {
+                $this->rules['non_empty'][$key] = false;
+                $this->isValid = false;
             }
         }
 
@@ -52,6 +56,19 @@ class RuleSet implements RuleSetBuilder
     {
         global $wpdb;
 
+        $product = wc_get_product_id_by_sku($this->row['sku']);
+        if (! $product) {
+            $this->rules['unique']['sku'] = true;
+            $item_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_pre_import_relationships
+                                WHERE `product_id` = %d", $this->row['id']));
+            if (! $item_id) {
+                $this->rules['unique']['id'] = true;
+            } else {
+                $this->rules['unique']['id'] = false;
+                $this->isValid = false;
+            }
+        }
+
         if (! $this->isValid) {
             return $this;
         }
@@ -59,11 +76,10 @@ class RuleSet implements RuleSetBuilder
         $item_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_pre_import
                                 WHERE `sku` = %s", $this->row['sku']));
 
-        $product = wc_get_product_id_by_sku($this->row['sku']);
         if (! $item_id && !$product) {
             $this->rules['unique']['sku'] = true;
             $item_id = $wpdb->get_var($wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_pre_import_relationships
-                                WHERE `product_id` = %i", $this->row['id']));
+                                WHERE `product_id` = %d", $this->row['id']));
             if (! $item_id) {
                 $this->rules['unique']['id'] = true;
                 $this->isValid = true;
@@ -97,7 +113,7 @@ class RuleSet implements RuleSetBuilder
 
         $cat = (ProductCatTaxonomy::parseCategoriesString($this->row['category_ids'])) ?? [];
         if (empty($cat)) {
-            $this->isValid = false;
+            $this->isValid = $this->rules['non_empty']['category_ids'] = false;
             return $this;
         }
 

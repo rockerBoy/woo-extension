@@ -65,12 +65,15 @@ class PreImportTable implements TableInterface
                 `product_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_parent_category_id`  bigint(20) unsigned NOT NULL default '0',
                 `product_author_id`  bigint(20) unsigned NOT NULL default '0',
-                `imported_file_token` varchar(200) NULL default '',
+                `imported_file_token` varchar(255) NULL default '',
+                `is_imported` tinyint(1) NULL default 0,
                 `order` int(11) unsigned NULL default 0,
                 PRIMARY KEY (id),
                 KEY import_id (import_id),
                 KEY post_id (post_id),
-                KEY product_id (product_id)
+                KEY product_id (product_id),
+                KEY product_category_id (product_category_id),
+                KEY is_imported (product_category_id)
             ) $collate;");
     }
 

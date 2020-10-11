@@ -67,8 +67,7 @@ abstract class Import
 
     public function getPreImportedRows(): array
     {
-        $product_builder = new ProductBuilder();
-        $product_query = $this->db->prepare("
+        return $this->db->get_results("
                 SELECT 
                 rel.product_id as id,
                 pi.sku,
@@ -80,9 +79,7 @@ abstract class Import
                 WHERE 
                     `pi`.is_valid = 1 AND 
                     `pi`.is_imported = 0
-        ");
-
-        return $this->db->get_results($product_query, ARRAY_A);
+        ", ARRAY_A);
     }
 
     protected function parseCategoriesField(string $categories): array

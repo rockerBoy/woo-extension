@@ -269,11 +269,21 @@ final class Pages implements PageInterface
         check_ajax_referer('ewoo-product-import', 'security');
 
         $product_id = $request->get('prod_id');
+        $product = new Product();
+        $product->deletePreImportedProduct($product_id);
 
-        (new Product())
-            ->deletePreImportedProduct($product_id);
+        $data = [
+            'total' => $product->getTotal()??0,
+            'valid' => $product->getValid()??0,
+            'errors' => 0,
+        ];
+        $data['errors'] = $data['total'] - $data['valid'];
+
         wp_send_json_success(
             array(
+                'total' => $data['total'],
+                'valid' => $data['valid'],
+                'errors' => $data['errors'],
                 'result'   => 'done',
             )
         );
@@ -287,95 +297,102 @@ final class Pages implements PageInterface
         check_ajax_referer('ewoo-product-import', 'security');
 
         $form_data = $request->get('form_data');
+        $errors = [
+            'name'  => __('Не заполнено поле Имя товара', 'extendedwoo'),
+            'sku'   => __('Поле Артикул заполнено неверно', 'extendedwoo'),
+            'category' => __('Не заполнено поле Категория товара', 'extendedwoo'),
+        ];
+        $errors_list = [];
+        $product_relations_ids = [];
         $results = [
             'products' => [],
         ];
-
+        $product_data = [];
         $check_item = new Product();
+
         if (! empty($form_data)) {
+            foreach ($form_data as $product) {
+                $rel_id = $product['relation_id'];
+                $value = trim($product['value']);
+                $fields = [];
+                if (! in_array($rel_id, $product_relations_ids, true)) {
+                    $field = $product['item'];
+                    $product_relations_ids[] = $rel_id;
+                    $fields[$field] = $value;
+                    $product_data[$rel_id] = $fields;
+                } else {
+                    $fields = $product_data[$rel_id];
+                    $field = $product['item'];
+                    $fields[$field] = $value;
+                    $product_data[$rel_id] = $fields;
+                }
+            }
+
             foreach ($form_data as $item) {
-                $item_type = $item['item'];
-                $item_value = $item['value'];
                 $rel_id = $item['relation_id'];
-                $product_id = $item['product_id'];
-
                 $product = new Product();
-                $product->setNewID($product_id);
+                $product_id = $wpdb->get_var("
+                                SELECT
+                                    `product_id`
+                                FROM {$wpdb->prefix}woo_pre_import_relationships
+                                WHERE `id` = $rel_id LIMIT 1");
 
-                switch ($item_type) {
-                    case "sku":
-                        $is_exists = $wpdb->prepare("SELECT id 
-                                                FROM {$wpdb->prefix}woo_pre_import
-                                                WHERE
-                                                 sku = %s", $item_value);
-                        $is_exists = $wpdb->get_var($is_exists);
+                if (! empty($product_id)) {
+                    $product->setNewID($product_id);
 
-                        if (false === (bool)$is_exists) {
-                            $import_id = $product
-                                ->getPreImportID();
-                            $wpdb->query($wpdb->prepare(
-                                "UPDATE {$wpdb->prefix}woo_pre_import
-                                    SET sku = %s, is_valid = 1 
-                                    WHERE id = %d",
-                                $item_value,
-                                $import_id
-                            ));
+                    $stored_data = $product->getStoredInfoByProduct($rel_id, $product_id);
+                    $product_changes = $product_data[$rel_id];
+
+                    if (empty($stored_data)) {
+                        continue;
+                    }
+
+                    if (! empty($product_changes['name'])) {
+                        $product_name = $product_changes['name'];
+                        $product->fixUploadedProductName($stored_data['id'], $product_name);
+                        $stored_data['name'] = $product_name;
+                    } elseif (!$stored_data['name']) {
+                        $errors_list[$rel_id][] = $errors['name'];
+                    }
+
+                    if (!empty($product_changes['sku'])) {
+                        $sku = $product_changes['sku'];
+
+                        if (true === (bool)$product->fixUploadedProductSKU($stored_data['id'], $sku)) {
+                            $stored_data['sku'] = $sku;
+
                             $results['products'][$rel_id] = [
                                 'result'   => 'done',
                                 'status'   => 'ok',
-                                'sku' => $item_value,
+                                'sku' => $sku,
                                 'row_id' => $rel_id,
                             ];
                         } else {
-                            $results['products'][$rel_id] = [
-                                'result'   => 'done',
-                                'status'   => 'error',
-                                'msg' => __('Артикль уже существует', 'extendedwoo'),
-                                'row_id' => $rel_id,
-                                'sku' => $item_value,
-                            ];
-                            wp_send_json_success($results);
+                            $errors_list[$rel_id][] = $errors['sku'];
                         }
-                        break;
-                    case "category":
-                        $import_id = $product
-                            ->getPreImportID();
-                        $term = get_term($item_value);
-                        $wpdb->query($wpdb->prepare(
-                            "UPDATE {$wpdb->prefix}woo_pre_import_relationships
-                        SET product_category_id = %d, product_parent_category_id = %d
-                        WHERE product_id = %d",
-                            $term->term_id,
-                            ($term->parent) ?? 0,
-                            $product_id
-                        ));
+                    }
 
-                        $wpdb->query($wpdb->prepare(
-                            "UPDATE {$wpdb->prefix}woo_pre_import
-                        SET is_valid = 1
-                        WHERE id = %d",
-                            $import_id
-                        ));
-                        $results['products'][$rel_id] = [
-                            'result'   => 'done',
-                            'status'   => 'ok',
-                            'category' => $term->name,
-                            'row_id' => $rel_id,
-                        ];
-                        break;
-                }
+                    if (!empty($product_changes['category'])) {
+                        $category = $product_changes['category'];
+                        $product->fixUploadedProductCategory($rel_id, $category);
+                        $stored_data['category'] = $category;
+                    } elseif (!$stored_data['category']) {
+                        $errors_list[$rel_id][] = $errors['category'];
+                    }
 
-                $total = $product->getTotal();
-                $valid = $product->getValid();
-                $errors = $product->getErrors();
-
-                $results['total'] = $total;
-                $results['success'] = $valid;
-
-                if ($valid > 0 && $errors === 0) {
-                    $results['errors'] = $total-$valid;
-                } else {
-                    $results['errors'] = $total;
+                    $results['products'][$rel_id] = [
+                        'result'   => 'done',
+                        'status'   => (empty($errors_list))? 'ok': 'nok',
+                        'errors' => $errors_list[$rel_id] ?? []
+                    ];
+                    if (!empty($stored_data['name']) && !empty($stored_data['category']) && !empty($stored_data['sku'])) {
+                        $wpdb
+                            ->query($wpdb->prepare(
+                                "UPDATE {$wpdb->prefix}woo_pre_import SET `is_valid` = 1  WHERE id = %d",
+                                $stored_data['id']
+                            ));
+                        $results['products'][$rel_id] ['status'] = 'ok';
+                    }
                 }
             }
         }
@@ -383,19 +400,27 @@ final class Pages implements PageInterface
         $total = $check_item->getTotal();
         $valid = $check_item->getValid();
         $errors = $check_item->getErrors();
+        $results['total'] = $total;
+        $results['valid'] = $valid;
+        $results['errors'] = $total-$valid;
 
-        if ($valid > 0 && $errors === 0) {
-            if ($total - $valid === 0) {
-                $results['errors'] = $total-$valid;
-                $results['status'] = 'ok';
-            }
-        } elseif ($errors > 0) {
+        if ($errors > 0) {
             $results['status'] = 'nok';
-            $results['errors'] = $errors;
         } else {
             $results['status'] = 'ok';
-            $results['errors'] = $errors;
         }
+        //        if ($valid > 0 && $errors === 0) {
+//            if ($total - $valid === 0) {
+//                $results['errors'] = $total-$valid;
+//                $results['status'] = 'ok';
+//            }
+//        } elseif ($errors > 0) {
+//            $results['status'] = 'nok';
+//            $results['errors'] = $errors;
+//        } else {
+//            $results['status'] = 'ok';
+//            $results['errors'] = $errors;
+//        }
 
         wp_send_json_success($results);
     }

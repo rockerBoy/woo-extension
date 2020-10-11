@@ -27,6 +27,9 @@ wp_enqueue_script('ewoo-product-validation');
 </header>
 
 <section class="extended-validation-msg">
+    <div class="extended-validation-msg-complete hidden">
+        <h2>Ошибки отсутствуют</h2>
+    </div>
     <?php
         $results = array();
 
