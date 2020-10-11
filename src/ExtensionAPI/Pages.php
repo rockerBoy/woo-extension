@@ -175,15 +175,16 @@ final class Pages implements PageInterface
         $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
         $columnsToExport = ($request->get('selected_columns'))?:[];
         $categoriesToExport = ($request->get('export_category'))?:[];
-        $useMeta = $request->get('export_meta');
+        $export_all = $request->get('export_all');
         $step = ($request->get('step'))?:1;
         $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xls');
         $products = new Products();
         $exporter = new Exporter($excelGenerator, $products);
+
         $exporter
             ->setColumnsToExport(wp_unslash($columnsToExport))
             ->setCategoriesToExport(wp_unslash($categoriesToExport))
-            ->enableMetaExport($useMeta)
+            ->setExportAll($export_all)
             ->setPage($step)
             ->generate();
 

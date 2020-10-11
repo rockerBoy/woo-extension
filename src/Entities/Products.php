@@ -65,8 +65,12 @@ class Products implements ProductInterface
         return $this;
     }
 
-    public function getProducts()
+    public function getProducts(bool $export_all = false)
     {
+        if (false === $export_all) {
+            $this->product_args['status'] = ['private'];
+        }
+
         return wc_get_products(
             apply_filters(
                 "woocommerce_product_export_product_query_args",

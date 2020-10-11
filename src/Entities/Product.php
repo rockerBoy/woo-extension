@@ -27,6 +27,7 @@ final class Product extends \WC_Product_Simple
         $this->relation_table   = $wpdb->prefix
                                   . 'woo_pre_import_relationships';
         $this->time             = new \DateTimeImmutable('now');
+        $this->set_status('private');
     }
 
     public function setNewID(int $id)
@@ -374,6 +375,11 @@ final class Product extends \WC_Product_Simple
         foreach ($existing_product_ids as $id) {
             $product = wc_get_product($id);
             $list_of_product_skus[] = $product->get_sku();
+        }
+
+        if (empty($list_of_product_skus)) {
+            $this->db->query("TRUNCATE TABLE {$this->pre_import_table}");
+            $this->db->query("TRUNCATE TABLE {$this->relation_table}");
         }
 
         if (! empty($existing_product_ids)) {

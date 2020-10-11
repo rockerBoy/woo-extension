@@ -41,7 +41,7 @@
     productExportForm.prototype.processStep = function ( step, data, columns, filename ) {
         var $this         = this,
             selected_columns = $('.woocommerce-exporter-columns').val(),
-            export_meta      = $('#woocommerce-exporter-meta:checked').length ? 1: 0,
+            export_all       = $('#woocommerce-exporter-all-products:checked').length ? 1: 0,
             export_types     = $('.woocommerce-exporter-types').val(),
             export_category  = $('.woocommerce-exporter-category').val();
 
@@ -54,7 +54,7 @@
                 step             : step,
                 columns          : columns,
                 selected_columns : selected_columns,
-                export_meta      : export_meta,
+                export_all       : export_all,
                 export_types     : export_types,
                 export_category  : export_category,
                 filename         : filename,

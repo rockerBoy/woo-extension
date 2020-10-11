@@ -13,7 +13,7 @@ final class Exporter implements ExporterInterface
     private array $productTypesToExport = [];
     private int $page = 1;
     private int $limit = 50;
-    private bool $enableMetaExport = false;
+    private bool $enableExportAll = false;
     private FileExportInterface $file_export;
     private string $exportType = 'product';
     private int $totalRows = 0;
@@ -73,9 +73,10 @@ final class Exporter implements ExporterInterface
         return $this;
     }
 
-    public function enableMetaExport(bool $enable_meta_export = false): ExporterInterface
+    public function setExportAll(bool $export_all = false): self
     {
-        $this->enableMetaExport = $enable_meta_export;
+        $this->enableExportAll = $export_all;
+
         return $this;
     }
 
@@ -118,7 +119,9 @@ final class Exporter implements ExporterInterface
             $args['category'] = $this->categoriesToExport;
         }
 
-        $products = $this->productModel->setProductArgs($args)->getProducts();
+        $products = $this->productModel
+            ->setProductArgs($args)
+            ->getProducts($this->enableExportAll);
         $this->totalRows  = $products->total;
         $headers = $this->getHeaders();
         $this->rowData[] = $headers;
@@ -160,7 +163,7 @@ final class Exporter implements ExporterInterface
      */
     private function getColumnNames()
     {
-        return apply_filters("woocommerce_{$this->export_type}_export_column_names", $this->columnNames, $this);
+        return $this->columnNames;
     }
 
     private function getHeaders(): array
@@ -206,10 +209,8 @@ final class Exporter implements ExporterInterface
                 continue;
             }
             $value = '';
-            if (has_filter("woocommerce_product_export_{$this->export_type}_column_{$column_id}")) {
-                // Filter for 3rd parties.
-                $value = apply_filters("woocommerce_product_export_{$this->export_type}_column_{$column_id}", '', $product, $column_id);
-            } elseif (is_callable(array( $this, "get_column_value_{$column_id}" ))) {
+
+            if (is_callable(array( $this, "get_column_value_{$column_id}" ))) {
                 // Handle special columns which don't map 1:1 to product data.
                 $value = $this->{"get_column_value_{$column_id}"}($product);
             } elseif (is_callable(array( $product, "get_{$column_id}" ))) {
@@ -255,5 +256,10 @@ final class Exporter implements ExporterInterface
         }
 
         return $row;
+    }
+
+    public function enableMetaExport(bool $enable_meta_export = false
+    ): ExporterInterface {
+        return $this;
     }
 }

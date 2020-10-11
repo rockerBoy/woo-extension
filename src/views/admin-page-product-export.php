@@ -52,11 +52,11 @@ $products = new Products();
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="woocommerce-exporter-meta"><?php esc_html_e( 'Export custom meta?', 'woocommerce' ); ?></label>
+                                <label for="woocommerce-exporter-all-products"><?= __( 'Экспортировать все товары?', 'extendedwoo' ); ?></label>
                             </th>
                             <td>
-                                <input type="checkbox" id="woocommerce-exporter-meta" value="1" />
-                                <label for="woocommerce-exporter-meta"><?php esc_html_e( 'Yes, export all custom meta', 'woocommerce' ); ?></label>
+                                <input type="checkbox" id="woocommerce-exporter-all-products" value="1" />
+                                <label for="woocommerce-exporter-all-products"><?php esc_html_e( 'Да, экспортировать все товары, включая существующие', 'extendedwoo' ); ?></label>
                             </td>
                         </tr>
                         <?php do_action('woocommerce_product_export_row'); ?>
