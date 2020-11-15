@@ -51,7 +51,7 @@ class ProductExcelUpdater extends Import
 
     public function update(): array
     {
-        $prices = $this->prepareRows();;
+        $prices = $this->prepareRows();
         $data = [
             'author_id' => get_current_user_id(),
             'failed'   => [],

@@ -7,10 +7,11 @@ use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\export\Exporter;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\import\BrandsExcelImporter;
 use ExtendedWoo\ExtensionAPI\import\ProductDiscountsUpdater;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelUpdater;
+use ExtendedWoo\ExtensionAPI\import\SecondaryProductUpdater;
 use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
@@ -218,10 +219,8 @@ final class Pages implements PageInterface
             $params = array(
                 'mapping'         => isset($_POST['mapping']) ? (array) wc_clean(wp_unslash($_POST['mapping'])) : array(), // PHPCS: input var ok.
              );
-
             if (! empty($request->get('import_type'))) {
                 $import_type = $request->get('import_type');
-
                 switch ($import_type) {
                     case "update_prices":
                         $updater = new ProductExcelUpdater($request->get('file'), $params);
@@ -232,6 +231,12 @@ final class Pages implements PageInterface
                         $results = $updater->update();
                         break;
                     case "secondary_import":
+                        $updater = new SecondaryProductUpdater($request->get('file'), $params);
+                        $results = $updater->update();
+                        break;
+                    case "upload_brands":
+                        $updater = new BrandsExcelImporter($request->get('file'), $params);
+                        $results = $updater->update();
                         break;
                     default:
                         $importer = new ProductExcelImporter($request->get('file'), $params);

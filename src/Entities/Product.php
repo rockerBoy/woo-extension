@@ -244,6 +244,15 @@ final class Product extends \WC_Product_Simple
         return $id;
     }
 
+    public function getProductIDBySKU(string $sku)
+    {
+        return $this->db->get_var("SELECT `rel`.post_id
+                                        FROM {$this->relation_table} `rel`
+                                        INNER JOIN {$this->pre_import_table} `pi` ON `rel`.import_id = `pi`.id                  
+                                        WHERE
+                                            `pi`.`sku` = '{$sku}'");
+    }
+
     public function getCategory(): string
     {
         $ids      = $this->get_category_ids();
@@ -273,12 +282,10 @@ final class Product extends \WC_Product_Simple
         if (! empty($relation_id)) {
             $product_id = $this->db->get_var("SELECT `product_id` FROM {$this->relation_table}
                 WHERE `id` IN($relation_id) LIMIT 1");
-            $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
-                WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
-
-//            if (true === (bool)$is_duplicate) {
-//                $relation_id = $is_duplicate;
-//            }
+            if (! empty($product_id)) {
+                $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
+                    WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
+            }
 
             $import_id = $this->db->get_var("SELECT `import_id` FROM {$this->relation_table}
                 WHERE `id` = $relation_id LIMIT 1

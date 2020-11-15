@@ -4,8 +4,10 @@
 namespace ExtendedWoo\ExtensionAPI\menu;
 
 use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\import\importing_strategies\BrandsImportStrategy;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\FullProductImportType;
 use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
+use ExtendedWoo\ExtensionAPI\import\models\BrandsImportController;
 use ExtendedWoo\ExtensionAPI\import\PriceImportController;
 use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
@@ -72,6 +74,14 @@ final class AdminMenu
             'manage_options',
             'excel_sales_import',
             [$this, 'productsSalesImportPage']
+        );
+        add_submenu_page(
+            'excel_import',
+            __('Импорт брендов', 'extendedwoo'),
+            __('Импорт брендов', 'extendedwoo'),
+            'manage_options',
+            'excel_brand_import',
+            [$this, 'productsBrandsImportPage']
         );
     }
 
@@ -152,6 +162,26 @@ final class AdminMenu
         $controller = new DiscountsImportController($this->request);
         $controller
             ->setImportType(ImportTypeFactory::getImportType(ProductSalesImportType::class))
+            ->dispatch();
+    }
+
+    public function productsBrandsImportPage(): void
+    {
+        wp_localize_script(
+            'wc-product-import',
+            'wc_product_import_params',
+            [
+                'import_nonce'    => wp_create_nonce('wc-product-import'),
+                'mapping'         => [
+                    'from' => '',
+                    'to'   => '',
+                ]
+            ]
+        );
+        wp_enqueue_script('wc-product-import');
+        $controller = new BrandsImportController($this->request);
+        $controller
+            ->setImportType(ImportTypeFactory::getImportType(BrandsImportStrategy::class))
             ->dispatch();
     }
 

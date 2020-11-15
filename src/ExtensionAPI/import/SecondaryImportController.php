@@ -68,6 +68,8 @@ class SecondaryImportController extends BasicController
         $labels = array_values($this->importStrategy->getColumns());
         $mapped_items = ProductsImportHelper::autoMapColumns($labels);
 
+//        dd($mapped_items);
+//        dd($headers);
         wp_localize_script(
             'ewoo-product-validation',
             'ewoo_product_import_params',
@@ -104,7 +106,10 @@ class SecondaryImportController extends BasicController
         }
 
         $req = $this->request;
-        if (!empty($req->get('map_from')) && ! empty($req->get('map_to'))) {
+
+        $labels = array_values($this->importStrategy->getColumns());
+        $mapping_to = $req->get('map_to');
+        if (!empty($labels) && ! empty($req->get('map_to'))) {
             $mapping_from = $req->get('map_from');
             $mapping_to = $req->get('map_to');
             // Save mapping preferences for future imports.
@@ -123,11 +128,13 @@ class SecondaryImportController extends BasicController
                     'from' => $mapping_from,
                     'to' => $mapping_to,
                 ],
+                'import_type' => 'secondary_import',
                 'file' => $this->file,
             ]
         );
 
         wp_enqueue_script('ewoo-product-import');
+
         include_once $this->import_views_path . '/import-progress.php';
     }
 

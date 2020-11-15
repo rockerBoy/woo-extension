@@ -29,13 +29,21 @@ wp_enqueue_script('ewoo-product-validation');
                 </tr>
             </thead>
             <tbody>
-            <?php foreach ($headers as $index => $header) : ?>
+            <?php
+            $default = ProductsImportHelper::getDefaultFields();
+            foreach ($headers as $index => $header) : ?>
                 <?php
-                $mapped_value = (! empty($mapped_items[$index])) ? $mapped_items[$index]: [];
-                $options = ($mapped_value) ?
-                    ProductsImportHelper::getMappingOptions($mapped_value, $labels): [];
+                    $mapped = (! empty($default[$header]))? $default[$header] : '';
+                    $options = ($mapped) ? ProductsImportHelper::getMappingOptions($mapped, $labels): [];
                 ?>
-                <tr class="<?= ($mapped_value)? 'field-'.$mapped_value : ''?> mapping-field">
+                <?php  foreach ($labels as $key => $label) : ?>
+                    <?php
+                    $value = $mapped_items[$key];
+                    if (!is_array($label)) : ?>
+                        <?php $mapped_value = $mapped_items[$key]; ?>
+                    <?php endif; ?>
+                <?php endforeach ?>
+                <tr class="mapping-field">
                     <td class="wc-importer-mapping-table-name">
                         <?= $header ?>
                         <span class="description"></span>
@@ -50,11 +58,19 @@ wp_enqueue_script('ewoo-product-validation');
                                 if (is_array($label)) : ?>
                                     <optgroup label="<?= esc_attr($label['name']) ?>">
                                         <?php foreach ($label['options'] as $sub_key => $sub_value) : ?>
-                                            <option value="<?= esc_attr($sub_key) ?>" <?php selected($mapped_value, $sub_key); ?>><?= esc_html($sub_value) ?></option>
+                                            <option value="<?= esc_attr($sub_key) ?>"
+                                                <?php echo selected($sub_key, $default[$header]) ?>
+                                            ><?= esc_html($sub_value) ?></option>
                                         <?php endforeach ?>
                                     </optgroup>
-                                <?php else : $mapped_value = $mapped_items[$key]; ?>
-                                    <option value="<?= esc_attr($mapped_value) ?>" <?php selected($mapped_value, $key); ?>><?= esc_html($label)?></option>
+                                <?php
+                                    else :
+                                        $mapped_value = (!empty($mapped_items[$key])? $mapped_items[$key] : '');
+                                        $possible_val = (! empty($default[$header]))? $default[$header]: '';
+                                ?>
+                                <option value="<?= esc_attr($mapped_value) ?>" <?php echo selected($mapped_value, $possible_val) ?> >
+                                    <?= esc_html($label)?>
+                                </option>
                                 <?php endif; ?>
                             <?php endforeach ?>
                         </select>
