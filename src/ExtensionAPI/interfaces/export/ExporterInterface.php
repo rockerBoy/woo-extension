@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export;
 
 interface ExporterInterface
 {
