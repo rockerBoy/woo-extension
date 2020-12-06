@@ -1,5 +1,5 @@
 <?php
-    use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
+    use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 ?>
 <section class="excel-resolver__rows">
     <table>

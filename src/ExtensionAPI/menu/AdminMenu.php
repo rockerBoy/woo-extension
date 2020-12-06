@@ -13,6 +13,7 @@ use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductSalesImportType;
+use ExtendedWoo\ExtensionAPI\import\SecondaryImportController;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 

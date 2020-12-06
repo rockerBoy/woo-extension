@@ -4,7 +4,7 @@
 namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\import\ProblemResolver;
+use ExtendedWoo\ExtensionAPI\import\models\ProblemResolver;
 use Symfony\Component\HttpFoundation\Request;
 
 class ProductImporterController extends BasicController

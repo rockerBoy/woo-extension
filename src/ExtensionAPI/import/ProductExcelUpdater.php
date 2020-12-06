@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
+namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\Import;
