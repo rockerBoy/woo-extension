@@ -1,11 +1,10 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
+namespace ExtendedWoo\ExtensionAPI\import;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\ProblemResolver;
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ImportType;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\import\ProblemResolver;
 use Symfony\Component\HttpFoundation\Request;
 use WP_Error;
 

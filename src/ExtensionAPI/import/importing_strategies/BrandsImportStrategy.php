@@ -1,19 +1,17 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies;
+namespace ExtendedWoo\ExtensionAPI\import\importing_strategies;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
 
 class BrandsImportStrategy implements ImportType
 {
     public function getColumns(): array
     {
-        $columns = [
+        return [
             'brands'     => __('Бренд', 'woocommerce'),
         ];
-
-        return $columns;
     }
 
     public function validateColumnsData(array $columns_data): array

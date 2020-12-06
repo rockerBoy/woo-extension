@@ -1,8 +1,8 @@
 <?php
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\models;
+namespace ExtendedWoo\ExtensionAPI\import\models;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\models\taxonomies\ProductCatTaxonomy;
 
 class RuleSet implements RuleSetBuilder
 {

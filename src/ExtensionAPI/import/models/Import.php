@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\models;
+namespace ExtendedWoo\ExtensionAPI\import\models;
 
 use DateTimeImmutable;
 use ExtendedWoo\Entities\ProductBuilder;

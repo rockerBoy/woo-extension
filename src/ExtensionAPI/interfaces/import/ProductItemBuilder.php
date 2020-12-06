@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\import;
 
 interface ProductItemBuilder
 {

@@ -2,7 +2,7 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ProductItemBuilder;
+use ExtendedWoo\ExtensionAPI\interfaces\import\ProductItemBuilder;
 use WC_Product;
 
 class ProductBuilder implements ProductItemBuilder

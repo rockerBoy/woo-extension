@@ -1,6 +1,6 @@
 <?php
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\models;
+namespace ExtendedWoo\ExtensionAPI\import\models;
 
 use ExtendedWoo\Entities\ProductBuilder;
 use WC_Product;
