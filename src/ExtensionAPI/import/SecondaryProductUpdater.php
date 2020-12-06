@@ -4,7 +4,7 @@ namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\Entities\Product;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use finfo;
+
 
 class SecondaryProductUpdater extends ProductExcelUpdater
 {
@@ -80,14 +80,15 @@ class SecondaryProductUpdater extends ProductExcelUpdater
 
                 if (! empty($columns['brands'])) {
                     $brand = get_term_by('name', trim($columns['brands']), 'brands');
-                    if ($brand) {
+
+                    if (!empty($brand)) {
                         wp_set_post_terms($product->get_id(), [$brand->term_id], 'brands');
                     }
                 }
 
                 if (! empty($columns['manufacturer'])) {
                     $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'manufacturers');
-                    if ($brand) {
+                    if (!empty($manufacturers)) {
                         wp_set_post_terms($product->get_id(),
                             [$manufacturers->term_id], 'manufacturers');
                     }
@@ -116,19 +117,5 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                 return $product;
             }
         }
-    }
-
-    private function getCurlImage(string $url)
-    {
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_URL, $url);
-
-        $data = curl_exec($ch);
-        curl_close($ch);
-
-        return $data;
     }
 }
