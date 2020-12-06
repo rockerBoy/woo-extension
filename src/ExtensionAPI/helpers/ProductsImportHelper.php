@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\helpers;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\helpers;
 
-use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\interfaces\export\taxonomies\ProductCatTaxonomy;
 
 final class ProductsImportHelper
 {
@@ -38,7 +38,6 @@ final class ProductsImportHelper
                 __('Position', 'woocommerce')       => 'menu_order',
                 __('Бренд', 'woocommerce')          => 'brands',
                 __('Производитель', 'woocommerce')  => 'manufacturer',
-                __('Images', 'woocommerce')         => 'images'
             ];
     }
     public static function normalizeRowNames(array $columns): array
@@ -182,7 +181,7 @@ final class ProductsImportHelper
 
     public static function getCategories(): array
     {
-        $term_list = get_terms(['taxonomy' => 'product_cat', 'hide_empty' => false]);
+        $term_list = get_terms( ['taxonomy' => 'product_cat', 'hide_empty' => false] );
 
         return $term_list;
     }

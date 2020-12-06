@@ -3,7 +3,7 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\ExporterInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\export\ExporterInterface;
 
 class ProductExporter implements ExporterInterface
 {
@@ -18,26 +18,6 @@ class ProductExporter implements ExporterInterface
     private int $total_rows = 0;
     private bool $enable_meta_export = false;
     private $export_type = 'product';
-
-    /**
-     * Column ids and names
-     * @var array $column_names
-     */
-    private array $column_names = [];
-
-    /**
-     * List of columns to export, or empty for all.
-     *
-     * @var array
-     */
-    private array $columns_to_export = [];
-
-    /**
-     * Which product types are being exported.
-     *
-     * @var array $product_types_to_export
-     */
-    private string $filename = 'wc-export';
 
     public function __construct()
     {
@@ -99,6 +79,7 @@ class ProductExporter implements ExporterInterface
     public function setProductCategoryToExport($category): self
     {
         $this->product_category_to_export = $this->product_category_to_export = array_map('sanitize_title_with_dashes', $category);
+
         return $this;
     }
 

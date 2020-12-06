@@ -3,7 +3,7 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\TableInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\TableInterface;
 use wpdb;
 
 class CategoryFiltersTable implements TableInterface

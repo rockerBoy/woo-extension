@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 
 class BrandsExcelImporter extends ProductExcelUpdater
 {
@@ -28,7 +28,6 @@ class BrandsExcelImporter extends ProductExcelUpdater
     public function update(): array
     {
         $brands = $this->prepareRows();
-//        $brands = array_shift($brands);
         $data = [
             'author_id' => get_current_user_id(),
             'failed'   => [],
@@ -44,7 +43,7 @@ class BrandsExcelImporter extends ProductExcelUpdater
         return $data;
     }
 
-    private function process(array $data)
+    private function process( array $data)
     {
         if (! empty($data)) {
             $brand_item = trim($data['brands']);
@@ -63,9 +62,7 @@ class BrandsExcelImporter extends ProductExcelUpdater
                 );
 
                 $new_film_id = wp_insert_post($post);
-//                wp_set_object_terms($new_film_id, $brand_item, 'brands', true);
-                $term = wp_insert_term($brand_item, 'brands', array( 'parent' => null ));
-//                dd($post);
+                wp_set_object_terms($new_film_id, $brand_item, 'brands', true);
             }
         }
 

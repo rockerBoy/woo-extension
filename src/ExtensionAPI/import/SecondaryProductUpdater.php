@@ -1,9 +1,9 @@
 <?php
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
 use ExtendedWoo\Entities\Product;
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 
 class SecondaryProductUpdater extends ProductExcelUpdater
 {

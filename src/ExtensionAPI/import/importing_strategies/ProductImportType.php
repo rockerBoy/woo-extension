@@ -1,10 +1,10 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import\importing_strategies;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies;
 
-use ExtendedWoo\ExtensionAPI\import\models\RuleSet;
-use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\RuleSet;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ImportType;
 
 class ProductImportType implements ImportType
 {

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\interfaces;
 
 interface TaxonomyInterface
 {

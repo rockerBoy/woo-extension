@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\export;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\models\export;
 
 use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -64,7 +64,6 @@ class ExcelExport implements FileExportInterface
         header('Content-Type: application/vnd.ms-excel');
         header('Content-Disposition: attachment; filename="'.$this->file_name.'"');
         $content = file_get_contents($this->getFilePath());
-        @unlink($this->getFilePath());
         exit($content);
     }
 

@@ -23,16 +23,11 @@
      */
     productExportForm.prototype.onSubmit = function ( event ) {
         event.preventDefault();
-        let currentDate    = new Date(),
-            day            = currentDate.getDate(),
-            month          = currentDate.getMonth() + 1,
-            year           = currentDate.getFullYear(),
-            timestamp      = currentDate.getTime(),
-            filename       = 'wc-product-export-' + day + '-' + month + '-' + year + '-' + timestamp + '.csv';
+
         event.data.productExportForm.$form.addClass('woocommerce-exporter__exporting');
         event.data.productExportForm.$form.find('.woocommerce-exporter-progress').val(0);
         event.data.productExportForm.$form.find('.woocommerce-exporter-button').prop('disabled', true);
-        event.data.productExportForm.processStep(1, $(this).serialize(), '', filename);
+        event.data.productExportForm.processStep(1, $(this).serialize(), '');
     };
 
     /**
@@ -42,6 +37,7 @@
         var $this         = this,
             selected_columns = $('.woocommerce-exporter-columns').val(),
             export_all       = $('#woocommerce-exporter-all-products:checked').length ? 1: 0,
+            export_without_images       = $('#woocommerce_exporter_products_without_image:checked').length ? 1: 0,
             export_types     = $('.woocommerce-exporter-types').val(),
             export_category  = $('.woocommerce-exporter-category').val();
 
@@ -55,6 +51,7 @@
                 columns          : columns,
                 selected_columns : selected_columns,
                 export_all       : export_all,
+                export_without_images: export_without_images,
                 export_types     : export_types,
                 export_category  : export_category,
                 filename         : filename,

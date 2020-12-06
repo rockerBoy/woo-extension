@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 use Symfony\Component\HttpFoundation\Request;
 
 class SecondaryImportController extends BasicController

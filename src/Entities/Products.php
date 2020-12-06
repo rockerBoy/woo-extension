@@ -1,26 +1,8 @@
 <?php
 
-/**
- *
- * PreImport database table
- *
- * @var int product_id
- * @var string product_title
- * @var string product_excerpt
- * @var string product_content
- * @var string sku
- * @var float min_price
- * @var float max_price
- * @var boolean on_sale
- * @var string stock_status
- * @var string tax_class
- */
-
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\import\ProductInterface;
-
-class Products implements ProductInterface
+final class Products
 {
     public const POST_TYPE = 'product';
 
@@ -55,6 +37,7 @@ class Products implements ProductInterface
             'brands'                    => __('Бренд', 'woocommerce'),
             'manufacturers'             => __('Страна производитель', 'woocommerce'),
             'tag_ids'                   => __('Tags', 'woocommerce'),
+            'images'                   => __('Images', 'woocommerce'),
         ];
     }
 
@@ -67,6 +50,8 @@ class Products implements ProductInterface
 
     public function getProducts(bool $export_all = false)
     {
+        $export_all = true;
+//        dd($this->product_args);
         if (false === $export_all) {
             $this->product_args['status'] = ['private'];
         }
@@ -139,15 +124,5 @@ class Products implements ProductInterface
         }
 
         return $result_attributes;
-    }
-
-    public function checkIfExists(string $product_name): bool
-    {
-        return  false;
-    }
-
-    public function getProductTerms(): array
-    {
-        return  [];
     }
 }

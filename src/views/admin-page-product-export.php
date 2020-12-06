@@ -1,6 +1,7 @@
 <?php
 
 use ExtendedWoo\Entities\Products;
+use ExtendedWoo\ExtensionAPI\interfaces\export\Pages;
 
 $products = new Products();
 ?>
@@ -52,6 +53,14 @@ $products = new Products();
                         </tr>
                         <tr>
                             <th scope="row">
+                                <label for="woocommerce_exporter_products_without_image"><?= __( 'Экспортировать только товары без изображения', 'extendedwoo' ); ?></label>
+                            </th>
+                            <td>
+                                <input type="checkbox" name="woocommerce_exporter_products_without_image" id="woocommerce_exporter_products_without_image" value="1" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
                                 <label for="woocommerce-exporter-all-products"><?= __( 'Экспортировать все товары?', 'extendedwoo' ); ?></label>
                             </th>
                             <td>
@@ -64,6 +73,29 @@ $products = new Products();
                     </table>
                     <progress class="woocommerce-exporter-progress" max="100" value="0"></progress>
                 </section>
+                <?php if (! empty($_GET['files'])): ?>
+                <section>
+                    <?php
+                    $uploads = wp_upload_dir();
+                    $path = trailingslashit($uploads['basedir']);
+                        foreach ($_GET['files'] as $file) {
+
+                            $query_args = apply_filters(
+                                'ewoo_export_get_ajax_query_args',
+                                array(
+                                    'nonce'    => wp_create_nonce('product-xls'),
+                                    'action'   => 'download_product_xls',
+                                    'filename' => $file,
+                                )
+                            );
+                            $link = add_query_arg($query_args, admin_url(Pages::PAGE_ROOT.'&page=product_excel_exporter'));
+                            if (is_file($path.$file)) {
+                                printf("<a target='_blank' href='%s'>%s</a><br/>", $link, $file);
+                            }
+                        }
+                        ?>
+                </section>
+                <?php endif; ?>
                 <div class="wc-actions">
                     <button type="submit" class="woocommerce-exporter-button button button-primary" value="<?php esc_attr_e('Сгенерировать Эксель', 'extended-woo'); ?>"><?php esc_html_e('Сгенерировать Эксель', 'extended-woo'); ?></button>
                 </div>

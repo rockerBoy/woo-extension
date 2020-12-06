@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
-use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ImportType;
 use Symfony\Component\HttpFoundation\Request;
 use WP_Error;
 

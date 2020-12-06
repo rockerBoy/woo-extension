@@ -11,7 +11,7 @@
  * @var int order
  */
 
-namespace ExtendedWoo\ExtensionAPI\interfaces;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\interfaces;
 
 interface EntityInterface
 {

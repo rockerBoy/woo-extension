@@ -3,7 +3,7 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\CategoryInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\CategoryInterface;
 
 class Category implements CategoryInterface
 {

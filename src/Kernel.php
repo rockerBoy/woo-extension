@@ -4,10 +4,11 @@
 namespace ExtendedWoo;
 
 use ExtendedWoo\Entities\Filters;
-use ExtendedWoo\ExtensionAPI\ExtensionInstall;
-use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
-use ExtendedWoo\ExtensionAPI\menu\AdminMenu;
-use ExtendedWoo\ExtensionAPI\Pages;
+use ExtendedWoo\ExtensionAPI\interfaces\export\controllers\AjaxController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\ExtensionInstall;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\ExtendedWooInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\export\menu\AdminMenu;
+use ExtendedWoo\ExtensionAPI\interfaces\export\Pages;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 
@@ -33,13 +34,15 @@ final class Kernel implements ExtendedWooInterface
     {
         $this->request = Request::createFromGlobals();
         $pages = new Pages();
+        $ajaxController = new AjaxController();
         $filters = new Filters();
         add_action('init', array($filters, 'initTaxonomies'));
         add_action('admin_menu', [(new AdminMenu($this->twig)), 'initMenu'], 8);
         add_action('admin_init', array($this, 'install'));
         add_action('admin_menu', [$pages, 'menu'], 1);
         add_action('admin_init', array($pages, 'downloadExportFile'));
-        add_action('wp_ajax_ext_do_ajax_product_export', array( $pages, 'doAjaxProductExport' ));
+
+        add_action('wp_ajax_ext_do_ajax_product_export', array( $ajaxController, 'productExport' ));
         add_action('wp_ajax_ext_do_ajax_product_import', array( $pages, 'doAjaxProductImport' ));
         add_action('wp_ajax_ext_do_ajax_product_remove', array( $pages, 'doAjaxProductRemove' ));
         add_action('wp_ajax_ext_do_ajax_check_resolver_form', array( $pages, 'doAjaxCheckResolverForm' ));

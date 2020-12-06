@@ -3,18 +3,19 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
+use DateTimeImmutable;
 use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\Products;
-use ExtendedWoo\ExtensionAPI\export\Exporter;
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\import\BrandsExcelImporter;
-use ExtendedWoo\ExtensionAPI\import\ProductDiscountsUpdater;
-use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
-use ExtendedWoo\ExtensionAPI\import\ProductExcelUpdater;
-use ExtendedWoo\ExtensionAPI\import\SecondaryProductUpdater;
-use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\Exporter;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\BrandsExcelImporter;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductDiscountsUpdater;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductExcelImporter;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductExcelUpdater;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\SecondaryProductUpdater;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
-use \ExtendedWoo\ExtensionAPI\export\ExcelExport;
+use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\ExcelExport;
 
 final class Pages implements PageInterface
 {
@@ -111,9 +112,6 @@ final class Pages implements PageInterface
         );
         $parsed_options = wp_parse_args($options, $defaults);
 
-//        if (0 !== strpos($parsed_options['path'], self::PAGE_ROOT)) {
-//            $options['path'] = self::PAGE_ROOT . '=' . $options['path'];
-//        }
         if (is_null($parsed_options['parent'])) {
             add_menu_page(
                 $parsed_options['title'],
@@ -169,49 +167,8 @@ final class Pages implements PageInterface
     }
 
 
-    public function doAjaxProductExport(): void
-    {
-        $request = $this->request;
-        check_ajax_referer('ewoo-product-export', 'security');
-        $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
-        $columnsToExport = ($request->get('selected_columns'))?:[];
-        $categoriesToExport = ($request->get('export_category'))?:[];
-        $export_all = $request->get('export_all');
-        $step = ($request->get('step'))?:1;
-        $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xls');
-        $products = new Products();
-        $exporter = new Exporter($excelGenerator, $products);
-
-        $exporter
-            ->setColumnsToExport(wp_unslash($columnsToExport))
-            ->setCategoriesToExport(wp_unslash($categoriesToExport))
-            ->setExportAll($export_all)
-            ->setPage($step)
-            ->generate();
-
-        $query_args = apply_filters(
-            'ewoo_export_get_ajax_query_args',
-            array(
-                'nonce'    => wp_create_nonce('product-xls'),
-                'action'   => 'download_product_xls',
-                'filename' => $excelGenerator->getFileName(),
-            )
-        );
-
-        wp_send_json_success(
-            array(
-                'step'       => 'done',
-                'percentage' => 100,
-                'url'        => add_query_arg($query_args, admin_url(Pages::PAGE_ROOT.'&page=product_excel_exporter')),
-            )
-        );
-        wp_die();
-    }
-
     public function doAjaxProductImport(): void
     {
-        global $wpdb;
-
         $request = $this->request;
         check_ajax_referer('ewoo-product-import', 'security');
 
@@ -269,9 +226,6 @@ final class Pages implements PageInterface
         }
     }
 
-    /**
-     * @return array
-     */
     public function doAjaxProductRemove(): void
     {
         $request = $this->request;
@@ -340,6 +294,7 @@ final class Pages implements PageInterface
             foreach ($form_data as $item) {
                 $rel_id = $item['relation_id'];
                 $product = new Product();
+                /** @noinspection SqlDialectInspection */
                 $product_id = $wpdb->get_var("
                                 SELECT
                                     `product_id`
@@ -440,11 +395,13 @@ final class Pages implements PageInterface
         $request = $this->request;
         $action = $request->get('action');
         $nonce = $request->get('nonce');
-        $date = (new \DateTimeImmutable("now"))->format('d-m-Y');
-        if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') && wp_unslash($action) === 'download_product_xls') {
-            $excelGenerator = new ExcelExport('Product_Export_'.$date.'.xls');
+        $filename = $request->get('filename');
+
+        $date = (new DateTimeImmutable("now"))->format('d-m-Y');
+        if ((! empty($action) && ! empty($nonce)) && wp_verify_nonce(wp_unslash($nonce), 'product-xls') &&
+            wp_unslash($action) === 'download_product_xls' && ! empty($filename)) {
+            $excelGenerator = new ExcelExport($filename);
             $excelGenerator->sendFileToUser();
-            wp_die();
         }
     }
     
@@ -480,6 +437,16 @@ final class Pages implements PageInterface
             )
         );
 
+        if (empty($_GET['files']) && empty($_GET['action']) && empty($_GET['filename'])) {
+            $uploads = wp_upload_dir();
+            $path = trailingslashit($uploads['basedir']);
+            
+            foreach (scandir($path) as $file) {
+                if (false !== strpos($file, 'Product_Export_')) {
+                    @unlink($path.$file);
+                }
+            }
+        }
         ob_start();
         require __DIR__.'/../views/admin-page-product-export.php';
 

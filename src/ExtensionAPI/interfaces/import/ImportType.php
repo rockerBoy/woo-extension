@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import;
 
 interface ImportType
 {

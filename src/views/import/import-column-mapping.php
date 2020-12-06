@@ -1,6 +1,6 @@
 <?php
 
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 
 wp_enqueue_script('ewoo-product-validation');
 ?>

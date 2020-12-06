@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
-use ExtendedWoo\ExtensionAPI\interfaces\import\ProductItemBuilder as ProductBuilder;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ProductItemBuilder as ProductBuilder;
 
 class ExcelImportProductItemBuilder implements ProductBuilder
 {

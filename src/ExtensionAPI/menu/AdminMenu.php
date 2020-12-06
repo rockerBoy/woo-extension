@@ -1,19 +1,19 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\menu;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\menu;
 
-use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\BrandsImportStrategy;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\FullProductImportType;
-use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
-use ExtendedWoo\ExtensionAPI\import\models\BrandsImportController;
-use ExtendedWoo\ExtensionAPI\import\PriceImportController;
-use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductSalesImportType;
-use ExtendedWoo\ExtensionAPI\import\SecondaryImportController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\BrandsImportStrategy;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\FullProductImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\ImportTypeFactory;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\BrandsImportController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\PriceImportController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductImporterController;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\ProductImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\ProductPriceImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\ProductSalesImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\SecondaryImportController;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 

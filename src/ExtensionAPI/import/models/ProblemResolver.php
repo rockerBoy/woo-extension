@@ -1,13 +1,13 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\import\models;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\models;
 
 use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\ProductBuilder;
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
-use ExtendedWoo\ExtensionAPI\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\import\ImportType;
+use ExtendedWoo\ExtensionAPI\interfaces\export\taxonomies\ProductCatTaxonomy;
 
 final class ProblemResolver
 {

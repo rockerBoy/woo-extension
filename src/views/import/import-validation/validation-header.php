@@ -1,7 +1,5 @@
 <?php
 
-use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-
 $validated = [
         'correct' => 0,
         'errors' => 0,

@@ -1,11 +1,11 @@
 <?php
 
-namespace ExtendedWoo\ExtensionAPI\import;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
 
 use DateTimeImmutable;
 use ExtendedWoo\Entities\ProductBuilder;
-use ExtendedWoo\ExtensionAPI\import\models\Import;
-use ExtendedWoo\ExtensionAPI\import\models\ProductFactory;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\Import;
+use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\ProductFactory;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductExcelImporter extends Import

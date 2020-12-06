@@ -1,21 +1,21 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\export;
+namespace ExtendedWoo\ExtensionAPI\interfaces\export\models\export;
 
 use ExtendedWoo\Entities\Products;
 
-final class Exporter implements ExporterInterface
+final class Exporter
 {
-    private array $columnNames = [];
+    private array $columnNames;
     private array $columnsToExport = [];
-    private array $categoriesToExport = [];
-    private array $productTypesToExport = [];
+    private string $categoriesToExport;
+    private array $productTypesToExport;
     private int $page = 1;
     private int $limit = 50;
     private bool $enableExportAll = false;
+    private bool $exportWithoutImages = false;
     private FileExportInterface $file_export;
-    private string $exportType = 'product';
     private int $totalRows = 0;
     private int $exportedRowCount = 0;
     private array $rowData = [];
@@ -23,30 +23,28 @@ final class Exporter implements ExporterInterface
 
     public function __construct($file_export, $product)
     {
-        try {
-            $this->file_export = $file_export;
-            $this->productModel = $product;
-            $this->columnNames = $this->productModel->getDefaultColumnNames();
-            $this->setProductTypesToExport(
-                array_merge(
-                    array_keys(
-                        wc_get_product_types()
-                    ),
-                    array( 'variation' )
-                )
-            );
-        } catch (Exception $exception) {
-        }
+        $this->file_export = $file_export;
+        $this->productModel = $product;
+        $this->columnNames = $this->productModel->getDefaultColumnNames();
+
+        $this->setProductTypesToExport(
+            array_merge(
+                array_keys(
+                    wc_get_product_types()
+                ),
+                array( 'variation' )
+            )
+        );
     }
 
-    public function setCategoriesToExport(array $categories_to_export): ExporterInterface
+    public function setCategoriesToExport(string $categories_to_export): self
     {
-        $this->categoriesToExport = array_map('sanitize_title_with_dashes', $categories_to_export);
+        $this->categoriesToExport = $categories_to_export;
 
         return $this;
     }
 
-    public function setColumnsToExport(array $exportColumns): ExporterInterface
+    public function setColumnsToExport(array $exportColumns): self
     {
         $this->columnsToExport = $exportColumns;
 
@@ -59,14 +57,14 @@ final class Exporter implements ExporterInterface
         return $this;
     }
 
-    public function setLimit(int $limit): ExporterInterface
+    public function setLimit(int $limit): self
     {
         $this->limit = $limit;
 
         return $this;
     }
 
-    public function setPage(int $page): ExporterInterface
+    public function setPage(int $page): self
     {
         $this->page = $page;
 
@@ -80,16 +78,23 @@ final class Exporter implements ExporterInterface
         return $this;
     }
 
+    public function setExportWithoutImages(bool $without_images = false): self
+    {
+        $this->exportWithoutImages = $without_images;
+
+        return $this;
+    }
+
     public function isColumnExporting($column_id): bool
     {
-        $column_id         = strstr($column_id, ':') ? current(explode(':', $column_id)) : $column_id;
+        $column_id         = strpos($column_id, ':') !== false ? current(explode(':', $column_id)) : $column_id;
         $columns_to_export = $this->columnsToExport;
 
         if (empty($columns_to_export)) {
             return true;
         }
 
-        if (in_array($column_id, $columns_to_export, true) || 'meta' === $column_id) {
+        if ('meta' === $column_id || in_array($column_id, $columns_to_export, true)) {
             return true;
         }
 
@@ -107,6 +112,7 @@ final class Exporter implements ExporterInterface
                 'future',
                 'pending'
             ],
+            'category' => $this->categoriesToExport,
             'type'     => ['simple'],
             'limit' => $this->limit,
             'page' => $this->page,
@@ -115,13 +121,17 @@ final class Exporter implements ExporterInterface
             'paginate' => true,
         ];
 
-        if (! empty($this->categoriesToExport)) {
-            $args['category'] = $this->categoriesToExport;
+        $products = $this->productModel->setProductArgs($args)->getProducts($this->enableExportAll);
+
+        if (! empty($this->exportWithoutImages) && true === $this->exportWithoutImages) {
+            foreach ($products->products as $key => $product) {
+                if (true === (bool) $product->get_image_id()) {
+                    unset($products->products[$key]);
+                    $products->total -= 1;
+                }
+            }
         }
 
-        $products = $this->productModel
-            ->setProductArgs($args)
-            ->getProducts($this->enableExportAll);
         $this->totalRows  = $products->total;
         $headers = $this->getHeaders();
         $this->rowData[] = $headers;
@@ -153,31 +163,23 @@ final class Exporter implements ExporterInterface
 
     protected function filterDescriptionField($description)
     {
-        $description = str_replace('\n', "\\\\n", $description);
-        $description = str_replace("\n", '\n', $description);
+        $description = str_replace(array('\n', "\n"), array("\\\\n", '\n'),
+            $description);
         return $description;
-    }
-
-    /**
-     * @return mixed
-     */
-    private function getColumnNames()
-    {
-        return $this->columnNames;
     }
 
     private function getHeaders(): array
     {
         $headers = [];
         foreach ($this->columnNames as $index => $column_name) {
-            $column_id = strstr($index, ':') ? current(explode(':', $index)) : $index;
+            $column_id = strpos($index, ':') !== false ? current(explode(':', $index)) : $index;
             if (!empty($this->columnsToExport) && !$this->isColumnExporting($column_id)) {
                 continue;
             }
             $headers[] = $column_name;
         }
 
-        $cat_id = get_term_by('slug', current($this->categoriesToExport), 'product_cat');
+        $cat_id = get_term_by('slug', $this->categoriesToExport, 'product_cat');
         $attributes = $this->productModel->getCategoryAttributes($cat_id->term_id);
 
         if (! empty($attributes)) {
@@ -186,6 +188,7 @@ final class Exporter implements ExporterInterface
 
         return $headers;
     }
+
     /**
      * @param $product
      *
@@ -193,7 +196,7 @@ final class Exporter implements ExporterInterface
      */
     private function generateRowData($product): array
     {
-        $columns = $this->getColumnNames();
+        $columns = $this->columnNames;
         $row     = [];
         $categories = $this->productModel->getCategory($product);
         $brands = $this->productModel->getBrand($product);
@@ -203,7 +206,7 @@ final class Exporter implements ExporterInterface
         $parent_categories = $this->productModel->getCategory($product, true);
 
         foreach ($columns as $column_id => $column_name) {
-            $column_id = strstr($column_id, ':') ? current(explode(':', $column_id)) : $column_id;
+            $column_id = strpos($column_id, ':') !== false ? current(explode(':', $column_id)) : $column_id;
 
             if (!empty($this->columnsToExport) && !$this->isColumnExporting($column_id)) {
                 continue;
@@ -256,10 +259,5 @@ final class Exporter implements ExporterInterface
         }
 
         return $row;
-    }
-
-    public function enableMetaExport(bool $enable_meta_export = false
-    ): ExporterInterface {
-        return $this;
     }
 }
