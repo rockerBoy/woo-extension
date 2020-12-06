@@ -197,7 +197,7 @@ final class Exporter
     private function generateRowData($product): array
     {
         $columns = $this->columnNames;
-        $row     = [];
+        $row = [];
         $categories = $this->productModel->getCategory($product);
         $brands = $this->productModel->getBrand($product);
         $cat_id = current($product->category_ids);
@@ -233,6 +233,10 @@ final class Exporter
                     break;
                 case "manufacturers":
                     $value = $countries;
+                    break;
+                case "images":
+                    $id = $product->get_image_id() ?? 0;
+                    $value = wp_get_attachment_image_url($id, 'full');
                     break;
             }
 

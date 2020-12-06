@@ -3,7 +3,7 @@
 namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\Entities\Product;
-use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 
 class SecondaryProductUpdater extends ProductExcelUpdater
 {

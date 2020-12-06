@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export;
+namespace ExtendedWoo\ExtensionAPI\models\export;
 
 
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;

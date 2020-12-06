@@ -3,8 +3,8 @@
 
 namespace ExtendedWoo\ExtensionAPI\import;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\interfaces\export\import\models\Import;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\import\models\Import;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductExcelUpdater extends Import

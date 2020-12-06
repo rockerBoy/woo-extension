@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\export;
+namespace ExtendedWoo\ExtensionAPI\models\export;
 
 
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
