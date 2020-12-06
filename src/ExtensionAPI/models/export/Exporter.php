@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI\models\export;
 
+use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\Products;
 
 final class Exporter
@@ -196,6 +197,7 @@ final class Exporter
      */
     private function generateRowData($product): array
     {
+        $fz_product = new Product($product->get_id());
         $columns = $this->columnNames;
         $row = [];
         $categories = $this->productModel->getCategory($product);
@@ -220,7 +222,6 @@ final class Exporter
                 // Default and custom handling.
                 $value = $product->{"get_{$column_id}"}('edit');
             }
-
             switch ($column_id) {
                 case "category_ids":
                     $value = $categories;
@@ -236,7 +237,16 @@ final class Exporter
                     break;
                 case "images":
                     $id = $product->get_image_id() ?? 0;
-                    $value = wp_get_attachment_image_url($id, 'full');
+                    if ($fz_product->getRealID() > 0 && $id == 0) {
+                        //https://rost.kh.ua/photo/4233098.jpg
+                        $is_exists = wc_rest_upload_image_from_url($value);
+                        if (!$is_exists instanceof \WP_Error) {
+                            $value = "https://rost.kh.ua/photo/{$fz_product->getRealID()}.jpg";
+                        }
+                    } elseif ($id) {
+                        $value = wp_get_attachment_image_url($id, 'full');
+                    }
+
                     break;
             }
 
