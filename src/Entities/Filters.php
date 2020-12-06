@@ -3,9 +3,8 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\Brands;
-use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductCategoryMetaboxes;
-use ExtendedWoo\ExtensionAPI\interfaces\export\Manufacturer;
+use ExtendedWoo\ExtensionAPI\Brands;
+use ExtendedWoo\ExtensionAPI\Manufacturer;
 
 final class Filters
 {

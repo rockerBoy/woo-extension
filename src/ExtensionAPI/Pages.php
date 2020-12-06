@@ -5,15 +5,13 @@ namespace ExtendedWoo\ExtensionAPI;
 
 use DateTimeImmutable;
 use ExtendedWoo\Entities\Product;
-use ExtendedWoo\Entities\Products;
-use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\Exporter;
 use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\BrandsExcelImporter;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductDiscountsUpdater;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductExcelImporter;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\ProductExcelUpdater;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\SecondaryProductUpdater;
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\PageInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use Symfony\Component\HttpFoundation\Request;
 use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\ExcelExport;
 

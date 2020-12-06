@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\menu;
+namespace ExtendedWoo\ExtensionAPI\menu;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\BrandsImportStrategy;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\importing_strategies\FullProductImportType;
 use ExtendedWoo\ExtensionAPI\interfaces\export\import\ImportTypeFactory;

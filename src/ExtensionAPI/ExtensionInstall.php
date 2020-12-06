@@ -7,7 +7,7 @@ use \wpdb;
 use ExtendedWoo\Entities\CategoryFiltersTable;
 use ExtendedWoo\Entities\Filters;
 use ExtendedWoo\Entities\PreImportTable;
-use ExtendedWoo\ExtensionAPI\interfaces\export\models\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\models\taxonomies\ProductCatTaxonomy;
 
 /**
  * Class ExtensionInstall

@@ -2,7 +2,7 @@
 
 namespace ExtendedWoo\Entities;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\TableInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\TableInterface;
 use wpdb;
 
 class PreImportTable implements TableInterface

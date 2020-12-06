@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
+namespace ExtendedWoo\ExtensionAPI\import;
 
 class DiscountsImportController extends PriceImportController
 {

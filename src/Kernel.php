@@ -4,11 +4,11 @@
 namespace ExtendedWoo;
 
 use ExtendedWoo\Entities\Filters;
-use ExtendedWoo\ExtensionAPI\interfaces\export\controllers\AjaxController;
-use ExtendedWoo\ExtensionAPI\interfaces\export\ExtensionInstall;
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\ExtendedWooInterface;
-use ExtendedWoo\ExtensionAPI\interfaces\export\menu\AdminMenu;
-use ExtendedWoo\ExtensionAPI\interfaces\export\Pages;
+use ExtendedWoo\ExtensionAPI\ExtensionInstall;
+use ExtendedWoo\ExtensionAPI\controllers\AjaxController;
+use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
+use ExtendedWoo\ExtensionAPI\menu\AdminMenu;
+use ExtendedWoo\ExtensionAPI\Pages;
 use Symfony\Component\HttpFoundation\Request;
 use Twig\Environment;
 
@@ -66,6 +66,7 @@ final class Kernel implements ExtendedWooInterface
     public function uninstall(): ExtendedWooInterface
     {
         ExtensionInstall::uninstallTables();
+
         return $this;
     }
 

@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import;
+namespace ExtendedWoo\ExtensionAPI\import;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\helpers\ProductsImportHelper;
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use Symfony\Component\HttpFoundation\Request;
 
 class PriceImportController extends BasicController

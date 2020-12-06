@@ -1,10 +1,10 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\models\taxonomies;
+namespace ExtendedWoo\ExtensionAPI\models\taxonomies;
 
 use ExtendedWoo\Entities\Filters;
-use ExtendedWoo\ExtensionAPI\interfaces\export\interfaces\TaxonomyInterface;
+use ExtendedWoo\ExtensionAPI\interfaces\TaxonomyInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 final class ProductCatTaxonomy implements TaxonomyInterface

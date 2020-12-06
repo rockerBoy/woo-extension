@@ -1,14 +1,14 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\controllers;
+namespace ExtendedWoo\ExtensionAPI\controllers;
 
 
 use DateTimeImmutable;
 use ExtendedWoo\Entities\Products;
-use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\ExcelExport;
-use ExtendedWoo\ExtensionAPI\interfaces\export\models\export\Exporter;
-use ExtendedWoo\ExtensionAPI\interfaces\export\Pages;
+use ExtendedWoo\ExtensionAPI\models\export\ExcelExport;
+use ExtendedWoo\ExtensionAPI\models\export\Exporter;
+use ExtendedWoo\ExtensionAPI\Pages;
 use Symfony\Component\HttpFoundation\Request;
 
 final class AjaxController

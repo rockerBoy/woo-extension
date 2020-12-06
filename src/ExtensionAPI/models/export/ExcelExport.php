@@ -1,7 +1,7 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\models\export;
+namespace ExtendedWoo\ExtensionAPI\models\export;
 
 use PhpOffice\PhpSpreadsheet\Settings;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;

@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\helpers;
+namespace ExtendedWoo\ExtensionAPI\helpers;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\models\taxonomies\ProductCatTaxonomy;
 
 final class ProductsImportHelper
 {
