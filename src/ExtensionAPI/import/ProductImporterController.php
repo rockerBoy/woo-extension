@@ -4,9 +4,8 @@
 namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
-use ExtendedWoo\ExtensionAPI\interfaces\import\ProblemResolver;
+use ExtendedWoo\ExtensionAPI\import\ProblemResolver;
 use Symfony\Component\HttpFoundation\Request;
-use WP_Error;
 
 class ProductImporterController extends BasicController
 {
@@ -114,6 +113,7 @@ class ProductImporterController extends BasicController
             ));
             $this->showErrors();
         }
+
         $req = $this->request;
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');

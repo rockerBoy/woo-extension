@@ -3,6 +3,7 @@
 
 namespace ExtendedWoo\ExtensionAPI\import;
 
+use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -68,8 +69,6 @@ class SecondaryImportController extends BasicController
         $labels = array_values($this->importStrategy->getColumns());
         $mapped_items = ProductsImportHelper::autoMapColumns($labels);
 
-//        dd($mapped_items);
-//        dd($headers);
         wp_localize_script(
             'ewoo-product-validation',
             'ewoo_product_import_params',

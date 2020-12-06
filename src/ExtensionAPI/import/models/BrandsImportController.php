@@ -1,9 +1,9 @@
 <?php
 
 
-namespace ExtendedWoo\ExtensionAPI\interfaces\export\import\models;
+namespace ExtendedWoo\ExtensionAPI\import\models;
 
-use ExtendedWoo\ExtensionAPI\interfaces\export\import\PriceImportController;
+use ExtendedWoo\ExtensionAPI\import\PriceImportController;
 
 class BrandsImportController extends PriceImportController
 {
