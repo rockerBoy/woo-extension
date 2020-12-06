@@ -38,6 +38,7 @@ final class ProductsImportHelper
                 __('Position', 'woocommerce')       => 'menu_order',
                 __('Бренд', 'woocommerce')          => 'brands',
                 __('Производитель', 'woocommerce')  => 'manufacturer',
+                __('Images', 'woocommerce')         => 'images',
             ];
     }
     public static function normalizeRowNames(array $columns): array

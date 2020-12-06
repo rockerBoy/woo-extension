@@ -9,6 +9,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class ProductExcelUpdater extends Import
 {
+    protected array $preImportColumns;
+    protected array $relationsColumns;
+
     public function __construct(string $fileName, array $args = [])
     {
         global $wpdb;

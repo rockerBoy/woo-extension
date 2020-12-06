@@ -4,8 +4,7 @@
 namespace ExtendedWoo\ExtensionAPI\import\models;
 
 use DateTimeImmutable;
-use ExtendedWoo\Entities\ProductBuilder;
-use ExtendedWoo\ExtensionAPI\interfaces\export\taxonomies\ProductCatTaxonomy;
+use ExtendedWoo\ExtensionAPI\models\taxonomies\ProductCatTaxonomy;
 use wpdb;
 
 abstract class Import

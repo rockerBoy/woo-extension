@@ -6,7 +6,7 @@ use ExtendedWoo\ExtensionAPI\interfaces\import\ImportType;
 
 class FullProductImportType implements ImportType
 {
-    private $basicColumns;
+    private array $basicColumns;
 
     public function __construct(array $basicColumns)
     {
@@ -22,6 +22,7 @@ class FullProductImportType implements ImportType
             'category_ids'       => __('Categories', 'woocommerce'),
             'brands'             => __('Бренд', 'woocommerce'),
             'manufacturer'       => __('Производитель', 'woocommerce'),
+            'images'             => __('Images', 'woocommerce'),
         ];
 
         return array_merge($this->basicColumns, $columns);
