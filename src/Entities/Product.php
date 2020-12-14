@@ -3,6 +3,8 @@
 
 namespace ExtendedWoo\Entities;
 
+use ExtendedWoo\ExtensionAPI\models\ImagesDownload;
+
 final class Product extends \WC_Product_Simple
 {
     private int $new_id = 0;
@@ -223,7 +225,7 @@ final class Product extends \WC_Product_Simple
     {
         $id = parent::save();
         $this->setImportedFlag(1);
-
+        (new ImagesDownload($this))->downloadImage();
         $import_id = $this->getPreImportID();
         $relation_id = $this->getRelationsID();
 

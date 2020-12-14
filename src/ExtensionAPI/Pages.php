@@ -33,13 +33,18 @@ final class Pages implements PageInterface
      * @var string|null $current_page
      */
     private ?string $current_page = null;
+    private \wpdb $db;
 
     public function __construct()
     {
+        global $wpdb;
+
         if (! defined('ABSPATH')) {
             exit;
         }
+
         $this->request = Request::createFromGlobals();
+        $this->db = $wpdb;
     }
 
     public function menu(): void
@@ -50,6 +55,13 @@ final class Pages implements PageInterface
             'screen_id' => 'product_page_product_exporter',
             'title'     => __('Export Products', 'woocommerce'),
             'path'     => 'product_excel_exporter',
+        ]);
+        $this->registerPage([
+            'id'        => 'product_category_filters',
+            'parent'    => self::PAGE_ROOT,
+            'screen_id' => 'product_category_filters',
+            'title'     => __('Настройка фильтров категорий', 'woocommerce'),
+            'path'     => 'product_category_filters',
         ]);
     }
 
@@ -449,5 +461,142 @@ final class Pages implements PageInterface
         require __DIR__.'/../views/admin-page-product-export.php';
 
         return ob_get_clean();
+    }
+
+    protected function getCategoryAttributes(int $category_id): array
+    {
+        $wpdb = $this->db;
+        $result = [];
+        $attributes = $wpdb->prepare("SELECT * FROM {$wpdb->prefix}woo_category_attributes
+                WHERE attribute_category_id = %d", $category_id );
+
+        $queried = $wpdb->get_results($attributes);
+
+        if (false === $queried) {
+            return $result;
+        }
+
+        foreach ($queried as $attr) {
+            $result[] = $attr->attribute_name;
+        }
+
+        return $result;
+    }
+
+    protected function makeSelectField(string $id, array $options, array $selected_options)
+    {
+
+        $cat_atts = (!empty($selected_options[$id])) ? $selected_options[$id] : [];
+
+        ob_start();
+        ?>
+
+        <select name="attributes[<?= $id ?>][]"
+                class="woocommerce-exporter-category wc-enhanced-select"
+                style="width:100%; max-width: 200px !important;" multiple data-placeholder="<?php esc_attr_e( 'Выберите аттрибуты', 'woocommerce' ); ?>">
+            <?php
+            foreach ( $options as $key => $name ) {
+                $active = (! empty($cat_atts) && in_array($name, $cat_atts)) ? 'selected="selected"': '';
+                echo '<option value="' . esc_attr( $key ) . '" '.$active.'>' . esc_html( $name ) . '</option>';
+            }
+            ?>
+        </select>
+        <?php
+        $select = ob_get_contents();
+
+        ob_end_clean();
+
+        return $select;
+    }
+
+    private function productCategoryFilters()
+    {
+        wp_enqueue_script('wc-enhanced-select');
+        wp_enqueue_script('ewoo-product-category-filters');
+        wp_localize_script(
+            'ewoo-product-category-filters',
+            'ewoo_product_category_filters_params',
+            array(
+                'export_nonce' => wp_create_nonce('ewoo-product-category-filters'),
+            )
+        );
+
+        $categories = get_categories(
+            [
+                'taxonomy'   => 'product_cat',
+                'hide_empty' => false,
+                'orderby' => 'name',
+                'order' => 'ASC',
+            ]
+        );
+
+        $parents = [];
+        $selected_attribures = [];
+
+        foreach ($categories as $category) {
+            $attributes = $this->getCategoryAttributes($category->term_id);
+
+            if (! empty($attributes)) {
+                $selected_attribures[$category->term_id] = $attributes;
+            }
+
+            if ($category->parent === 0) {
+                $parents[] = $category;
+            }
+        }
+
+
+        $product_attributes = $this->getProductAttributes();
+        $options = $product_attributes;
+
+        ob_start();
+        require __DIR__.'/../views/admin-page-category-filters.php';
+
+        if (! empty($_POST['attributes'])) {
+            $attributes = $_POST['attributes'];
+
+            foreach ($categories as $category) {
+                $term_id = $category->term_id;
+                $attr = (empty($attributes[$term_id])) ? []: $attributes[$term_id];
+
+                $this->saveAttributes($term_id, $attr);
+            }
+        }
+        return ob_get_clean();
+    }
+
+    private function saveAttributes(int $term_id, array $attributes): void
+    {
+        $wpdb = $this->db;
+        $attributes_list = $this->getProductAttributes();
+
+        $wpdb->query("DELETE FROM {$wpdb->prefix}woo_category_attributes
+                WHERE `attribute_category_id` = {$term_id}");
+
+        foreach ($attributes as $key => $attribute) {
+            $selected_attribute = $attributes_list[$attribute];
+            $is_exists = $wpdb->prepare("SELECT `attribute_id` FROM {$wpdb->prefix}woo_category_attributes
+                WHERE attribute_category_id = %d AND attribute_name = %s", $term_id, $selected_attribute);
+
+            if (false === (bool)$wpdb->query($is_exists)) {
+                $sql = $wpdb->prepare("INSERT INTO {$wpdb->prefix}woo_category_attributes
+                    ( attribute_name, attribute_label, attribute_type, attribute_category_id, attribute_order_by )
+                    VALUES (%s, %s, %s, %d, %s ); ", $selected_attribute, 'additional_field_'.$key, 'text', $term_id, '');
+                $wpdb->query($sql);
+            } else {
+
+            }
+        }
+    }
+
+    private function getProductAttributes() {
+        $product_attributes = [];
+        $attributes         = wc_get_attribute_taxonomies();
+
+        foreach ( $attributes as $attribute ) {
+            $product_attributes[ 'pa_' . $attribute->attribute_name ] = $attribute->attribute_label;
+        }
+
+        return $product_attributes;
     }
 }

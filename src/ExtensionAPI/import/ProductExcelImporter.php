@@ -99,8 +99,11 @@ class ProductExcelImporter extends Import
             'product_uploaded_gmt' => (new DateTimeImmutable())->format('Y-m-d H:i:s'),
         ];
         $product = (new ProductFactory($columns))->getProduct();
+
+
         $product->set_category_ids([$columns['category_ids']]);
         $product->setFilename($this->fileName);
+
         try {
             $product->set_catalog_visibility('hidden');
         } catch (\WC_Data_Exception $e) {

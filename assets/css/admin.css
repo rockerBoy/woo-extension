@@ -68,3 +68,15 @@
 .woocommerce-progress-form-wrapper {
     max-width: 75vw !important;
 }
+
+.category-filters tr td {
+    word-break: break-word;
+    max-width: 150px;
+}
+.category-filters .parent-cat {
+    font-weight: 600;
+}
+
+.category-filters tr td:last-child {
+    max-width: 400px;
+}

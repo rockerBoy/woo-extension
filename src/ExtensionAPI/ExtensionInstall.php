@@ -44,7 +44,6 @@ final class ExtensionInstall
 
         add_action('admin_enqueue_scripts', [$assets, 'adminStyles']);
         add_action('admin_enqueue_scripts', [$assets, 'adminScripts']);
-//        add_action('product_cat_add_form_fields', array( $product_cat, 'addTaxonomyFields' ));
         add_action('product_cat_edit_form_fields', array( $product_cat, 'editTaxonomyFields' ));
         add_action('created_term', array( $product_cat, 'saveTaxonomyFields' ), 10, 3);
         add_action('edit_term', array( $product_cat, 'saveTaxonomyFields' ), 10, 3);

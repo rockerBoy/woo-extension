@@ -39,7 +39,6 @@ final class ProblemResolver
         $temp_products = $this->temporaryProductList;
 
         if (ProductsImportHelper::validateMapping($this->mapping)) {
-            $unique_rel_ids = [];
             foreach ($temp_products as $index => $product) {
                 $validation_flag = $this->validationResult[$index]['status'];
                 $rel_id = $product->getRelationsID();
@@ -60,7 +59,6 @@ final class ProblemResolver
                          name="name['.$rel_id.']" 
                          data-rel="'.$rel_id.'"
                          required />',
-                        'category_ids' => '',
                     ];
                     $input_set['category_ids'] = '<select class="select_valid_category" 
                     name="category['.$rel_id.']" data-rel="'.$rel_id.'" required>';
@@ -102,7 +100,7 @@ final class ProblemResolver
                         $table_output .= $this->makeRow('<button class="button button-primary remove-item" data-rel="'.$rel_id.'" value="'.$meta_data['id'].'">Удалить продукт</button>');
 //                        $is_unique = $this->validationResult[$index]['data']['unique'];
                         $is_not_empty = $this->validationResult[$index]['data']['non_empty'];
-                        $is_format_correct = $this->validationResult[$index]['data']['wrong_formatted'];
+//                        $is_format_correct = $this->validationResult[$index]['data']['wrong_formatted'];
 
                         if (! $is_unique['sku'] || ! $is_unique['id']) {
                             $error_msg = __('Такой товар уже существует', 'extendedwoo');
