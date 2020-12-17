@@ -32,7 +32,7 @@ final class ProductsImportHelper
                 __('Purchase note', 'woocommerce')  => 'purchase_note',
                 __('Sale price', 'woocommerce')     => 'sale_price',
                 __('Regular price', 'woocommerce')  => 'regular_price',
-                __('Categories', 'woocommerce')     => 'category_ids',
+                __('Категория', 'woocommerce')     => 'category_ids',
                 __('Tags', 'woocommerce')           => 'tag_ids',
                 __('Parent', 'woocommerce')         => 'parent_id',
                 __('Position', 'woocommerce')       => 'menu_order',

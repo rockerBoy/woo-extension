@@ -39,6 +39,6 @@ final class Manufacturer
         ];
 
         $this->options['labels'] = $labels;
-        register_taxonomy('manufacturers', 'product', $this->options);
+//        register_taxonomy('manufacturers', 'product', $this->options);
     }
 }

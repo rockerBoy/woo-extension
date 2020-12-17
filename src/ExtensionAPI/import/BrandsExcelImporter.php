@@ -47,7 +47,7 @@ class BrandsExcelImporter extends ProductExcelUpdater
     {
         if (! empty($data)) {
             $brand_item = trim($data['brands']);
-            $brand = get_term_by('name', $brand_item, 'brands');
+            $brand = get_term_by('name', $brand_item, 'pa_brands');
 
             if (empty($brand)) {
                 $post = array(
@@ -55,14 +55,14 @@ class BrandsExcelImporter extends ProductExcelUpdater
                     'ping_status' => 'closed',
                     'post_author' => get_current_user_id(),
                     'post_name' => sanitize_title($brand_item),
-                    'post_status' => 'private',
+//                    'post_status' => 'private',
                     'post_title' => $brand_item,
                     'post_type' => 'product',
-                    'tax_input' => array('brands')
+                    'tax_input' => array('pa_brands')
                 );
 
                 $new_film_id = wp_insert_post($post);
-                wp_set_object_terms($new_film_id, $brand_item, 'brands', true);
+                wp_set_object_terms($new_film_id, $brand_item, 'pa_brands', true);
             }
         }
 

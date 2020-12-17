@@ -59,7 +59,7 @@ class ProductExporter implements ExporterInterface
                 'purchase_note'      => __('Purchase note', 'woocommerce'),
                 'sale_price'         => __('Sale price', 'woocommerce'),
                 'regular_price'      => __('Regular price', 'woocommerce'),
-                'category_ids'       => __('Categories', 'woocommerce'),
+                'category_ids'       => __('Категория', 'woocommerce'),
                 'tag_ids'            => __('Tags', 'woocommerce'),
                 'shipping_class_id'  => __('Shipping class', 'woocommerce'),
                 'images'             => __('Images', 'woocommerce'),

@@ -40,6 +40,6 @@ final class Brands
         if (empty($this->options['labels'])) {
             $this->options['labels'] = $labels;
         }
-        register_taxonomy('brands', 'product', $this->options);
+//        register_taxonomy('brands', 'product', $this->options);
     }
 }

@@ -229,12 +229,12 @@ final class Exporter
                 case "parent_category_ids":
                     $value = $parent_categories;
                     break;
-                case "brands":
-                    $value = html_entity_decode($brands);
-                    break;
-                case "manufacturers":
-                    $value = $countries;
-                    break;
+//                case "brands":
+//                    $value = html_entity_decode($brands);
+//                    break;
+//                case "manufacturers":
+//                    $value = $countries;
+//                    break;
                 case "images":
                     $id = $product->get_image_id() ?? 0;
                     if ($fz_product->getRealID() > 0 && $id == 0) {

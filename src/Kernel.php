@@ -43,9 +43,9 @@ final class Kernel implements ExtendedWooInterface
         add_action('admin_init', array($pages, 'downloadExportFile'));
 
         add_action('wp_ajax_ext_do_ajax_product_export', array( $ajaxController, 'productExport' ));
-        add_action('wp_ajax_ext_do_ajax_product_import', array( $pages, 'doAjaxProductImport' ));
-        add_action('wp_ajax_ext_do_ajax_product_remove', array( $pages, 'doAjaxProductRemove' ));
-        add_action('wp_ajax_ext_do_ajax_check_resolver_form', array( $pages, 'doAjaxCheckResolverForm' ));
+        add_action('wp_ajax_ext_do_ajax_product_import', array( $ajaxController, 'productImport' ));
+        add_action('wp_ajax_ext_do_ajax_product_remove', array( $ajaxController, 'productRemove' ));
+        add_action('wp_ajax_ext_do_ajax_check_resolver_form', array( $ajaxController, 'checkResolverForm' ));
 
         return $this;
     }

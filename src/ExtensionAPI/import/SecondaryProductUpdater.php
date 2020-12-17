@@ -4,6 +4,7 @@ namespace ExtendedWoo\ExtensionAPI\import;
 
 use ExtendedWoo\Entities\Product;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
+use WC_Product_Attribute;
 
 
 class SecondaryProductUpdater extends ProductExcelUpdater
@@ -30,12 +31,12 @@ class SecondaryProductUpdater extends ProductExcelUpdater
     public function update(): array
     {
         $product_data = $this->prepareRows();
-
         $data = [
             'author_id' => get_current_user_id(),
             'failed'   => [],
             'updated'  => [],
         ];
+
         foreach ($product_data as $product) {
             if (! empty($product['sku']) &&
                 ! empty($product['short_description']) &&
@@ -56,7 +57,6 @@ class SecondaryProductUpdater extends ProductExcelUpdater
         } else {
             $id = (int)$data['id'];
         }
-
         $columns = [
             'short_description' => $data['short_description'] ?? '',
             'description' => $data['description'] ?? '',
@@ -66,31 +66,59 @@ class SecondaryProductUpdater extends ProductExcelUpdater
             'manufacturer' => $data['manufacturer'] ?? '',
             'images'    =>  $data['images'] ?? '',
         ];
-
         if (! empty($id)) {
             $product = wc_get_product_object('simple', $id);
+            $attributes_taxonomies = wc_get_attribute_taxonomies();
+            $attrs = $data_attributes = $tax_list = [];
+
+            foreach ($attributes_taxonomies as $attr) {
+                $attrs[] = $attr->attribute_label;
+            }
+
+            foreach ($data as $key => $item) {
+                if (in_array($key, $attrs) && ! empty($item)) {
+                    $data_attributes[] = [
+                        'name' => $key,
+                        'value' => [$item],
+                    ];
+                }
+            }
+
             if ($product) {
                 if ($product->get_short_description() !== $columns['short_description']) {
                     $product->set_short_description($columns['short_description']);
                 }
-
+                if (! empty($data['name']) && $data['name'] !== $product->get_name()) {
+                    $product->set_name($data['name']);
+                }
                 if ($product->get_description() !== $columns['description']) {
                     $product->set_description($columns['description']);
                 }
+                if (! empty($data_attributes)) {
+                    foreach ($data_attributes as $attribute) {
+                        $attribute_object = new WC_Product_Attribute();
+                        $attribute_object->set_name( $attribute['name'] );
+                        $attribute_object->set_options( $attribute['value'] );
+                        $attribute_object->set_visible( true );
+                        $tax_list[] = $attribute_object;
+                    }
+
+                    $product->set_attributes($tax_list);
+                }
 
                 if (! empty($columns['brands'])) {
-                    $brand = get_term_by('name', trim($columns['brands']), 'brands');
+                    $brand = get_term_by('name', trim($columns['brands']), 'pa_brands');
 
                     if (!empty($brand)) {
-                        wp_set_post_terms($product->get_id(), [$brand->term_id], 'brands');
+                        wp_set_post_terms($product->get_id(), [$brand->term_id], 'pa_brands');
                     }
                 }
 
                 if (! empty($columns['manufacturer'])) {
-                    $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'manufacturers');
+                    $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'pa_manufacturers');
                     if (!empty($manufacturers)) {
                         wp_set_post_terms($product->get_id(),
-                            [$manufacturers->term_id], 'manufacturers');
+                            [$manufacturers->term_id], 'pa_manufacturers');
                     }
                 }
 

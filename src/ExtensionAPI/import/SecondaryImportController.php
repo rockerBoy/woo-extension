@@ -65,10 +65,16 @@ class SecondaryImportController extends BasicController
         $request = $this->request;
         $this->startRow = $_GET['start_row'];
         $importer = (new ProductExcelImporter($this->file, ['start_from' => $this->startRow]));
-        $headers  = $importer->getHeader($this->startRow);
+        $headers  = $importer->getHeader();
         $labels = array_values($this->importStrategy->getColumns());
-        $mapped_items = ProductsImportHelper::autoMapColumns($labels);
+        $attributes         = wc_get_attribute_taxonomies();
+        $res = [];
 
+        foreach ($attributes as $attr) {
+            $res[] = $attr->attribute_label;
+        }
+        $labels = array_merge($labels, $res);
+        $mapped_items = ProductsImportHelper::autoMapColumns($labels);
         wp_localize_script(
             'ewoo-product-validation',
             'ewoo_product_import_params',

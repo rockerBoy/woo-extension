@@ -19,9 +19,9 @@ class FullProductImportType implements ImportType
             'short_description'  => __('Short description', 'woocommerce'),
             'description'        => __('Description', 'woocommerce'),
             'stock_status'       => __('In stock?', 'woocommerce'),
-            'category_ids'       => __('Categories', 'woocommerce'),
-            'brands'             => __('Бренд', 'woocommerce'),
-            'manufacturer'       => __('Производитель', 'woocommerce'),
+            'category_ids'       => __('Категория', 'woocommerce'),
+//            'brands'             => __('Бренд', 'woocommerce'),
+//            'manufacturer'       => __('Производитель', 'woocommerce'),
             'images'             => __('Images', 'woocommerce'),
         ];
 

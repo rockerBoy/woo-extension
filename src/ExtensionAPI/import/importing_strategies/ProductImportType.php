@@ -20,7 +20,7 @@ class ProductImportType implements ImportType
     public function getColumns(): array
     {
         return array_merge($this->basicColumns, [
-            'category_ids'       => __('Categories', 'woocommerce'),
+            'category_ids'       => __('Категория', 'woocommerce'),
         ]);
     }
 
