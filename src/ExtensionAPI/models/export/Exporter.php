@@ -226,6 +226,7 @@ final class Exporter
                 // Default and custom handling.
                 $value = $product->{"get_{$column_id}"}('edit');
             }
+
             switch ($column_id) {
                 case "category_ids":
                     $value = $categories;
@@ -262,17 +263,31 @@ final class Exporter
         }
 
         $extra = [];
+
         if (! empty($attributes)) {
             $atts = $product->get_attributes();
+
+
             foreach ($attributes as $index => $name) {
                 foreach ($atts as $item) {
-                    if ($name === $item['data']['name']) {
-                        $extra[$index] = implode(', ', $item['data']['options']);
+                    $data = $item['data'];
+                    $label = wc_attribute_label( $data['name'] );
+
+                    if ($name === $label) {
+                        $options = [];
+
+                        foreach ($data['options'] as $option) {
+                            $data_attr = get_term($option);
+                            $options[] = $data_attr->name;
+                        }
+
+                        $extra[$index] = implode(', ', $options);
                     } else if(empty($extra[$index])) {
                         $extra[$index] = '';
                     }
                 }
             }
+
             $row = array_merge($row, $extra);
         }
 
