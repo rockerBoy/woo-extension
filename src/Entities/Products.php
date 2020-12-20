@@ -80,7 +80,7 @@ final class Products
 
     public function getBrand($product): string
     {
-        $taxonomy = get_the_terms($product->id, 'brands');
+        $taxonomy = get_the_terms($product->id, 'pa_brands');
         $brand = '';
         if (false !== $taxonomy) {
             $brand = current($taxonomy)->name;

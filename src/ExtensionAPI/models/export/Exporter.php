@@ -135,6 +135,7 @@ final class Exporter
 
         $this->totalRows  = $products->total;
         $headers = $this->getHeaders();
+
         $this->rowData[] = $headers;
 
         foreach ($products->products as $product) {
@@ -172,11 +173,14 @@ final class Exporter
     private function getHeaders(): array
     {
         $headers = [];
+
         foreach ($this->columnNames as $index => $column_name) {
             $column_id = strpos($index, ':') !== false ? current(explode(':', $index)) : $index;
+
             if (!empty($this->columnsToExport) && !$this->isColumnExporting($column_id)) {
                 continue;
             }
+
             $headers[] = $column_name;
         }
 
