@@ -106,21 +106,21 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                     $product->set_attributes($tax_list);
                 }
 
-                if (! empty($columns['brands'])) {
-                    $brand = get_term_by('name', trim($columns['brands']), 'pa_brands');
-
-                    if (!empty($brand)) {
-                        wp_set_post_terms($product->get_id(), [$brand->term_id], 'pa_brands');
-                    }
-                }
-
-                if (! empty($columns['manufacturer'])) {
-                    $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'pa_manufacturers');
-                    if (!empty($manufacturers)) {
-                        wp_set_post_terms($product->get_id(),
-                            [$manufacturers->term_id], 'pa_manufacturers');
-                    }
-                }
+//                if (! empty($columns['brands'])) {
+//                    $brand = get_term_by('name', trim($columns['brands']), 'pa_brands');
+//
+//                    if (!empty($brand)) {
+//                        wp_set_post_terms($product->get_id(), [$brand->term_id], 'pa_brands');
+//                    }
+//                }
+//
+//                if (! empty($columns['manufacturer'])) {
+//                    $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'pa_manufacturers');
+//                    if (!empty($manufacturers)) {
+//                        wp_set_post_terms($product->get_id(),
+//                            [$manufacturers->term_id], 'pa_manufacturers');
+//                    }
+//                }
 
                 if (! empty($columns['images'])) {
                     $image_id = $product->get_image_id();

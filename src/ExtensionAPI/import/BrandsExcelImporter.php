@@ -61,8 +61,8 @@ class BrandsExcelImporter extends ProductExcelUpdater
                     'tax_input' => array('pa_brands')
                 );
 
-                $new_film_id = wp_insert_post($post);
-                wp_set_object_terms($new_film_id, $brand_item, 'pa_brands', true);
+                wp_insert_term($brand_item, 'pa_brands');
+//                wp_set_object_terms($new_film_id, $brand_item, 'pa_brands', true);
             }
         }
 

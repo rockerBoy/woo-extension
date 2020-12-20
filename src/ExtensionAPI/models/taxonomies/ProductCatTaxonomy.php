@@ -4,54 +4,21 @@
 namespace ExtendedWoo\ExtensionAPI\models\taxonomies;
 
 use ExtendedWoo\Entities\Filters;
-use ExtendedWoo\ExtensionAPI\interfaces\TaxonomyInterface;
 use Symfony\Component\HttpFoundation\Request;
+use wpdb;
 
-final class ProductCatTaxonomy implements TaxonomyInterface
+final class ProductCatTaxonomy
 {
     private Request $request;
     public const TAXONOMY = 'product_cat';
-    private ?\wpdb $db = null;
+    private wpdb $db;
     private Filters $filters;
 
-    public function __construct(\wpdb $db, Filters $filters)
+    public function __construct(wpdb $db, Filters $filters)
     {
         $this->db = $db;
         $this->filters = $filters;
         $this->request = Request::createFromGlobals();
-    }
-    public function addTaxonomyFields(): void
-    {
-        require __DIR__.'/../../views/taxonomies/product_cat_add_fields.php';
-    }
-
-    public function editTaxonomyFields($term): void
-    {
-        $fields = $this->filters->getCategoryFilters($term->term_id);
-
-        require __DIR__.'/../../views/taxonomies/product_cat_edit_fields.php';
-    }
-
-    public function saveTaxonomyFields(int $term_id, string $tt_id = '', string $taxonomy = ''): void
-    {
-        $wpdb = $this->db;
-
-        $request = $this->request;
-        if ($taxonomy === self::TAXONOMY && !empty($request->get('additional_field'))) {
-            $fields = $request->get('additional_field');
-
-            foreach ($fields as $key => $field) {
-                $field = trim($field);
-                $is_exists = $wpdb->prepare("SELECT id FROM {$wpdb->prefix}woo_category_attributes
-                WHERE attribute_category_id = %d AND attribute_label = %s", $field, 'additional_field_'.$key);
-                if (! $wpdb->query($is_exists)) {
-                    $sql = $wpdb->prepare("INSERT INTO {$wpdb->prefix}woo_category_attributes
-                    ( attribute_name, attribute_label, attribute_type, attribute_category_id, attribute_order_by )
-                    VALUES (%s, %s, %s, %d, %s ); ", $field, 'additional_field_'.$key, 'text', $term_id, '');
-                    $wpdb->query($sql);
-                }
-            }
-        }
     }
 
     public static function parseCategoriesString(string $categories): array
@@ -65,7 +32,6 @@ final class ProductCatTaxonomy implements TaxonomyInterface
         foreach ($row_terms as $row_term) {
             $parent = null;
             $terms = array_map('trim', explode('>', $row_term));
-            $total = sizeof($terms);
 
             foreach ($terms as $index => $term) {
                 if (! current_user_can('manage_product_terms')) {
@@ -74,9 +40,9 @@ final class ProductCatTaxonomy implements TaxonomyInterface
 
                 if (!term_exists($term)) {
                     return [];
-                } else {
-                    $parsed_categories[] = term_exists($term);
                 }
+
+                $parsed_categories[] = term_exists($term);
             }
         }
 
