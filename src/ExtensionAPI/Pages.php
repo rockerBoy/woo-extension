@@ -331,19 +331,21 @@ final class Pages implements PageInterface
         $wpdb = $this->db;
         $attributes_list = $this->getProductAttributes();
 
-        $wpdb->query("DELETE FROM {$wpdb->prefix}woo_category_attributes
-                WHERE `attribute_category_id` = {$term_id}");
+        if (! empty($attributes)) {
+            $wpdb->query("DELETE FROM {$wpdb->prefix}woo_category_attributes
+                    WHERE `attribute_category_id` = {$term_id}");
 
-        foreach ($attributes as $key => $attribute) {
-            $selected_attribute = $attributes_list[$attribute];
-            $is_exists = $wpdb->prepare("SELECT `attribute_id` FROM {$wpdb->prefix}woo_category_attributes
-                WHERE attribute_category_id = %d AND attribute_name = %s", $term_id, $selected_attribute);
+            foreach ($attributes as $key => $attribute) {
+                $selected_attribute = $attributes_list[$attribute];
+                $is_exists = $wpdb->prepare("SELECT `attribute_id` FROM {$wpdb->prefix}woo_category_attributes
+                    WHERE attribute_category_id = %d AND attribute_name = %s", $term_id, $selected_attribute);
 
-            if (false === (bool)$wpdb->query($is_exists)) {
-                $sql = $wpdb->prepare("INSERT INTO {$wpdb->prefix}woo_category_attributes
-                    ( attribute_name, attribute_label, attribute_type, attribute_category_id, attribute_order_by )
-                    VALUES (%s, %s, %s, %d, %s ); ", $selected_attribute, 'additional_field_'.$key, 'text', $term_id, '');
-                $wpdb->query($sql);
+                if (false === (bool)$wpdb->query($is_exists)) {
+                    $sql = $wpdb->prepare("INSERT INTO {$wpdb->prefix}woo_category_attributes
+                        ( attribute_name, attribute_label, attribute_type, attribute_category_id, attribute_order_by )
+                        VALUES (%s, %s, %s, %d, %s ); ", $selected_attribute, 'additional_field_'.$key, 'text', $term_id, '');
+                    $wpdb->query($sql);
+                }
             }
         }
     }
