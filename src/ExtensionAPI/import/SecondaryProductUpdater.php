@@ -38,9 +38,7 @@ class SecondaryProductUpdater extends ProductExcelUpdater
         ];
 
         foreach ($product_data as $product) {
-            if (! empty($product['sku']) &&
-                ! empty($product['short_description']) &&
-                ! empty($product['description'])
+            if (! empty($product['sku'])
             ) {
                 $data['updated'][] = $this->process($product);
             } else {
@@ -52,11 +50,7 @@ class SecondaryProductUpdater extends ProductExcelUpdater
 
     private function process(array $data)
     {
-        if (empty($data['id'])) {
-            $id = (new Product())->getProductIDBySKU($data['sku']);
-        } else {
-            $id = (int)$data['id'];
-        }
+        $id = (new Product())->getProductIDBySKU($data['sku']);
         $columns = [
             'short_description' => $data['short_description'] ?? '',
             'description' => $data['description'] ?? '',
@@ -66,23 +60,9 @@ class SecondaryProductUpdater extends ProductExcelUpdater
             'manufacturer' => $data['manufacturer'] ?? '',
             'images'    =>  $data['images'] ?? '',
         ];
+
         if (! empty($id)) {
             $product = wc_get_product_object('simple', $id);
-            $attributes_taxonomies = wc_get_attribute_taxonomies();
-            $attrs = $data_attributes = $tax_list = [];
-
-            foreach ($attributes_taxonomies as $attr) {
-                $attrs[] = $attr->attribute_label;
-            }
-
-            foreach ($data as $key => $item) {
-                if (in_array($key, $attrs) && ! empty($item)) {
-                    $data_attributes[] = [
-                        'name' => $key,
-                        'value' => [$item],
-                    ];
-                }
-            }
 
             if ($product) {
                 if ($product->get_short_description() !== $columns['short_description']) {
@@ -94,34 +74,20 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                 if ($product->get_description() !== $columns['description']) {
                     $product->set_description($columns['description']);
                 }
-                if (! empty($data_attributes)) {
-                    foreach ($data_attributes as $attribute) {
-                        $attribute_object = new WC_Product_Attribute();
-                        $attribute_object->set_name( $attribute['name'] );
-                        $attribute_object->set_options( $attribute['value'] );
-                        $attribute_object->set_visible( true );
-                        $tax_list[] = $attribute_object;
-                    }
 
-                    $product->set_attributes($tax_list);
+                switch (strtolower($data['catalog_visibility'])) {
+                    case 'да':
+                        $cat_visibility = 'visible';
+                        break;
+                    default:
+                        $cat_visibility = 'hidden';
                 }
 
-//                if (! empty($columns['brands'])) {
-//                    $brand = get_term_by('name', trim($columns['brands']), 'pa_brands');
-//
-//                    if (!empty($brand)) {
-//                        wp_set_post_terms($product->get_id(), [$brand->term_id], 'pa_brands');
-//                    }
-//                }
-//
-//                if (! empty($columns['manufacturer'])) {
-//                    $manufacturers = get_term_by('name', trim($columns['manufacturer']), 'pa_manufacturers');
-//                    if (!empty($manufacturers)) {
-//                        wp_set_post_terms($product->get_id(),
-//                            [$manufacturers->term_id], 'pa_manufacturers');
-//                    }
-//                }
+                $attributes = $this->makeAttributeObjects($product, $this->prepareAttributes($data));
+                $product->set_catalog_visibility($cat_visibility);
 
+                $product->set_attributes($attributes);
+//                dd($product);
                 if (! empty($columns['images'])) {
                     $image_id = $product->get_image_id();
                     //https://rost.kh.ua/photo/4233098.jpg
@@ -142,8 +108,109 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                 }
 
                 $product->save();
+
                 return $product;
             }
         }
+    }
+
+    private function prepareAttributes(array $data): array
+    {
+        $attributes_taxonomies = wc_get_attribute_taxonomies();
+        $attrs = $data_attributes = [];
+
+        foreach ($attributes_taxonomies as $attr) {
+            $attrs[] = $attr->attribute_label;
+        }
+
+        foreach ($data as $key => $item) {
+            if (in_array($key, $attrs, true) && ! empty($item)) {
+                $data_attributes[] = [
+                    'attribute_names' => [$key],
+                    'attribute_values' => [$item],
+                ];
+            }
+        }
+
+        return $data_attributes;
+    }
+
+    private function makeAttributeObjects(&$product, array $attributes): array
+    {
+        $attributes_objects = [];
+        $list = wc_get_attribute_taxonomies();
+        $i = 0;
+        foreach ($attributes as $attribute) {
+            $attribute['attribute_position'] = $i++;
+            $attr_object  = current($this->prepare_attributes($attribute));
+            $id = $attr_object['data']['id'];
+            $name = 'pa_'.($list['id:'.$id])->attribute_name;
+
+            $attributes_objects[$name] = $attr_object;
+        }
+
+        return $attributes_objects;
+    }
+
+    private function prepare_attributes( array $data ): array
+    {
+        $attributes = array();
+        if ( isset( $data['attribute_names'], $data['attribute_values'] ) ) {
+            $attribute_names         = $data['attribute_names'];
+            $attribute_values        = $data['attribute_values'];
+            $data['attribute_visibility'] = [1];
+            $data['attribute_variation'] = [];
+            $data['attribute_position'] = [$data['attribute_position']];
+            $attribute_visibility    = isset( $data['attribute_visibility'] ) ? $data['attribute_visibility'] : array();
+            $attribute_variation     = isset( $data['attribute_variation'] ) ? $data['attribute_variation'] : array();
+            $attribute_position      = $data['attribute_position'];
+            $attribute_names_max_key = max( array_keys( $attribute_names ) );
+
+            for ( $i = 0; $i <= $attribute_names_max_key; $i++ ) {
+                if ( empty( $attribute_names[ $i ] ) || ! isset( $attribute_values[ $i ] ) ) {
+                    continue;
+                }
+
+                $attribute_name = wc_clean( esc_html( $attribute_names[ $i ] ) );
+
+                $id = 0;
+                $attributes_taxonomies = wc_get_attribute_taxonomies();
+                $tax = 'pa_';
+
+                foreach ($attributes_taxonomies as $taxonomy) {
+                    if ($taxonomy->attribute_label === $attribute_name) {
+                        $id = $taxonomy->attribute_id;
+                        $tax .= $taxonomy->attribute_name;
+                    }
+                }
+
+                $attribute_id = $id;
+
+                $options = [];
+
+                foreach ($attribute_values as $value) {
+                    $term = get_term_by('name', $value, $tax);
+
+                    if (! empty($term)) {
+                        $options[] = $term->term_id;
+                    } else {
+                        wp_insert_term($value, $tax);
+                        $term = get_term_by('name', $value, $tax);
+                        $options[] = $term->term_id;
+                    }
+                }
+
+                $attribute = new WC_Product_Attribute();
+                $attribute->set_id( $attribute_id );
+                $attribute->set_name( $tax );
+                $attribute->set_options( $options );
+                $attribute->set_position( $attribute_position[ $i ] );
+                $attribute->set_visible( isset( $attribute_visibility[ $i ] ) );
+                $attribute->set_variation( isset( $attribute_variation[ $i ] ) );
+                $attributes[] = apply_filters( 'woocommerce_admin_meta_boxes_prepare_attribute', $attribute, $data, $i );
+            }
+        }
+
+        return $attributes;
     }
 }

@@ -138,9 +138,11 @@
                             totalCounter.html(response.data.total);
 
                             if (response.data.errors == 0) {
-                                $('.button-prev').removeClass('hidden');
+                                $('.item-danger').addClass('hidden');
+                                $('.button-next').removeClass('hidden');
                                 $('.btn-check-form').remove();
                             }
+
                             row.remove();
                         }
                     }
@@ -175,6 +177,7 @@
         $this.form.find('.btn-check-form').on('click', function (e) {
             e.preventDefault();
             let formData = [];
+
 
             $this.form.find('.edit-product-sku').each(function () {
                 let relID = $(this).attr('data-rel');
@@ -243,6 +246,7 @@
                     security         : ewoo_product_import_params.import_nonce,
                 },
                 dataType: 'json',
+
                 success: function ( response ) {
                     let successClass = 'item-success hidden';
                     let errorClass = 'item-danger';

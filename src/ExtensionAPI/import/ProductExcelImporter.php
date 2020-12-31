@@ -44,6 +44,7 @@ class ProductExcelImporter extends Import
             'product_parent_category_id' => 0,
             'product_author_id' => get_current_user_id(),
         ];
+
         $this->readFile();
     }
 
@@ -66,9 +67,10 @@ class ProductExcelImporter extends Import
         ];
 
         $import_products = $this->getPreImportedRows();
+        $progress_left = $this->getImportProgress();
 
-        foreach ($import_products as $product) {
-            $data['imported'][] = $this->process($product);
+        if ($progress_left > 0) {
+            $data['imported'][] = $this->process(current($import_products));
         }
 
         return $data;

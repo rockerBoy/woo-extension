@@ -42,6 +42,7 @@ final class ProblemResolver
             foreach ($temp_products as $index => $product) {
                 $validation_flag = $this->validationResult[$index]['status'];
                 $rel_id = $product->getRelationsID();
+
                 if (! empty($this->validationResult)) {
                     if ($validation_flag === true) {
                         $table_output .= "<tr id='row-{$rel_id}' class='item-success hidden'>";
@@ -50,10 +51,7 @@ final class ProblemResolver
                     }
 
                     $input_set = [
-                        'sku' => '<input type="text" class="edit-product-sku"
-                         name="sku['.$rel_id.']" 
-                         data-rel="'.$rel_id.'"
-                         required />',
+                        'sku' => '<input type="text" class="edit-product-sku" name="sku['.$rel_id.']" data-rel="'.$rel_id.'" required />',
                         'category_ids' => '',
                         'name' => '<input type="text" class="edit-product-name"
                          name="name['.$rel_id.']" 
@@ -79,7 +77,7 @@ final class ProblemResolver
                     }
 
                     $meta_data = [
-                        'id' => $id,
+                        'id' => $id ?? 0,
                         'sku' => $product->get_sku(),
                         'name' => ProductsImportHelper::makeExcerpt($product->get_name(), 0, 50),
                         'category_ids' => $product->getCategory(),
@@ -205,7 +203,6 @@ final class ProblemResolver
             ->setFilename($this->filename)
             ->setUUID($this->uuid)
             ->saveTemporary();
-
         $this->temporaryProductList[] = $temp_product;
     }
 

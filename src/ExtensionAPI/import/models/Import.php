@@ -78,7 +78,18 @@ abstract class Import
                 WHERE 
                     `pi`.is_valid = 1 AND 
                     `pi`.is_imported = 0
+                LIMIT 1
         ", ARRAY_A);
+    }
+
+    public function getImportProgress(): int
+    {
+        return $this->db->get_var("SELECT 
+                COUNT(rel.product_id) as count
+                FROM {$this->db->prefix}woo_pre_import_relationships rel
+                INNER JOIN {$this->db->prefix}woo_pre_import pi ON rel.import_id = pi.id
+                WHERE `pi`.is_valid = 1 AND `pi`.is_imported = 0"
+        );
     }
 
     protected function parseCategoriesField(string $categories): array

@@ -79,18 +79,14 @@ final class Product extends \WC_Product_Simple
         $uuid = $this->getUUID();
 
         if (! empty($uuid)) {
-            $relations_query = $this->db
-                ->prepare(
-                    "SELECT
-                                id
-                            FROM {$this->relation_table}
+            $relations_query = $this->db->prepare(
+                    "SELECT `id` FROM {$this->relation_table}
                             WHERE
                                 `product_id` = %d AND 
                                 `imported_file_token` = %s
-                            order by id ASC LIMIT 1",
-                    $this->getRealID(),
-                    $uuid
-                );
+                            order by id ASC LIMIT 1", $this->getRealID(), $uuid
+            );
+
             $relations_query = $this->db->get_var($relations_query);
         } else {
             $relations_query = $this->db
@@ -282,30 +278,36 @@ final class Product extends \WC_Product_Simple
     public function deletePreImportedProduct(int $relation_id): void
     {
         if (! empty($relation_id)) {
-            $product_id = $this->db->get_var("SELECT `product_id` FROM {$this->relation_table}
-                WHERE `id` IN($relation_id) LIMIT 1");
-            if (! empty($product_id)) {
-                $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
-                    WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
-            }
+            $product_id = $this->db
+                ->get_var("SELECT `product_id` FROM {$this->relation_table} WHERE `id` IN($relation_id) LIMIT 1");
+            $post_id = $this->db
+                ->get_var("SELECT `post_id` FROM {$this->relation_table} WHERE `id` IN($relation_id) LIMIT 1");
+
+//            if (! empty($product_id)) {
+//                $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
+//                    WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
+//            }
 
             $import_id = $this->db->get_var("SELECT `import_id` FROM {$this->relation_table}
                 WHERE `id` = $relation_id LIMIT 1
             ");
-            $this->db
-            ->query(
+
+            $this->db->query(
                 $this->db->prepare(
-                    "DELETE FROM {$this->relation_table} WHERE id = %d",
-                    $relation_id
-                )
+                    "DELETE FROM {$this->relation_table} WHERE id != %d AND product_id = %d", $relation_id, $product_id)
             );
-            $this->db
-            ->query(
+            $this->db->query(
                 $this->db->prepare(
                     "DELETE FROM {$this->pre_import_table} WHERE id = %d AND is_valid <> 1 AND is_imported <> 1",
                     $import_id
                 )
             );
+            if (! empty($post_id)) {
+                $this->db->query(
+                    $this->db->prepare(
+                        "DELETE FROM {$this->relation_table} WHERE post_id = %d", $post_id)
+                );
+            }
         }
     }
 

@@ -114,7 +114,23 @@ final class AjaxController
                         break;
                     default:
                         $importer = new ProductExcelImporter($request->get('file'), $params);
+                        $imported = (empty($_POST['imported']))? 0 : (int) $_POST['imported'];
+                        $total = (empty($_POST['total']))? $importer->getImportProgress() : (int) $_POST['total'];
+
                         $results = $importer->import();
+                        $progress_left = $importer->getImportProgress();
+                        $percentile = round(($imported/$total)*100, PHP_ROUND_HALF_UP);
+
+                        if ($progress_left > 0) {
+                            wp_send_json_success(
+                                array(
+                                    'position'   => 'in_progress',
+                                    'percentage' => $percentile,
+                                    'imported' => $imported,
+                                    'total' => $total,
+                                )
+                            );
+                        }
                 }
             }
 
@@ -149,14 +165,16 @@ final class AjaxController
         check_ajax_referer('ewoo-product-import', 'security');
 
         $product_id = $request->get('prod_id');
+
         $product = new Product();
         $product->deletePreImportedProduct($product_id);
 
         $data = [
-            'total' => $product->getTotal()??0,
-            'valid' => $product->getValid()??0,
+            'total' => $product->getTotal() ?? 0,
+            'valid' => $product->getValid() ?? 0,
             'errors' => 0,
         ];
+
         $data['errors'] = $data['total'] - $data['valid'];
 
         wp_send_json_success(
@@ -177,6 +195,7 @@ final class AjaxController
         check_ajax_referer('ewoo-product-import', 'security');
 
         $form_data = $request->get('form_data');
+
         $errors = [
             'name'  => __('Не заполнено поле Имя товара', 'extendedwoo'),
             'sku'   => __('Поле Артикул заполнено неверно', 'extendedwoo'),
@@ -211,7 +230,6 @@ final class AjaxController
             foreach ($form_data as $item) {
                 $rel_id = $item['relation_id'];
                 $product = new Product();
-                /** @noinspection SqlDialectInspection */
                 $product_id = $wpdb->get_var("
                                 SELECT
                                     `product_id`

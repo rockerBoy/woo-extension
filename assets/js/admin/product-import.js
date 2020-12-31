@@ -15,6 +15,7 @@
 
         // Number of import successes/failures.
         this.imported = 0;
+        this.total = 0;
         this.failed   = 0;
         this.updated  = 0;
         this.skipped  = 0;
@@ -42,21 +43,28 @@
                 position        : $this.position,
                 mapping         : $this.mapping,
                 import_type     : $this.import_type,
+                imported        : $this.imported,
+                total           : $this.total,
                 file            : $this.file,
                 security        : $this.security
             },
             dataType: 'json',
             success: function( response ) {
                 if ( response.success ) {
+
+                    if ($this.total === 0) {
+                        $this.total = response.data.total;
+                    }
+
                     $this.position  = response.data.position;
-                    $this.imported += response.data.imported;
+                    $this.imported++;
                     $this.failed   += response.data.failed;
                     $this.updated  += response.data.updated;
                     $this.skipped  += response.data.skipped;
                     $this.$form.find('.woocommerce-importer-progress').val( response.data.percentage );
 
                     if ( 'done' === response.data.position ) {
-                        var file_name = ewoo_product_import_params.file.split( '/' ).pop();
+                        let file_name = ewoo_product_import_params.file.split( '/' ).pop();
                         window.location = response.data.url +
                             '&products-imported=' +
                             parseInt( $this.imported, 10 ) +

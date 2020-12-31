@@ -36,8 +36,6 @@ final class ProductsImportHelper
                 __('Tags', 'woocommerce')           => 'tag_ids',
                 __('Parent', 'woocommerce')         => 'parent_id',
                 __('Position', 'woocommerce')       => 'menu_order',
-                __('Бренд', 'woocommerce')          => 'brands',
-                __('Производитель', 'woocommerce')  => 'manufacturer',
                 __('Images', 'woocommerce')         => 'images',
             ];
     }
