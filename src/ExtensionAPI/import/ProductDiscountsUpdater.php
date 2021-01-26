@@ -5,7 +5,7 @@ namespace ExtendedWoo\ExtensionAPI\import;
 
 class ProductDiscountsUpdater extends ProductExcelUpdater
 {
-    public function update(): array
+    public function update(int $index = 0): array
     {
         $discounts = $this->prepareRows();
         $data = [
@@ -14,17 +14,21 @@ class ProductDiscountsUpdater extends ProductExcelUpdater
             'updated'  => [],
         ];
 
-        foreach ($discounts as $product_discount) {
-            if (! empty($product_discount['regular_price']) &&
-                ! empty($product_discount['sale_price']) &&
-                ! empty($product_discount['date_on_sale_from']) &&
-                ! empty($product_discount['date_on_sale_to'])
+        if (empty($discounts[$index])) {
+            return [];
+        }
 
-            ) {
-                $data['updated'][] = $this->process($product_discount);
-            } else {
-                $data['skipped'][] = $this->process($product_discount);
-            }
+        $product_discount = $discounts[$index];
+
+        if (! empty($product_discount['regular_price']) &&
+            ! empty($product_discount['sale_price']) &&
+            ! empty($product_discount['date_on_sale_from']) &&
+            ! empty($product_discount['date_on_sale_to'])
+
+        ) {
+            $data['updated'][] = $this->process($product_discount);
+        } else {
+            $data['skipped'][] = $this->process($product_discount);
         }
 
         return $data;

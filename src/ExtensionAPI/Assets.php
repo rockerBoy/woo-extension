@@ -40,4 +40,42 @@ class Assets
             array( 'jquery' )
         );
     }
+
+    public function findProductImages(): void
+    {
+        global $wpdb;
+        $args = [
+            'post_type'      => 'product',
+            'posts_per_page' => -1,
+        ];
+        $product_list = new \WP_Query( $args );
+
+        $wpdb->query("START TRANSACTION");
+
+        while ( $product_list->have_posts() ) : $product_list->the_post();
+            global $product;
+
+            $product_id = $product->get_id();
+            $rost_id = $wpdb->prepare("SELECT 
+                                            `product_id`
+                                        FROM {$wpdb->prefix}woo_imported_relationships
+                                        WHERE `post_id` = %d LIMIT 1", $product_id);
+            $rost_id = $wpdb->get_var($rost_id);
+            $is_image_set = $product->get_image_id();
+
+            if (false === (bool)$is_image_set && ! empty($rost_id)) {
+                $attachment_query = $wpdb->prepare("SELECT `id` FROM {$wpdb->posts} 
+                    WHERE 
+                          `post_type` = %s AND
+                          `post_name` LIKE (%s)",'attachment', $rost_id);
+                $attachment = $wpdb->get_var($attachment_query);
+
+                if (! empty($attachment)) {
+                   $product->set_image_id($attachment);
+                   $product->save();
+                }
+            }
+        endwhile;
+        $wpdb->query("COMMIT");
+    }
 }

@@ -64,9 +64,9 @@ final class Product extends \WC_Product_Simple
     {
         if (empty($this->uuid)) {
             return $this->db->get_var("SELECT `imported_file_token` FROM $this->relation_table ORDER BY id DESC LIMIT 1") ?? '';
-        } else {
-            return $this->uuid;
         }
+
+        return $this->uuid;
     }
 
     public function getNewID(): int
@@ -89,8 +89,7 @@ final class Product extends \WC_Product_Simple
 
             $relations_query = $this->db->get_var($relations_query);
         } else {
-            $relations_query = $this->db
-                ->prepare(
+            $relations_query = $this->db->prepare(
                     "SELECT
                                 id
                             FROM {$this->relation_table}
@@ -225,20 +224,21 @@ final class Product extends \WC_Product_Simple
         $import_id = $this->getPreImportID();
         $relation_id = $this->getRelationsID();
 
-        $query = $this->db
-            ->prepare("UPDATE {$this->pre_import_table} pi
-        SET pi.is_imported = 1 WHERE id = %d", $import_id);
+        $query = $this->db->prepare("
+            UPDATE {$this->pre_import_table} pi
+            SET pi.is_imported = 1 WHERE id = %d", $import_id
+        );
         $this->db->query($query);
 
-        $query = $this->db
-            ->prepare(
+        $query = $this->db->prepare(
                 "UPDATE {$this->relation_table}
                         SET post_id = %d 
                         WHERE import_id = %d",
                 $id,
                 $import_id
-            );
+        );
         $this->db->query($query);
+
         return $id;
     }
 
@@ -270,44 +270,31 @@ final class Product extends \WC_Product_Simple
 
     public function saveTemporary(): void
     {
-        $this
-            ->saveToPreImport()
-            ->saveRelationships($this->new_id);
+        $this->saveToPreImport()->saveRelationships($this->new_id);
     }
 
     public function deletePreImportedProduct(int $relation_id): void
     {
+        $db = $this->db;
+
         if (! empty($relation_id)) {
-            $product_id = $this->db
-                ->get_var("SELECT `product_id` FROM {$this->relation_table} WHERE `id` IN($relation_id) LIMIT 1");
-            $post_id = $this->db
-                ->get_var("SELECT `post_id` FROM {$this->relation_table} WHERE `id` IN($relation_id) LIMIT 1");
+            $db->query("START TRANSACTION");
 
-//            if (! empty($product_id)) {
-//                $is_duplicate = $this->db->get_var("SELECT `id` FROM {$this->relation_table}
-//                    WHERE `product_id` IN($product_id) AND `id` NOT IN($relation_id) ORDER BY id DESC LIMIT 1");
-//            }
-
-            $import_id = $this->db->get_var("SELECT `import_id` FROM {$this->relation_table}
-                WHERE `id` = $relation_id LIMIT 1
-            ");
-
-            $this->db->query(
-                $this->db->prepare(
-                    "DELETE FROM {$this->relation_table} WHERE id != %d AND product_id = %d", $relation_id, $product_id)
+            $product_id = $db->get_var("SELECT `product_id` FROM {$this->relation_table} WHERE `id` = $relation_id LIMIT 1");
+            $post_id = $db->get_var("SELECT `post_id` FROM {$this->relation_table} WHERE `id` = $relation_id LIMIT 1");
+            $import_id = $db->get_var("SELECT `import_id` FROM {$this->relation_table} WHERE `id` = $relation_id LIMIT 1");
+            $db->query(
+                $db->prepare("DELETE FROM {$this->relation_table} WHERE id != %d AND product_id = %d", $relation_id, $product_id)
             );
-            $this->db->query(
-                $this->db->prepare(
-                    "DELETE FROM {$this->pre_import_table} WHERE id = %d AND is_valid <> 1 AND is_imported <> 1",
-                    $import_id
-                )
+            $db->query(
+                $db->prepare("DELETE FROM {$this->pre_import_table} WHERE id = %d AND is_valid <> 1 AND is_imported <> 1", $import_id)
             );
+
             if (! empty($post_id)) {
-                $this->db->query(
-                    $this->db->prepare(
-                        "DELETE FROM {$this->relation_table} WHERE post_id = %d", $post_id)
-                );
+                $db->query($db->prepare("DELETE FROM {$this->relation_table} WHERE post_id = %d", $post_id));
             }
+
+            $db->query("COMMIT");
         }
     }
 

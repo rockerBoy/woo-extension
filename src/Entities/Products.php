@@ -7,8 +7,9 @@ final class Products
     public const POST_TYPE = 'product';
 
     private array $product_args = [];
+
     /**
-     * @psalm-suppress UndefinedFunction
+     *
      * @return array
      */
     public function getDefaultColumnNames(): array
@@ -51,7 +52,7 @@ final class Products
     public function getProducts(bool $export_all = false)
     {
         $export_all = true;
-//        dd($this->product_args);
+
         if (false === $export_all) {
             $this->product_args['status'] = ['private'];
         }
@@ -78,9 +79,9 @@ final class Products
         }
     }
 
-    public function getBrand($product): string
+    public function getBrand(\WC_Product_Simple $product): string
     {
-        $taxonomy = get_the_terms($product->id, 'pa_brands');
+        $taxonomy = get_the_terms($product->get_id(), 'pa_brands');
         $brand = '';
         if (false !== $taxonomy) {
             $brand = current($taxonomy)->name;
@@ -89,14 +90,16 @@ final class Products
         return $brand;
     }
 
-    public function getCountry($product): string
+    public function getCountry(\WC_Product_Simple $product): string
     {
-        $taxonomies = get_the_terms($product->id, 'manufacturers');
+        $taxonomies = get_the_terms($product->get_id(), 'manufacturers');
         $countries = [];
 
         if (false !== $taxonomies) {
             foreach ($taxonomies as $taxonomy) {
-                $countries[] = $taxonomy->name;
+                if ($taxonomy instanceof \WP_Term) {
+                    $countries[] = $taxonomy->name;
+                }
             }
         }
 

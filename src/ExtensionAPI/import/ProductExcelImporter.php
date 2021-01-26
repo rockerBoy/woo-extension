@@ -87,6 +87,7 @@ class ProductExcelImporter extends Import
 
     private function process(array $data)
     {
+        $db = $this->db;
         $columns = [
             'product_title' => $data['name'] ?? '',
             'product_excerpt' => $data['short_description'] ?? '',
@@ -113,6 +114,19 @@ class ProductExcelImporter extends Import
         }
 
         $product->save();
+        $product_id = wc_get_product_id_by_sku($data['sku']);
+        $imported_id = $db->get_var("SELECT id FROM {$db->prefix}woo_imported_relationships
+        WHERE `product_id` = {$data['id']}");
+
+        if (empty($imported_id) && ! empty($product_id)) {
+            $data = [
+                'product_id' => $data['id'],
+                'post_id' => $product_id,
+                'sku' => $data['sku']
+            ];
+            $format = ['%d', '%d', '%s',];
+            $db->insert("{$db->prefix}woo_imported_relationships", $data, $format);
+        }
 
         return $product;
     }

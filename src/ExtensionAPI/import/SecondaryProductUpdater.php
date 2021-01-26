@@ -21,14 +21,13 @@ class SecondaryProductUpdater extends ProductExcelUpdater
             if (! is_numeric($prepared_row['id'])) {
                 continue;
             }
-
             $prepared_data[] = $prepared_row;
         }
 
         return $prepared_data;
     }
 
-    public function update(): array
+    public function update(int $index = 0): array
     {
         $product_data = $this->prepareRows();
         $data = [
@@ -37,20 +36,29 @@ class SecondaryProductUpdater extends ProductExcelUpdater
             'updated'  => [],
         ];
 
-        foreach ($product_data as $product) {
-            if (! empty($product['sku'])
-            ) {
-                $data['updated'][] = $this->process($product);
-            } else {
-                $data['skipped'][] = $product;
-            }
+        if (empty($product_data[$index])) {
+            return [];
         }
+
+        $product = $product_data[$index];
+
+        if (! empty($product['sku'])) {
+            $data['updated'][] = $this->process($product);
+        } else {
+            $data['skipped'][] = $product;
+        }
+
         return $data;
     }
 
     private function process(array $data)
     {
         $id = (new Product())->getProductIDBySKU($data['sku']);
+
+        if (empty($id)) {
+            $id = wc_get_product_id_by_sku($data['sku']);
+        }
+
         $columns = [
             'short_description' => $data['short_description'] ?? '',
             'description' => $data['description'] ?? '',
@@ -75,7 +83,7 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                     $product->set_description($columns['description']);
                 }
 
-                switch (strtolower($data['catalog_visibility'])) {
+                switch (mb_strtolower($data['catalog_visibility'])) {
                     case 'да':
                         $cat_visibility = 'visible';
                         break;
@@ -84,10 +92,11 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                 }
 
                 $attributes = $this->makeAttributeObjects($product, $this->prepareAttributes($data));
+             
                 $product->set_catalog_visibility($cat_visibility);
 
                 $product->set_attributes($attributes);
-//                dd($product);
+
                 if (! empty($columns['images'])) {
                     $image_id = $product->get_image_id();
                     //https://rost.kh.ua/photo/4233098.jpg
@@ -120,7 +129,7 @@ class SecondaryProductUpdater extends ProductExcelUpdater
         $attrs = $data_attributes = [];
 
         foreach ($attributes_taxonomies as $attr) {
-            $attrs[] = $attr->attribute_label;
+            $attrs[] = $attr->attribute_name;
         }
 
         foreach ($data as $key => $item) {
@@ -154,7 +163,6 @@ class SecondaryProductUpdater extends ProductExcelUpdater
 
     private function prepare_attributes( array $data ): array
     {
-        $attributes = array();
         if ( isset( $data['attribute_names'], $data['attribute_values'] ) ) {
             $attribute_names         = $data['attribute_names'];
             $attribute_values        = $data['attribute_values'];
@@ -178,7 +186,8 @@ class SecondaryProductUpdater extends ProductExcelUpdater
                 $tax = 'pa_';
 
                 foreach ($attributes_taxonomies as $taxonomy) {
-                    if ($taxonomy->attribute_label === $attribute_name) {
+                    if ($taxonomy->attribute_name === $attribute_name) {
+                        $attribute_name = wc_clean( esc_html( $taxonomy->attribute_name[ $i ] ) );
                         $id = $taxonomy->attribute_id;
                         $tax .= $taxonomy->attribute_name;
                     }

@@ -75,6 +75,18 @@ class PreImportTable implements TableInterface
                 KEY product_category_id (product_category_id),
                 KEY is_imported (product_category_id)
             ) $collate;");
+        $db->query("
+        CREATE TABLE IF NOT EXISTS {$db->prefix}woo_imported_relationships (
+                `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                `product_id` bigint(20) unsigned NOT NULL,
+                `post_id` bigint(20) unsigned NOT NULL,
+                `sku` varchar(100) NULL default '',
+                `product_uploaded` datetime NOT NULL default CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY post_id (post_id),
+                KEY sku (sku),
+                KEY product_id (product_id)
+            ) $collate;");
     }
 
     /**

@@ -40,7 +40,7 @@ wp_enqueue_script('ewoo-product-validation');
                     <?php
                     $value = $mapped_items[$key];
                     if (!is_array($label)) : ?>
-                        <?php $mapped_value = $mapped_items[$key]; ?>
+                        <?php $mapped_value = trim($mapped_items[$key]); ?>
                     <?php endif; ?>
                 <?php endforeach ?>
                 <tr class="mapping-field">
@@ -67,8 +67,16 @@ wp_enqueue_script('ewoo-product-validation');
                                     else :
                                         $mapped_value = (!empty($mapped_items[$key])? $mapped_items[$key] : '');
                                         $possible_val = (! empty($default[$header]))? $default[$header]: '';
+                                        $name = $mapped_value;
+                                        if (! empty($attributes)) {
+                                            foreach ($attributes as $attribute) {
+                                                if ($name === $attribute->attribute_name) {
+                                                    $label = $attribute->attribute_label;
+                                                }
+                                            }
+                                        }
                                 ?>
-                                <option value="<?= esc_attr($mapped_value) ?>" <?php echo selected($mapped_value, $possible_val) ?> >
+                                <option value='<?php echo $mapped_value ?>' <?php echo selected($mapped_value, $possible_val) ?> >
                                     <?= esc_html($label)?>
                                 </option>
                                 <?php endif; ?>

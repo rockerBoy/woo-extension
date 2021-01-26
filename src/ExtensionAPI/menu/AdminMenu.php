@@ -4,7 +4,9 @@
 namespace ExtendedWoo\ExtensionAPI\menu;
 
 use ExtendedWoo\ExtensionAPI\import\DiscountsImportController;
+use ExtendedWoo\ExtensionAPI\import\IDImportController;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\BrandsImportStrategy;
+use ExtendedWoo\ExtensionAPI\import\importing_strategies\IDImportStrategy;
 use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\FullProductImportType;
 use ExtendedWoo\ExtensionAPI\import\models\BrandsImportController;
@@ -15,16 +17,13 @@ use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductSalesImportType;
 use ExtendedWoo\ExtensionAPI\import\SecondaryImportController;
 use Symfony\Component\HttpFoundation\Request;
-use Twig\Environment;
 
 final class AdminMenu
 {
     private Request $request;
-    private Environment $view;
 
-    public function __construct(Environment $environment)
+    public function __construct()
     {
-        $this->view = $environment;
         $this->request = Request::createFromGlobals();
     }
 
@@ -82,6 +81,14 @@ final class AdminMenu
             'manage_options',
             'excel_brand_import',
             [$this, 'productsBrandsImportPage']
+        );
+        add_submenu_page(
+            'excel_import',
+            __('Импорт ROST ID', 'extendedwoo'),
+            __('Импорт ROST ID', 'extendedwoo'),
+            'manage_options',
+            'excel_id_import',
+            [$this, 'productsIDImportPage']
         );
     }
 
@@ -182,6 +189,25 @@ final class AdminMenu
         $controller = new BrandsImportController($this->request);
         $controller
             ->setImportType(ImportTypeFactory::getImportType(BrandsImportStrategy::class))
+            ->dispatch();
+    }
+    public function productsIDImportPage(): void
+    {
+        wp_localize_script(
+            'wc-product-import',
+            'wc_product_import_params',
+            [
+                'import_nonce'    => wp_create_nonce('wc-product-import'),
+                'mapping'         => [
+                    'from' => '',
+                    'to'   => '',
+                ]
+            ]
+        );
+        wp_enqueue_script('wc-product-import');
+        $controller = new IDImportController($this->request);
+        $controller
+            ->setImportType(ImportTypeFactory::getImportType(IDImportStrategy::class))
             ->dispatch();
     }
 

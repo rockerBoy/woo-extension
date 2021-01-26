@@ -13,7 +13,7 @@ final class Exporter
     private string $categoriesToExport;
     private array $productTypesToExport;
     private int $page = 1;
-    private int $limit = 50;
+    private int $limit = -1;
     private bool $enableExportAll = false;
     private bool $exportWithoutImages = false;
     private FileExportInterface $file_export;
@@ -119,11 +119,10 @@ final class Exporter
             'page' => $this->page,
             'orderby'  => ['ID' => 'ASC'],
             'return'   => 'objects',
-            'paginate' => true,
+            'paginate' => false,
         ];
 
         $products = $this->productModel->setProductArgs($args)->getProducts($this->enableExportAll);
-
         if (! empty($this->exportWithoutImages) && true === $this->exportWithoutImages) {
             foreach ($products->products as $key => $product) {
                 if (true === (bool) $product->get_image_id()) {
@@ -132,13 +131,12 @@ final class Exporter
                 }
             }
         }
-
-        $this->totalRows  = $products->total;
+        $this->totalRows  = count($products);
         $headers = $this->getHeaders();
 
         $this->rowData[] = $headers;
 
-        foreach ($products->products as $product) {
+        foreach ($products as $product) {
             $this->rowData[] = $this->generateRowData($product);
         }
     }
@@ -199,14 +197,14 @@ final class Exporter
      *
      * @return array
      */
-    private function generateRowData($product): array
+    private function generateRowData(\WC_Product_Simple $product): array
     {
         $fz_product = new Product($product->get_id());
         $columns = $this->columnNames;
         $row = [];
         $categories = $this->productModel->getCategory($product);
         $brands = $this->productModel->getBrand($product);
-        $cat_id = current($product->category_ids);
+        $cat_id = current($product->get_category_ids());
         $attributes = $this->productModel->getCategoryAttributes($cat_id);
         $countries = $this->productModel->getCountry($product);
         $parent_categories = $this->productModel->getCategory($product, true);
@@ -234,12 +232,7 @@ final class Exporter
                 case "parent_category_ids":
                     $value = $parent_categories;
                     break;
-//                case "brands":
-//                    $value = html_entity_decode($brands);
-//                    break;
-//                case "manufacturers":
-//                    $value = $countries;
-//                    break;
+
                 case "images":
                     $id = $product->get_image_id() ?? 0;
                     if ($fz_product->getRealID() > 0 && $id == 0) {

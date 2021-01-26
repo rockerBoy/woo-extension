@@ -52,7 +52,7 @@ class ProductExcelUpdater extends Import
             ->toArray(null, false, true, true);
     }
 
-    public function update(): array
+    public function update(int $index = 0): array
     {
         $prices = $this->prepareRows();
         $data = [
@@ -61,15 +61,26 @@ class ProductExcelUpdater extends Import
             'updated'  => [],
         ];
 
-        foreach ($prices as $product_price) {
-            if (! empty($product_price['regular_price'])) {
-                $data['updated'][] = $this->process($product_price);
-            } else {
-                $data['skipped'][] = $this->process($product_price);
-            }
+        $product_price = $prices[$index];
+
+        if (! empty($product_price['regular_price'])) {
+            $data['updated'][] = $this->process($product_price);
+        } else {
+            $data['skipped'][] = $this->process($product_price);
         }
 
         return $data;
+    }
+
+    public function countTotalRows(): int
+    {
+        $rows = $this->prepareRows();
+
+        if (empty($rows)) {
+            return 0;
+        } else {
+            return count($rows);
+        }
     }
 
     protected function prepareRows(): array

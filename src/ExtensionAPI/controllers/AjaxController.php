@@ -9,6 +9,7 @@ use ExtendedWoo\Entities\Product;
 use ExtendedWoo\Entities\Products;
 use ExtendedWoo\ExtensionAPI\helpers\ProductsImportHelper;
 use ExtendedWoo\ExtensionAPI\import\BrandsExcelImporter;
+use ExtendedWoo\ExtensionAPI\import\IDsExcelImporter;
 use ExtendedWoo\ExtensionAPI\import\ProductDiscountsUpdater;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelImporter;
 use ExtendedWoo\ExtensionAPI\import\ProductExcelUpdater;
@@ -95,26 +96,125 @@ final class AjaxController
 
             if (! empty($request->get('import_type'))) {
                 $import_type = $request->get('import_type');
+                $imported = (empty($_POST['imported']))? 0 : (int) $_POST['imported'];
+
                 switch ($import_type) {
                     case "update_prices":
                         $updater = new ProductExcelUpdater($request->get('file'), $params);
-                        $results = $updater->update();
+                        $total = (empty($_POST['total']))? $updater->countTotalRows() : (int) $_POST['total'];
+
+                        if ($total > $imported) {
+                            $percentile = round(($imported/$total)*100, PHP_ROUND_HALF_UP);
+
+                            $results = $updater->update($imported);
+
+                            if ($percentile < 100) {
+                                wp_send_json_success(
+                                    array(
+                                        'position'   => 'in_progress',
+                                        'percentage' => $percentile,
+                                        'imported' => $imported,
+                                        'total' => $total,
+                                    )
+                                );
+                            }
+                        } else {
+                            wp_send_json_success(
+                                array(
+                                    'position'   => 'done',
+                                    'percentage' => 100,
+                                    'url'        => add_query_arg(
+                                        array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
+                                        admin_url('admin.php?page=excel_import&step=result')
+                                    ),
+                                    'updated'    => $total,
+                                )
+                            );
+                        }
                         break;
                     case "update_actions":
                         $updater = new ProductDiscountsUpdater($request->get('file'), $params);
-                        $results = $updater->update();
+                        $total = (empty($_POST['total']))? $updater->countTotalRows() : (int) $_POST['total'];
+                        $results = $updater->update($imported);
+
+                        if ($total > $imported) {
+                            $percentile = round(($imported/$total)*100, PHP_ROUND_HALF_UP);
+
+                            $results = $updater->update($imported);
+
+                            if ($percentile < 100) {
+                                wp_send_json_success(
+                                    array(
+                                        'position'   => 'in_progress',
+                                        'percentage' => $percentile,
+                                        'imported' => $imported,
+                                        'total' => $total,
+                                    )
+                                );
+                            }
+                        } else {
+                            wp_send_json_success(
+                                array(
+                                    'position'   => 'done',
+                                    'percentage' => 100,
+                                    'url'        => add_query_arg(
+                                        array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
+                                        admin_url('admin.php?page=excel_import&step=result')
+                                    ),
+                                    'updated'    => $total,
+                                )
+                            );
+                        }
                         break;
                     case "secondary_import":
                         $updater = new SecondaryProductUpdater($request->get('file'), $params);
-                        $results = $updater->update();
+                        $total = (empty($_POST['total']))? $updater->countTotalRows() : (int) $_POST['total'];
+                        $results = $updater->update($imported);
+
+                        if ($total > $imported) {
+                            $percentile = round(($imported/$total)*100, PHP_ROUND_HALF_UP);
+
+                            $results = $updater->update($imported);
+
+                            if ($percentile < 100) {
+                                wp_send_json_success(
+                                    array(
+                                        'position'   => 'in_progress',
+                                        'percentage' => $percentile,
+                                        'imported' => $imported,
+                                        'total' => $total,
+                                    )
+                                );
+                            }
+                        } else {
+                            wp_send_json_success(
+                                array(
+                                    'position'   => 'done',
+                                    'percentage' => 100,
+                                    'url'        => add_query_arg(
+                                        array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
+                                        admin_url('admin.php?page=excel_import&step=result')
+                                    ),
+                                    'updated'    => $total,
+                                )
+                            );
+                        }
+
                         break;
                     case "upload_brands":
                         $updater = new BrandsExcelImporter($request->get('file'), $params);
+                        $total = (empty($_POST['total']))? $updater->countTotalRows() : (int) $_POST['total'];
+
+                        $results = $updater->update();
+                        break;
+                    case "upload_ids":
+                        $updater = new IDsExcelImporter($request->get('file'), $params);
+                        $total = (empty($_POST['total']))? $updater->countTotalRows() : (int) $_POST['total'];
+
                         $results = $updater->update();
                         break;
                     default:
                         $importer = new ProductExcelImporter($request->get('file'), $params);
-                        $imported = (empty($_POST['imported']))? 0 : (int) $_POST['imported'];
                         $total = (empty($_POST['total']))? $importer->getImportProgress() : (int) $_POST['total'];
 
                         $results = $importer->import();
@@ -176,15 +276,14 @@ final class AjaxController
         ];
 
         $data['errors'] = $data['total'] - $data['valid'];
+        $success  = [
+            'total' => $data['total'],
+            'valid' => $data['valid'],
+            'errors' => $data['errors'],
+            'result'   => 'done',
+        ];
 
-        wp_send_json_success(
-            array(
-                'total' => $data['total'],
-                'valid' => $data['valid'],
-                'errors' => $data['errors'],
-                'result'   => 'done',
-            )
-        );
+        wp_send_json_success($success);
     }
 
     public function checkResolverForm(): void

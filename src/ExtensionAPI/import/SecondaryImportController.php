@@ -71,9 +71,11 @@ class SecondaryImportController extends BasicController
         $res = [];
 
         foreach ($attributes as $attr) {
-            $res[] = $attr->attribute_label;
+            $res[] = $attr->attribute_name;
         }
+
         $labels = array_merge($labels, $res);
+
         $mapped_items = ProductsImportHelper::autoMapColumns($labels);
         wp_localize_script(
             'ewoo-product-validation',
@@ -114,6 +116,7 @@ class SecondaryImportController extends BasicController
 
         $labels = array_values($this->importStrategy->getColumns());
         $mapping_to = $req->get('map_to');
+
         if (!empty($labels) && ! empty($req->get('map_to'))) {
             $mapping_from = $req->get('map_from');
             $mapping_to = $req->get('map_to');
