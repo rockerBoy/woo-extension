@@ -137,6 +137,7 @@ final class Product extends \WC_Product_Simple
     public function getTotal(): int
     {
         $uuid = $this->getUUID();
+
         if (!empty($uuid)) {
             $this->uuid = $uuid;
             $total_query = $this->db->get_var("

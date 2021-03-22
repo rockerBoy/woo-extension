@@ -90,6 +90,14 @@ final class AdminMenu
             'excel_id_import',
             [$this, 'productsIDImportPage']
         );
+        add_submenu_page(
+            'excel_import',
+            __('Поиск изображений в медиатеке', 'extendedwoo'),
+            __('Поиск изображений в медиатеке', 'extendedwoo'),
+            'manage_options',
+            'product_image_search',
+            [$this, 'productsImagePage']
+        );
     }
 
     public function productsImportPage(): void
@@ -191,6 +199,7 @@ final class AdminMenu
             ->setImportType(ImportTypeFactory::getImportType(BrandsImportStrategy::class))
             ->dispatch();
     }
+
     public function productsIDImportPage(): void
     {
         wp_localize_script(
@@ -209,6 +218,43 @@ final class AdminMenu
         $controller
             ->setImportType(ImportTypeFactory::getImportType(IDImportStrategy::class))
             ->dispatch();
+    }
+
+    public function productsImagePage(): void
+    {
+        wp_localize_script(
+            'wc-product-import',
+            'wc_product_import_params',
+            [
+                'import_nonce'    => wp_create_nonce('wc-product-import'),
+                'mapping'         => [
+                    'from' => '',
+                    'to'   => '',
+                ]
+            ]
+        );
+        wp_enqueue_script('wc-product-import');
+
+        ?>
+        <div class="woocommerce-progress-form-wrapper">
+            <form method="post" class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data">
+                <header>
+                    <p><?= __('Поиск изображений товаров в медиатеке', 'extendedwoo')?></p>
+                </header>
+                <div class="wc-actions">
+                    <?php
+
+                    if (! empty($_POST['find_images'])) {
+                        do_action('check_product_images');
+                    }
+                    ?>
+                    <button class="button button-primary button-search" type="submit"
+                            value="<?= __( 'Начать поиск', 'woocommerce' ) ?>" name="find_images"><?= __( 'Начать поиск', 'woocommerce' ) ?></button>
+                    <?php wp_nonce_field( 'etx-xls-importer' ); ?>
+                </div>
+            </form>
+        </div>
+        <?php
     }
 
     public function menuOrder(array $menu_order): array

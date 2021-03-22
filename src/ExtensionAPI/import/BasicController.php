@@ -111,6 +111,7 @@ abstract class BasicController
     {
         $file = $this->handleUpload();
         $request = $this->request;
+
         if (is_wp_error($file)) {
             $this->addErrors($file->get_error_message());
             return;
@@ -124,10 +125,9 @@ abstract class BasicController
     public function handleUpload()
     {
         $request  = $this->request;
-        $file_url = ( ! empty($request->get('file_url')))
-            ? wc_clean(wp_unslash($request->get('file_url'))) : '';
-        $this->startRow = (! empty($request->get('starting_row')))
-            ? wc_clean(wp_unslash($request->get('starting_row'))) : 1;
+
+        $file_url = ( ! empty($request->get('file_url'))) ? wc_clean(wp_unslash($request->get('file_url'))) : '';
+        $this->startRow = (! empty($request->get('starting_row'))) ? wc_clean(wp_unslash($request->get('starting_row'))) : 1;
 
         if (empty($file_url) && ! isset($_FILES['import'])) {
             return new WP_Error(
@@ -168,14 +168,10 @@ abstract class BasicController
             ];
 
             $id = wp_insert_attachment($object, $upload['file']);
-            wp_schedule_single_event(
-                time() + DAY_IN_SECONDS,
-                'importer_scheduled_cleanup',
-                array($id)
-            );
-            $f_size = (new ProductExcelImporter($upload['file']))
-                ->getImportSize();
-            if ($f_size <= 1) {
+
+            $f_size = (new ProductExcelImporter($upload['file']))->getImportSize();
+            dd($f_size);
+            if ($f_size <= 1 || $f_size > '2043800') {
                 return new WP_Error(
                     'extendedwoo_product_xls_importer_upload_invalid_file',
                     __(

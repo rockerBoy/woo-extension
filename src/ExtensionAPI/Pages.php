@@ -350,7 +350,8 @@ final class Pages implements PageInterface
         }
     }
 
-    private function getProductAttributes() {
+    private function getProductAttributes()
+    {
         $product_attributes = [];
         $attributes         = wc_get_attribute_taxonomies();
 

@@ -56,10 +56,7 @@ class ProductImporterController extends BasicController
 
     protected function showImportForm(): self
     {
-        $bytes      = apply_filters(
-            'import_upload_size_limit',
-            wp_max_upload_size()
-        );
+        $bytes      = apply_filters('import_upload_size_limit', '2043800');
         $size       = size_format($bytes);
         $upload_dir = wp_upload_dir();
         include $this->import_views_path . 'import-form.php';

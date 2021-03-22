@@ -17,9 +17,9 @@
                                 <p><strong><?= esc_html( $upload_dir['error'] ) ?></strong></p>
                             </div>
                         <?php else: ?>
-                            <input type="file" id="upload" name="import" size="25" />
+                            <input type="file" id="upload" name="import" size="2" />
                             <input type="hidden" name="action" value="save" />
-                            <input type="hidden" name="max_file_size" value="<?php echo esc_attr( $bytes ); ?>" />
+                            <input type="hidden" name="max_file_size" value="2043800" />
                             <br>
                             <small>
                                 <?php

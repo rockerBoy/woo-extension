@@ -26,7 +26,7 @@ class IDsExcelImporter extends ProductExcelUpdater
         return $prepared_data;
     }
 
-    public function update(): array
+    public function update(int $index = 0): array
     {
         $ids = $this->prepareRows();
         $data = [

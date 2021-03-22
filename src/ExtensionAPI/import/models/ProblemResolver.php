@@ -29,6 +29,7 @@ final class ProblemResolver
         $this->mapping = $this->clearMapping($mapping_to);
         $this->strategy = $strategy;
         $this->filename = $filename;
+
         $this->validateRows($dataRows);
     }
 
@@ -51,6 +52,7 @@ final class ProblemResolver
                     }
 
                     $input_set = [
+                        'id' => '',
                         'sku' => '<input type="text" class="edit-product-sku" name="sku['.$rel_id.']" data-rel="'.$rel_id.'" required />',
                         'category_ids' => '',
                         'name' => '<input type="text" class="edit-product-name"
@@ -96,9 +98,7 @@ final class ProblemResolver
                     $error_msg = '';
                     if (! $validation_flag) {
                         $table_output .= $this->makeRow('<button class="button button-primary remove-item" data-rel="'.$rel_id.'" value="'.$meta_data['id'].'">Удалить продукт</button>');
-//                        $is_unique = $this->validationResult[$index]['data']['unique'];
                         $is_not_empty = $this->validationResult[$index]['data']['non_empty'];
-//                        $is_format_correct = $this->validationResult[$index]['data']['wrong_formatted'];
 
                         if (! $is_unique['sku'] || ! $is_unique['id']) {
                             $error_msg = __('Такой товар уже существует', 'extendedwoo');

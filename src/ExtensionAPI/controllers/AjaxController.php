@@ -249,7 +249,7 @@ final class AjaxController
                             array( '_wpnonce' => wp_create_nonce('etx-xls-importer') ),
                             admin_url('admin.php?page=excel_import&step=result')
                         ),
-                        'imported'   => count($imported),
+                        'imported'   => count($imported) - 1,
                         'failed'     => count($failed),
                         'updated'    => count($updated),
                         'skipped'    => count($skipped),
@@ -394,8 +394,8 @@ final class AjaxController
                 }
             }
         }
-
         $total = $check_item->getTotal();
+        $total = ($total > 1) ? $total -1: $total;
         $valid = $check_item->getValid();
         $errors = $check_item->getErrors();
         $results['total'] = $total;
@@ -405,6 +405,7 @@ final class AjaxController
         if ($errors > 0) {
             $results['status'] = 'nok';
         } else {
+            $results['errors'] = 0;
             $results['status'] = 'ok';
         }
 

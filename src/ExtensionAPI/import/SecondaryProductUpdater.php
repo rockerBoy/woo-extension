@@ -65,26 +65,43 @@ class SecondaryProductUpdater extends ProductExcelUpdater
             'stock_status' => $data['stock_status'] ?? '',
             'status' => 'publish',
             'brands' => $data['brands'] ?? '',
+            'category_ids' => $data['category_ids'],
             'manufacturer' => $data['manufacturer'] ?? '',
             'images'    =>  $data['images'] ?? '',
         ];
+
+        if(! empty($data['category_ids'])) {
+            $cat = get_term_by('name', $data['category_ids'],'product_cat');
+
+            if ($cat instanceof \WP_Term) {
+                $columns['category_ids'] = [$cat->term_id];
+            }
+        }
 
         if (! empty($id)) {
             $product = wc_get_product_object('simple', $id);
 
             if ($product) {
+
+                if (!empty($columns['category_ids']) && $columns['category_ids'] !== $product->get_category_ids()) {
+                    $product->set_category_ids($columns['category_ids']);
+                }
+
                 if ($product->get_short_description() !== $columns['short_description']) {
                     $product->set_short_description($columns['short_description']);
                 }
+
                 if (! empty($data['name']) && $data['name'] !== $product->get_name()) {
                     $product->set_name($data['name']);
                 }
+
                 if ($product->get_description() !== $columns['description']) {
                     $product->set_description($columns['description']);
                 }
 
                 switch (mb_strtolower($data['catalog_visibility'])) {
                     case 'да':
+                    case 'visible':
                         $cat_visibility = 'visible';
                         break;
                     default:
@@ -149,6 +166,7 @@ class SecondaryProductUpdater extends ProductExcelUpdater
         $attributes_objects = [];
         $list = wc_get_attribute_taxonomies();
         $i = 0;
+
         foreach ($attributes as $attribute) {
             $attribute['attribute_position'] = $i++;
             $attr_object  = current($this->prepare_attributes($attribute));
@@ -165,12 +183,16 @@ class SecondaryProductUpdater extends ProductExcelUpdater
     {
         if ( isset( $data['attribute_names'], $data['attribute_values'] ) ) {
             $attribute_names         = $data['attribute_names'];
-            $attribute_values        = $data['attribute_values'];
+            $exp = static function ($arr) {
+                return explode(';', $arr);
+            };
+            $attribute_values        = current(array_map($exp, $data['attribute_values']));
+
             $data['attribute_visibility'] = [1];
             $data['attribute_variation'] = [];
             $data['attribute_position'] = [$data['attribute_position']];
-            $attribute_visibility    = isset( $data['attribute_visibility'] ) ? $data['attribute_visibility'] : array();
-            $attribute_variation     = isset( $data['attribute_variation'] ) ? $data['attribute_variation'] : array();
+            $attribute_visibility    = $data['attribute_visibility'] ?? array();
+            $attribute_variation     = $data['attribute_variation'] ?? array();
             $attribute_position      = $data['attribute_position'];
             $attribute_names_max_key = max( array_keys( $attribute_names ) );
 

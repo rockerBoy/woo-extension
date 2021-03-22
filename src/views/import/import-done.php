@@ -2,8 +2,8 @@
     <section class="woocommerce-importer-done">
         <?php
         $results = array();
-
         if ( 0 < $imported ) {
+            $imported--;
             $results[] = sprintf(
             /* translators: %d: products count */
                 _n( '%s product imported', '%s products imported', $imported, 'woocommerce' ),
