@@ -1,7 +1,6 @@
 <?php
 
 use ExtendedWoo\Entities\Products;
-use ExtendedWoo\ExtensionAPI\Pages;
 
 $products = new Products();
 

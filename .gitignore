@@ -1,4 +1,5 @@
 assets/node_modules
+node_modules/*
 vendor/*
 .idea
 lsp

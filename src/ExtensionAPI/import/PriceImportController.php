@@ -51,6 +51,9 @@ class PriceImportController extends BasicController
             'import_upload_size_limit',
             wp_max_upload_size()
         );
+
+        $file_id = 'price_import';
+
         $size       = size_format($bytes);
         $upload_dir = wp_upload_dir();
         include $this->import_views_path . 'import-form.php';
@@ -66,17 +69,19 @@ class PriceImportController extends BasicController
         $headers  = $importer->getHeader($this->startRow);
         $labels = array_values($this->importStrategy->getColumns());
         $mapped_items = ProductsImportHelper::autoMapColumns($labels);
+
         wp_localize_script(
             'ewoo-product-validation',
-            'ewoo_product_import_params',
+            'ewoo_bundle_params',
             [
-                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'import_nonce' => wp_create_nonce('ewoo-bundle'),
                 'mapping' => [
                     'required' => array_keys($this->importStrategy->getColumns())
                 ],
                 'file' => $this->file,
             ]
         );
+
         $sample = $importer->getSample();
         if (empty($sample)) {
             $this->addErrors(
@@ -117,10 +122,10 @@ class PriceImportController extends BasicController
         }
 
         wp_localize_script(
-            'ewoo-product-import',
-            'ewoo_product_import_params',
+            'ewoo-bundle',
+            'ewoo_bundle_params',
             [
-                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'import_nonce' => wp_create_nonce('ewoo-bundle'),
                 'mapping' => [
                     'from' => $mapping_from,
                     'to' => $mapping_to,
@@ -130,7 +135,7 @@ class PriceImportController extends BasicController
             ]
         );
 
-        wp_enqueue_script('ewoo-product-import');
+        wp_enqueue_script('ewoo-bundle');
 
         include_once $this->import_views_path . '/import-progress.php';
     }

@@ -221,7 +221,7 @@ final class Pages implements PageInterface
             }
         }
         ob_start();
-        require __DIR__.'/../views/admin-page-product-export.php';
+        require __DIR__.'/../views/export/admin-page-product-export.php';
 
         return ob_get_clean();
     }

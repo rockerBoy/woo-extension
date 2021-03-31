@@ -30,10 +30,10 @@ class BrandsImportController extends PriceImportController
         }
 
         wp_localize_script(
-            'ewoo-product-import',
-            'ewoo_product_import_params',
+            'ewoo-bundle',
+            'ewoo_bundle_params',
             [
-                'import_nonce' => wp_create_nonce('ewoo-product-import'),
+                'import_nonce' => wp_create_nonce('ewoo-bundle'),
                 'mapping' => [
                     'from' => $mapping_from,
                     'to' => $mapping_to,
@@ -43,7 +43,7 @@ class BrandsImportController extends PriceImportController
             ]
         );
 
-        wp_enqueue_script('ewoo-product-import');
+        wp_enqueue_script('ewoo-bundle');
 
         include_once $this->import_views_path . '/import-progress.php';
     }

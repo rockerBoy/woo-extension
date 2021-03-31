@@ -170,7 +170,6 @@ abstract class BasicController
             $id = wp_insert_attachment($object, $upload['file']);
 
             $f_size = (new ProductExcelImporter($upload['file']))->getImportSize();
-            dd($f_size);
             if ($f_size <= 1 || $f_size > '2043800') {
                 return new WP_Error(
                     'extendedwoo_product_xls_importer_upload_invalid_file',

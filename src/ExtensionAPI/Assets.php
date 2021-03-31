@@ -24,21 +24,27 @@ class Assets
     public function adminScripts(): void
     {
         wp_register_script(
-            'ewoo-product-export',
-            Kernel::pluginUrl() . '/assets/js/admin/product-export.js',
-            array( 'jquery' )
-        );
-        wp_register_script(
-            'ewoo-product-import',
-            Kernel::pluginUrl() . '/assets/js/admin/product-import.js',
+            'ewoo-bundle',
+            Kernel::pluginUrl() . '/assets/js/bundle.js',
             array( 'jquery' ),
-            '103'
+            '0.0.1'
         );
-        wp_register_script(
-            'ewoo-product-validation',
-            Kernel::pluginUrl() . '/assets/js/admin/product-validation.js',
-            array( 'jquery' )
-        );
+//        wp_register_script(
+//            'ewoo-product-export',
+//            Kernel::pluginUrl() . '/assets/js/admin/product-export.js',
+//            array( 'jquery' )
+//        );
+//        wp_register_script(
+//            'ewoo-product-import',
+//            Kernel::pluginUrl() . '/assets/js/admin/product-import.js',
+//            array( 'jquery' ),
+//            '103'
+//        );
+//        wp_register_script(
+//            'ewoo-product-validation',
+//            Kernel::pluginUrl() . '/assets/js/admin/product-validation.js',
+//            array( 'jquery' )
+//        );
     }
 
     public function findProductImages(): void

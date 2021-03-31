@@ -1,4 +1,4 @@
-<form method="post" class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data">
+<form method="post" id="<?= $form_id ?>" class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data">
         <header>
             <h2></h2>
             <p><?= __('Этот инструмент позволяет импортировать (или дописывать) данные товаров из Excel файла к вашему магазину.', 'extendedwoo')?></p>
@@ -18,8 +18,6 @@
                             </div>
                         <?php else: ?>
                             <input type="file" id="upload" name="import" size="2" />
-                            <input type="hidden" name="action" value="save" />
-                            <input type="hidden" name="max_file_size" value="2043800" />
                             <br>
                             <small>
                                 <?php
@@ -38,7 +36,7 @@
                         <label for="starting_row"><?= __('Экспортировать со строки:', 'extendedwoo')?></label>
                     </th>
                     <td>
-                        <input type="number" id="starting_row" name="starting_row" min="1" placeholder="1"/>
+                        <input type="number" id="starting_row" name="starting_row" min="1" placeholder="1" value="1"/>
                     </td>
                 </tr>
                 </tbody>

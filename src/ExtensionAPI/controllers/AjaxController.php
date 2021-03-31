@@ -27,7 +27,7 @@ final class AjaxController
     private Request $request;
     private array $referrers = [
         'export' => 'ewoo-product-export',
-        'import' => 'ewoo-product-import',
+        'import' => 'ewoo-bundle',
     ];
 
 
@@ -87,11 +87,11 @@ final class AjaxController
     public function productImport(): void
     {
         $request = $this->request;
-        check_ajax_referer('ewoo-product-import', 'security');
+        check_ajax_referer('ewoo-bundle', 'security');
 
         if (!empty($request->get('file'))) {
             $params = array(
-                'mapping'         => isset($_POST['mapping']) ? (array) wc_clean(wp_unslash($_POST['mapping'])) : array(), // PHPCS: input var ok.
+                'mapping'  => isset($_POST['mapping']) ? (array) wc_clean(wp_unslash($_POST['mapping'])) : array(), // PHPCS: input var ok.
             );
 
             if (! empty($request->get('import_type'))) {
@@ -262,7 +262,7 @@ final class AjaxController
     public function productRemove(): void
     {
         $request = $this->request;
-        check_ajax_referer('ewoo-product-import', 'security');
+        check_ajax_referer('ewoo-bundle', 'security');
 
         $product_id = $request->get('prod_id');
 
@@ -291,7 +291,7 @@ final class AjaxController
         global $wpdb;
 
         $request = $this->request;
-        check_ajax_referer('ewoo-product-import', 'security');
+        check_ajax_referer('ewoo-bundle', 'security');
 
         $form_data = $request->get('form_data');
 
@@ -410,5 +410,14 @@ final class AjaxController
         }
 
         wp_send_json_success($results);
+    }
+
+
+    public function fileUploader(): void
+    {
+        $request = $this->request;
+        check_ajax_referer('ewoo-bundle', 'security');
+
+
     }
 }
