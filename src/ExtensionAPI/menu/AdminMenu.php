@@ -44,7 +44,7 @@ final class AdminMenu
         add_menu_page(
             __('Импорт товаров', 'extendedwoo'),
             __('Импорт товаров', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_import',
             [$this, 'productsImportPage'],
             null,
@@ -54,7 +54,7 @@ final class AdminMenu
             'excel_import',
             __('Вторичный импорт товаров', 'extendedwoo'),
             __('Вторичный импорт товаров', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_update_products',
             [$this, 'productsUpdatePage']
         );
@@ -62,7 +62,7 @@ final class AdminMenu
             'excel_import',
             __('Импорт цен', 'extendedwoo'),
             __('Импорт цен', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_import_prices',
             [$this, 'productsPricingImportPage']
         );
@@ -70,7 +70,7 @@ final class AdminMenu
             'excel_import',
             __('Импорт акций', 'extendedwoo'),
             __('Импорт акций', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_sales_import',
             [$this, 'productsSalesImportPage']
         );
@@ -78,7 +78,7 @@ final class AdminMenu
             'excel_import',
             __('Импорт брендов', 'extendedwoo'),
             __('Импорт брендов', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_brand_import',
             [$this, 'productsBrandsImportPage']
         );
@@ -86,7 +86,7 @@ final class AdminMenu
             'excel_import',
             __('Импорт ROST ID', 'extendedwoo'),
             __('Импорт ROST ID', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'excel_id_import',
             [$this, 'productsIDImportPage']
         );
@@ -94,7 +94,7 @@ final class AdminMenu
             'excel_import',
             __('Поиск изображений в медиатеке', 'extendedwoo'),
             __('Поиск изображений в медиатеке', 'extendedwoo'),
-            'manage_options',
+            'manage_woocommerce',
             'product_image_search',
             [$this, 'productsImagePage']
         );

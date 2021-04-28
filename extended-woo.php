@@ -16,4 +16,6 @@ if (! defined('EWOO_PLUGIN_FILE')) {
     define('EWOO_PLUGIN_FILE', __FILE__);
 }
 
-require __DIR__.'/src/Bootstrap.php';
+require 'vendor/autoload.php';
+
+(new \ExtendedWoo\Kernel())->init();
