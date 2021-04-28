@@ -3,11 +3,13 @@
     "name": "rockerboy/extended-woo",
     "type": "project",
     "require": {
-        "phpoffice/phpspreadsheet": "^1.14",
         "vlucas/phpdotenv": "^5.0",
-        "zendframework/zend-diactoros": "^2.2",
         "symfony/http-foundation": "^5.1.2",
-        "ext-json": "*"
+        "ext-json": "*",
+        "box/spout": "^3.2",
+        "php-di/php-di": "^6.3",
+        "laminas/laminas-diactoros": "^2.5",
+        "ocramius/proxy-manager": "^2.11"
     },
     "require-dev": {
         "symfony/var-dumper": "^5.1"
