@@ -1,0 +1,1 @@
+C:37:"PHPUnit\Runner\DefaultTestResultCache":206:{a:2:{s:7:"defects";a:2:{s:25:"DBExtensionTest::testInit";i:5;s:30:"DBExtensionTest::testTerminate";i:5;}s:5:"times";a:2:{s:25:"DBExtensionTest::testInit";d:0.001;s:30:"DBExtensionTest::testTerminate";d:0;}}}

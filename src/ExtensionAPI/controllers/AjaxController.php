@@ -1,6 +1,5 @@
 <?php
 
-
 namespace ExtendedWoo\ExtensionAPI\controllers;
 
 
@@ -33,10 +32,6 @@ final class AjaxController
 
     public function __construct()
     {
-        if (! defined('ABSPATH')) {
-            exit;
-        }
-
         $this->request = Request::createFromGlobals();
     }
 

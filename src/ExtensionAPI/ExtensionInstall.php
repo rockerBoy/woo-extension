@@ -30,10 +30,7 @@ final class ExtensionInstall
         global $wpdb;
 
         self::$db = $wpdb;
-        self::$tables = [
-            new PreImportTable(self::$db),
-            new CategoryFiltersTable(self::$db),
-        ];
+        self::$tables = [];
 
         self::installTables();
         (new Filters())->setCatTable(next(self::$tables));

@@ -6,3 +6,4 @@ lsp
 tests
 phpcs.xml
 phpunit.xml
+psalm.xml

@@ -3,15 +3,21 @@
     "name": "rockerboy/extended-woo",
     "type": "project",
     "require": {
-        "phpoffice/phpspreadsheet": "^1.14",
         "vlucas/phpdotenv": "^5.0",
-        "zendframework/zend-diactoros": "^2.2",
         "symfony/http-foundation": "^5.1.2",
         "ext-json": "*",
-        "phpunit/phpunit": "^9.5"
+        "laminas/laminas-diactoros": "^2.5",
+        "box/spout": "^3.2",
+        "php-di/php-di": "^6.3",
+        "ocramius/proxy-manager": "^2.11"
     },
     "require-dev": {
-        "symfony/var-dumper": "^5.1"
+        "symfony/var-dumper": "^5.1",
+        "phpunit/phpunit": "^9.5",
+        "phpstan/phpstan-php-parser": "^0.12.3",
+        "squizlabs/php_codesniffer": "^3.5",
+        "nikic/php-parser": "^4.10",
+        "vimeo/psalm": "^4.7"
     },
     "authors": [
         {

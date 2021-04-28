@@ -37,8 +37,8 @@ export class ImportFormComponent extends Component {
 
     nextStep() {
         const step = this.$steps.children;
-        this.step++;
-        step[this.step].classList.add('active');
+        // this.step++;
+        // step[this.step].classList.add('active');
     }
 }
 

@@ -10,16 +10,15 @@ Author URI:
 License: A "Slug" license name e.g. GPL-3.0
 */
 
-declare(strict_types=1);
-
-require __DIR__ . '/vendor/autoload.php';
+if (! defined('ABSPATH')) {
+    exit;
+}
 
 if (! defined('EWOO_PLUGIN_FILE')) {
     define('EWOO_PLUGIN_FILE', __FILE__);
 }
 
+require __DIR__ . '/vendor/autoload.php';
 
-use ExtendedWoo\Kernel;
-
-
-$app = (new Kernel())->init();
+$app = require __DIR__ . '/bootstrap/container.php';
+$kernel = $app->get('Kernel')->init();

@@ -32,10 +32,6 @@ final class Pages implements PageInterface
     {
         global $wpdb;
 
-        if (! defined('ABSPATH')) {
-            exit;
-        }
-
         $this->request = Request::createFromGlobals();
         $this->db = $wpdb;
     }

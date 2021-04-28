@@ -3,9 +3,8 @@
 
 namespace ExtendedWoo;
 
-use ExtendedWoo\ExtensionAPI\ExtensionInstall;
+use DI\Container;
 use ExtendedWoo\ExtensionAPI\controllers\AjaxController;
-use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
 use ExtendedWoo\ExtensionAPI\menu\AdminMenu;
 use ExtendedWoo\ExtensionAPI\Pages;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,24 +14,30 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @package ExtendedWoo
  */
-final class Kernel implements ExtendedWooInterface
+final class Kernel
 {
     /**
-     * @return $this|ExtendedWooInterface
+     * @return $this
      */
-    private Request $request;
+    protected Request $request;
+    protected Container $app;
 
-
-    public function init(): ExtendedWooInterface
+    public function __construct(Container $app, Request $request)
     {
-        $this->request = Request::createFromGlobals();
+        $this->app = $app;
+        $this->request = $request;
+    }
+
+    public function init(): Kernel
+    {
         $pages = new Pages();
         $ajaxController = new AjaxController();
 
         add_action('admin_menu', [(new AdminMenu()), 'initMenu'], 8);
-        add_action('admin_init', array($this, 'install'));
+        add_action('admin_init', [$this, 'install']);
+
         add_action('admin_menu', [$pages, 'menu'], 1);
-        add_action('admin_init', array($pages, 'downloadExportFile'));
+        add_action('admin_init', [$pages, 'downloadExportFile']);
 
         add_action('wp_ajax_ext_do_ajax_product_export', [$ajaxController, 'productExport']);
         add_action('wp_ajax_ext_do_ajax_product_import', [$ajaxController, 'productImport']);
@@ -43,28 +48,30 @@ final class Kernel implements ExtendedWooInterface
         return $this;
     }
 
-    /**
-     * @return $this|ExtendedWooInterface
-     */
-    public function install(): ExtendedWooInterface
+    public function getApp(): Container
     {
-        ExtensionInstall::init();
+        return $this->app;
+    }
+
+    /**
+     * @return $this|Kernel
+     */
+    public function install(): Kernel
+    {
+        $dbExtension = $this->app->get('DBExtension');
+        $dbExtension->init();
 
         return $this;
     }
 
     /**
-     * @return ExtendedWooInterface
+     * @return Kernel
      */
-    public function uninstall(): ExtendedWooInterface
+    public function uninstall(): Kernel
     {
-        ExtensionInstall::uninstallTables();
+        $dbExtension = $this->app->get('DBExtension');
+        $dbExtension->terminate();
 
         return $this;
-    }
-
-    public static function pluginUrl(): string
-    {
-        return untrailingslashit(plugins_url('/', EWOO_PLUGIN_FILE));
     }
 }

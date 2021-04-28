@@ -183,6 +183,7 @@ class ProductExporter implements ExporterInterface
     {
         $description = str_replace('\n', "\\\\n", $description);
         $description = str_replace("\n", '\n', $description);
+
         return $description;
     }
 }
