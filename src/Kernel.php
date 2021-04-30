@@ -3,11 +3,7 @@
 
 namespace ExtendedWoo;
 
-use ExtendedWoo\ExtensionAPI\ExtensionInstall;
-use ExtendedWoo\ExtensionAPI\controllers\AjaxController;
-use ExtendedWoo\ExtensionAPI\interfaces\ExtendedWooInterface;
-use ExtendedWoo\ExtensionAPI\menu\AdminMenu;
-use ExtendedWoo\ExtensionAPI\Pages;
+use DI\Container;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -15,55 +11,62 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @package ExtendedWoo
  */
-final class Kernel implements ExtendedWooInterface
+final class Kernel
 {
     /**
-     * @return $this|ExtendedWooInterface
+     * @return $this
      */
-    private Request $request;
+    protected Request $request;
+    protected Container $app;
 
-
-    public function init(): ExtendedWooInterface
+    public function __construct(Container $app, Request $request)
     {
-        $this->request = Request::createFromGlobals();
-        $pages = new Pages();
-        $ajaxController = new AjaxController();
+        $this->app = $app;
+        $this->request = $request;
+    }
 
-        add_action('admin_menu', [(new AdminMenu()), 'initMenu'], 8);
-        add_action('admin_init', array($this, 'install'));
+    public function init(): Kernel
+    {
+        $pages = $this->app->get('ExtendedWoo\core\services\AdminPages');
+        $adminMenu = $this->app->get('ExtendedWoo\ExtensionAPI\menu\AdminMenu');
+        $ajaxController = $this->app->get('ExtendedWoo\ExtensionAPI\controllers\AjaxController');
+
+        add_action('admin_init', [$this, 'install']);
         add_action('admin_menu', [$pages, 'menu'], 1);
-        add_action('admin_init', array($pages, 'downloadExportFile'));
+//        add_action('admin_menu', [$adminMenu, 'initMenu'], 8);
+        add_action('admin_enqueue_scripts', [$this->app->get('Assets'), 'adminScripts']);
+//        add_action('admin_init', [$pages, 'downloadExportFile']);
 
-        add_action('wp_ajax_ext_do_ajax_product_export', array( $ajaxController, 'productExport' ));
-        add_action('wp_ajax_ext_do_ajax_product_import', array( $ajaxController, 'productImport' ));
-        add_action('wp_ajax_ext_do_ajax_product_remove', array( $ajaxController, 'productRemove' ));
-        add_action('wp_ajax_ext_do_ajax_check_resolver_form', array( $ajaxController, 'checkResolverForm' ));
+//        add_action('wp_ajax_ext_do_ajax_product_export', [$ajaxController, 'productExport']);
+//        add_action('wp_ajax_ext_do_ajax_product_import', [$ajaxController, 'productImport']);
+//        add_action('wp_ajax_ext_do_ajax_upload_file', [$ajaxController, 'fileUploader']);
+//        add_action('wp_ajax_ext_do_ajax_product_remove', [$ajaxController, 'productRemove']);
+//        add_action('wp_ajax_ext_do_ajax_check_resolver_form', [$ajaxController, 'checkResolverForm']);
 
-        return $this;
-    }
-
-    /**
-     * @return $this|ExtendedWooInterface
-     */
-    public function install(): ExtendedWooInterface
-    {
-        ExtensionInstall::init();
+        add_action('check_product_images', [$this->app->get('Assets'), 'findProductImages']);
 
         return $this;
     }
 
     /**
-     * @return ExtendedWooInterface
+     * @return $this|Kernel
      */
-    public function uninstall(): ExtendedWooInterface
+    public function install(): Kernel
     {
-        ExtensionInstall::uninstallTables();
+        $dbExtension = $this->app->get('DBExtension');
+        $dbExtension->init();
 
         return $this;
     }
 
-    public static function pluginUrl(): string
+    /**
+     * @return Kernel
+     */
+    public function uninstall(): Kernel
     {
-        return untrailingslashit(plugins_url('/', EWOO_PLUGIN_FILE));
+        $dbExtension = $this->app->get('DBExtension');
+        $dbExtension->terminate();
+
+        return $this;
     }
 }

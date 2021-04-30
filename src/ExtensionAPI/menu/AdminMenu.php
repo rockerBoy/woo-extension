@@ -11,25 +11,26 @@ use ExtendedWoo\ExtensionAPI\import\ImportTypeFactory;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\FullProductImportType;
 use ExtendedWoo\ExtensionAPI\import\models\BrandsImportController;
 use ExtendedWoo\ExtensionAPI\import\PriceImportController;
-use ExtendedWoo\ExtensionAPI\import\ProductImporterController;
-use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductPriceImportType;
 use ExtendedWoo\ExtensionAPI\import\importing_strategies\ProductSalesImportType;
 use ExtendedWoo\ExtensionAPI\import\SecondaryImportController;
+use Psr\Container\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 final class AdminMenu
 {
     private Request $request;
+    private ContainerInterface $app;
 
-    public function __construct()
+    public function __construct(ContainerInterface $app)
     {
-        $this->request = Request::createFromGlobals();
+        $this->request = $app->get('Request');
+        $this->app = $app;
     }
 
     public function initMenu():void
     {
-        add_action('admin_menu', array( $this, 'showMenu' ), 9);
+        add_action('admin_menu', [$this, 'showMenu'], 9);
         add_filter('menu_order', [$this, 'menuOrder']);
     }
 
@@ -113,26 +114,24 @@ final class AdminMenu
                 ]
             ]
         );
-        wp_enqueue_script('wc-product-import');
-        $controller = new ProductImporterController($this->request);
-        $controller
-            ->setImportType(ImportTypeFactory::getImportType(ProductImportType::class))
-            ->dispatch();
+
+        $controller = $this->app->get('ExtendedWoo\controllers\import\PrimaryImportController');
+        $controller->render('import/primary.html.twig');
     }
 
     public function productsUpdatePage(): void
     {
-        wp_localize_script(
-            'wc-product-import',
-            'wc_product_import_params',
-            [
-                'import_nonce'    => wp_create_nonce('wc-product-import'),
-                'mapping'         => [
-                    'from' => '',
-                    'to'   => '',
-                ]
+        $this->app->get('localizeImport');wp_localize_script(
+        'wc-product-import',
+        'wc_product_import_params',
+        [
+            'import_nonce'    => wp_create_nonce('wc-product-import'),
+            'mapping'         => [
+                'from' => '',
+                'to'   => '',
             ]
-        );
+        ]
+    );
         wp_enqueue_script('wc-product-import');
         $controller = new SecondaryImportController($this->request);
         $controller

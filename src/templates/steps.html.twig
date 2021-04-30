@@ -1,0 +1,7 @@
+<ol class="wc-progress-steps">
+    {% for step in steps %}
+        <li
+                {% if loop.first %} class="active"{% endif %}
+        >{{ step }}</li>
+    {% endfor %}
+</ol>

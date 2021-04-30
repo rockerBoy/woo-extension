@@ -59,6 +59,7 @@ abstract class BasicController
             'start_row' => $this->startRow,
             '_wpnonce'        => wp_create_nonce('etx-xls-importer'),
         ];
+
         return add_query_arg($params);
     }
 
@@ -72,8 +73,7 @@ abstract class BasicController
 
         if (! empty($request->get('remove_step'))) {
             if (is_file($this->file)) {
-                $last_file_id = $wpdb->get_var("
-                    SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY ID DESC LIMIT 1");
+                $last_file_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY ID DESC LIMIT 1");
                 wp_delete_attachment($last_file_id);
             }
             wp_redirect(esc_url_raw('admin.php?page=excel_import'));

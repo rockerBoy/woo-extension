@@ -2,43 +2,33 @@
 
 namespace ExtendedWoo\ExtensionAPI;
 
-use Exception;
-use ExtendedWoo\Kernel;
+use DI\Container;
 
 class Assets
 {
-    /**
-     * Enqueue styles.
-     */
+    private Container $app;
+
+    public function __construct(Container $app)
+    {
+        $this->app = $app;
+    }
+
     public function adminStyles(): void
     {
-        $ver = rand(1, 10_000);
-        wp_register_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css', '', $ver);
-        wp_enqueue_style('ewoo_admin_style', Kernel::pluginUrl() . '/assets/css/admin.css', '', $ver);
+        wp_register_style('ewoo_admin_style', $this->app->get('pluginURL') . '/assets/css/admin.css');
+        wp_enqueue_style('ewoo_admin_style', $this->app->get('pluginURL') . '/assets/css/admin.css');
         wp_enqueue_style('woocommerce_admin_styles');
     }
 
-    /**
-     * Enqueue scripts.
-     */
     public function adminScripts(): void
     {
         wp_register_script(
-            'ewoo-product-export',
-            Kernel::pluginUrl() . '/assets/js/admin/product-export.js',
-            array( 'jquery' )
-        );
-        wp_register_script(
-            'ewoo-product-import',
-            Kernel::pluginUrl() . '/assets/js/admin/product-import.js',
+            'ewoo-bundle',
+            $this->app->get('pluginURL') . '/assets/js/bundle.js',
             array( 'jquery' ),
-            '103'
+            '0.0.1'
         );
-        wp_register_script(
-            'ewoo-product-validation',
-            Kernel::pluginUrl() . '/assets/js/admin/product-validation.js',
-            array( 'jquery' )
-        );
+        wp_enqueue_script('ewoo-bundle');
     }
 
     public function findProductImages(): void
@@ -81,9 +71,9 @@ class Assets
                 $attachment = $wpdb->get_var($attachment_query);
 
                 if (! empty($attachment)) {
-                   $product->set_image_id($attachment);
-                   $product->save();
-                   ++$found;
+                    $product->set_image_id($attachment);
+                    $product->save();
+                    ++$found;
                 }
             }
         endwhile;

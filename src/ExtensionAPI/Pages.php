@@ -4,11 +4,10 @@
 namespace ExtendedWoo\ExtensionAPI;
 
 use DateTimeImmutable;
-use ExtendedWoo\ExtensionAPI\interfaces\PageInterface;
 use ExtendedWoo\ExtensionAPI\models\export\ExcelExport;
 use Symfony\Component\HttpFoundation\Request;
 
-final class Pages implements PageInterface
+final class Pages
 {
     public const PAGE_ROOT = 'edit.php?post_type=product';
 
@@ -32,10 +31,6 @@ final class Pages implements PageInterface
     {
         global $wpdb;
 
-        if (! defined('ABSPATH')) {
-            exit;
-        }
-
         $this->request = Request::createFromGlobals();
         $this->db = $wpdb;
     }
@@ -43,19 +38,19 @@ final class Pages implements PageInterface
     public function menu(): void
     {
         $this->registerPage([
-            'id'        => 'product_excel_exporter',
-            'parent'    => self::PAGE_ROOT,
-            'screen_id' => 'product_page_product_exporter',
-            'title'     => __('Export Products', 'woocommerce'),
-            'path'     => 'product_excel_exporter',
-        ]);
+                                'id'        => 'product_excel_exporter',
+                                'parent'    => self::PAGE_ROOT,
+                                'screen_id' => 'product_page_product_exporter',
+                                'title'     => __('Export Products', 'woocommerce'),
+                                'path'     => 'product_excel_exporter',
+                            ]);
         $this->registerPage([
-            'id'        => 'product_category_filters',
-            'parent'    => self::PAGE_ROOT,
-            'screen_id' => 'product_category_filters',
-            'title'     => __('Настройка фильтров категорий', 'woocommerce'),
-            'path'     => 'product_category_filters',
-        ]);
+                                'id'        => 'product_category_filters',
+                                'parent'    => self::PAGE_ROOT,
+                                'screen_id' => 'product_category_filters',
+                                'title'     => __('Настройка фильтров категорий', 'woocommerce'),
+                                'path'     => 'product_category_filters',
+                            ]);
     }
 
     public function connectPage($options): void
@@ -64,26 +59,6 @@ final class Pages implements PageInterface
             $options['title'] = array( $options['title'] );
         }
 
-        /**
-         * Filter the options when connecting or registering a page.
-         *
-         * Use the `js_page` option to determine if registering.
-         *
-         * @param array $options {
-         *   Array describing the page.
-         *
-         *   @type string       id           Id to reference the page.
-         *   @type string|array title        Page title. Used in menus and breadcrumbs.
-         *   @type string|null  parent       Parent ID. Null for new top level page.
-         *   @type string       screen_id    The screen ID that represents the connected page.
-         *                                   (Not required for registering).
-         *   @type string       path         Path for this page. E.g. admin.php?page=wc-settings&tab=checkout
-         *   @type string       capability   Capability needed to access the page.
-         *   @type string       icon         Icon. Dashicons helper class, base64-encoded SVG, or 'none'.
-         *   @type int          position     Menu item position.
-         *   @type boolean      js_page      If this is a JS-powered page.
-         * }
-         */
         $options = apply_filters('woocommerce_navigation_connect_page_options', $options);
 
         // @todo check for null ID, or collision.
@@ -177,7 +152,7 @@ final class Pages implements PageInterface
             $excelGenerator->sendFileToUser();
         }
     }
-    
+
     public function viewPage(): void
     {
         $prefix = 'product_page_';
@@ -213,7 +188,7 @@ final class Pages implements PageInterface
         if (empty($_GET['files']) && empty($_GET['action']) && empty($_GET['filename'])) {
             $uploads = wp_upload_dir();
             $path = trailingslashit($uploads['basedir']);
-            
+
             foreach (scandir($path) as $file) {
                 if (false !== strpos($file, 'Product_Export_')) {
                     @unlink($path.$file);
@@ -221,7 +196,7 @@ final class Pages implements PageInterface
             }
         }
         ob_start();
-        require __DIR__.'/../views/admin-page-product-export.php';
+        require __DIR__.'/../views/export/admin-page-product-export.php';
 
         return ob_get_clean();
     }
